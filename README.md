@@ -11,7 +11,7 @@ with a qibla compass. Clean-room Android implementation (Kotlin + Jetpack Compos
 
 اذهب إلى صفحة **Releases** وحمّل `MawaqitiPlus-1.0.0-beta1.apk`:
 
-**→ https://github.com/amh2002/mawaqiti-plus/releases/latest**
+**→ https://github.com/amh2002/mawaqiti-plus/releases/tag/v1.0.0-beta1**
 
 ### التثبيت · Install
 
