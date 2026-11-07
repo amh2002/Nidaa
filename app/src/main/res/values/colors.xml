@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mawaqiti_green">#0F5132</color>
+    <color name="mawaqiti_green_dark">#0A3D26</color>
+    <color name="mawaqiti_gold">#C9A227</color>
+    <color name="mawaqiti_background">#F7F5EF</color>
+    <color name="mawaqiti_background_dark">#101613</color>
+</resources>

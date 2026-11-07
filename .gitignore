@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+app/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin
+.kotlin/
+
+# Android local configuration (machine-specific SDK path)
+local.properties
+
+# IDE
+.idea/
+*.iml
+captures/
+
+# Build outputs / release assets are attached to GitHub Releases, not committed
+dist/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Crash dumps
+*.hprof

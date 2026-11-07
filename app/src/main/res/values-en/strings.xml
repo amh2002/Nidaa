@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mawaqiti</string>
+    <string name="beta_label">BETA</string>
+
+    <string name="tab_prayer">Prayer</string>
+    <string name="tab_qibla">Qibla</string>
+    <string name="tab_settings">Settings</string>
+
+    <string name="prayer_fajr">Fajr</string>
+    <string name="prayer_sunrise">Sunrise</string>
+    <string name="prayer_dhuhr">Dhuhr</string>
+    <string name="prayer_asr">Asr</string>
+    <string name="prayer_maghrib">Maghrib</string>
+    <string name="prayer_isha">Isha</string>
+
+    <string name="next_prayer">Next prayer</string>
+    <string name="remaining">Remaining</string>
+    <string name="city_label">City</string>
+    <string name="last_third">Last third of the night</string>
+    <string name="imsak">Imsak</string>
+    <string name="midnight">Midnight</string>
+    <string name="todays_times">Today\'s times</string>
+    <string name="refresh_location">Refresh location</string>
+
+    <string name="qibla_title">Qibla direction</string>
+    <string name="qibla_bearing">Qibla bearing</string>
+    <string name="qibla_distance">Distance to the Kaaba</string>
+    <string name="qibla_aligned">You are facing the qibla</string>
+    <string name="qibla_turn_right">Turn your phone to the right</string>
+    <string name="qibla_turn_left">Turn your phone to the left</string>
+    <string name="qibla_sensor_missing">A direction sensor is not available on this device</string>
+    <string name="qibla_current_heading">Phone heading</string>
+    <string name="qibla_calibrate">Move the phone in a figure 8 to calibrate the compass</string>
+    <string name="degrees_format">%1$.0f°</string>
+    <string name="km_format">%1$.0f km</string>
+
+    <string name="settings_method">Calculation method</string>
+    <string name="method_mwl">Muslim World League (18°/17°)</string>
+    <string name="method_isna">North America — ISNA (15°/15°)</string>
+    <string name="method_egypt">Egyptian Authority (19.5°/17.5°)</string>
+    <string name="method_umm_al_qura">Umm al-Qura (18.5° / Maghrib + 90 min)</string>
+    <string name="method_karachi">University of Karachi (18°/18°)</string>
+    <string name="method_custom">Custom angles</string>
+
+    <string name="settings_custom_fajr">Fajr angle (°)</string>
+    <string name="settings_custom_isha">Isha angle (°)</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="invalid_angle">Enter an angle between 0 and 30</string>
+
+    <string name="settings_madhab">Asr madhhab</string>
+    <string name="madhab_shafi">Shafi\'i (shadow 1)</string>
+    <string name="madhab_hanafi">Hanafi (shadow 2)</string>
+
+    <string name="settings_high_lat">High-latitude rule</string>
+    <string name="high_lat_night_middle">Middle of the night</string>
+    <string name="high_lat_angle_based">Angle based</string>
+
+    <string name="settings_location">Location</string>
+    <string name="settings_use_gps">Use my current location</string>
+    <string name="locating">Locating…</string>
+    <string name="location_failed">Could not get a location. Enter coordinates manually.</string>
+    <string name="settings_manual_coords">Manual coordinates</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="save_location">Save location</string>
+    <string name="invalid_coords">Invalid coordinates</string>
+    <string name="settings_city_search">Search for a city</string>
+    <string name="city_search_hint">Type a city name</string>
+    <string name="no_results">No results</string>
+    <string name="current_location">Current location</string>
+    <string name="location_source_gps">GPS</string>
+    <string name="location_source_manual">Manual</string>
+    <string name="location_source_default">Default</string>
+
+    <string name="permission_title">Location permission</string>
+    <string name="permission_message">Your location is used to calculate prayer times and the qibla direction accurately. You can also enter coordinates manually in Settings.</string>
+    <string name="allow">Allow</string>
+    <string name="later">Later</string>
+    <string name="permission_denied">Location permission was denied. You can enter coordinates manually in Settings.</string>
+
+    <string name="calc_error_title">Calculation failed</string>
+    <string name="calc_error_message">Prayer times could not be calculated for this location and date. Try a lower latitude or another method.</string>
+
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_body">Mawaqiti BETA calculates prayer times astronomically on-device, fully offline. This version has no notifications or adhan.</string>
+</resources>
