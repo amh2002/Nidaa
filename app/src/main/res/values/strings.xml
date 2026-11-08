@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">مواقيتي</string>
+    <string name="app_name">مواقيتي بلس</string>
     <string name="beta_label">نسخة تجريبية</string>
 
     <string name="tab_prayer">الصلاة</string>
@@ -15,74 +15,52 @@
     <string name="prayer_isha">العشاء</string>
 
     <string name="next_prayer">الصلاة القادمة</string>
-    <string name="remaining">متبقٍ</string>
-    <string name="city_label">المدينة</string>
+    <string name="remaining">المتبقي</string>
     <string name="last_third">الثلث الأخير من الليل</string>
-    <string name="imsak">الإمساك</string>
-    <string name="midnight">منتصف الليل</string>
     <string name="todays_times">مواقيت اليوم</string>
-    <string name="refresh_location">تحديث الموقع</string>
+    <string name="city_chip_desc">تغيير المدينة</string>
+    <string name="official_note">المواقيت وفق الجدول الرسمي الفلسطيني</string>
 
     <string name="qibla_title">اتجاه القبلة</string>
-    <string name="qibla_bearing">زاوية القبلة</string>
+    <string name="qibla_city">%1$s</string>
+    <string name="qibla_bearing">اتجاه القبلة</string>
     <string name="qibla_distance">المسافة إلى الكعبة</string>
     <string name="qibla_aligned">أنت تواجه القبلة</string>
     <string name="qibla_turn_right">أدر هاتفك إلى اليمين</string>
     <string name="qibla_turn_left">أدر هاتفك إلى اليسار</string>
-    <string name="qibla_sensor_missing">مستشعر الاتجاه غير متوفر على هذا الجهاز</string>
+    <string name="qibla_sensor_missing">لا يتوفر مستشعر اتجاه في هذا الجهاز.</string>
     <string name="qibla_current_heading">اتجاه الهاتف</string>
-    <string name="qibla_calibrate">حرّك الهاتف على شكل رقم 8 لمعايرة البوصلة</string>
+    <string name="qibla_calibrate">حرّك الهاتف على شكل رقم 8 لمعايرة البوصلة.</string>
     <string name="degrees_format">%1$.0f°</string>
     <string name="km_format">%1$.0f كم</string>
 
-    <string name="settings_method">طريقة الحساب</string>
-    <string name="method_mwl">رابطة العالم الإسلامي (18°/17°)</string>
-    <string name="method_isna">أمريكا الشمالية — ISNA (15°/15°)</string>
-    <string name="method_egypt">الهيئة المصرية (19.5°/17.5°)</string>
-    <string name="method_umm_al_qura">أم القرى (18.5° / المغرب + 90 د)</string>
-    <string name="method_karachi">جامعة كراتشي (18°/18°)</string>
-    <string name="method_custom">زوايا مخصصة</string>
+    <string name="country_palestine">فلسطين</string>
+    <string name="country_saudi">السعودية</string>
+    <string name="confirm">تأكيد</string>
+    <string name="cancel">إلغاء</string>
+    <string name="back">رجوع</string>
 
-    <string name="settings_custom_fajr">زاوية الفجر (°)</string>
-    <string name="settings_custom_isha">زاوية العشاء (°)</string>
-    <string name="save">حفظ</string>
-    <string name="saved">تم الحفظ</string>
-    <string name="invalid_angle">أدخل زاوية بين 0 و 30</string>
+    <string name="select_city_title">اختيار المدينة</string>
+    <string name="select_country_title">اختر الدولة</string>
+    <string name="select_country_hint">الخطوة 1 من 2</string>
+    <string name="select_city_step">الخطوة 2 من 2</string>
+    <string name="select_city_hint">اختر المدينة</string>
+    <string name="cities_count">%1$d مدينة</string>
+    <string name="no_cities">لا توجد مدن</string>
 
-    <string name="settings_madhab">مذهب العصر</string>
-    <string name="madhab_shafi">الشافعي (ظل 1)</string>
-    <string name="madhab_hanafi">الحنفي (ظل 2)</string>
+    <string name="settings_city_title">المدينة</string>
+    <string name="settings_city_hint">اضغط لاختيار مدينة أخرى</string>
+    <string name="settings_city_change">تغيير</string>
 
-    <string name="settings_high_lat">خطوط العرض العالية</string>
-    <string name="high_lat_night_middle">منتصف الليل</string>
-    <string name="high_lat_angle_based">حسب الزاوية</string>
+    <string name="settings_language">اللغة</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_english">English</string>
+    <string name="language_desc">تُطبَّق اللغة فورًا على كل الشاشات.</string>
 
-    <string name="settings_location">الموقع</string>
-    <string name="settings_use_gps">استخدم موقعي الحالي</string>
-    <string name="locating">جارٍ تحديد الموقع…</string>
-    <string name="location_failed">تعذر تحديد الموقع. أدخل الإحداثيات يدوياً.</string>
-    <string name="settings_manual_coords">إحداثيات يدوية</string>
-    <string name="latitude">خط العرض</string>
-    <string name="longitude">خط الطول</string>
-    <string name="save_location">حفظ الموقع</string>
-    <string name="invalid_coords">إحداثيات غير صالحة</string>
-    <string name="settings_city_search">البحث عن مدينة</string>
-    <string name="city_search_hint">اكتب اسم المدينة</string>
-    <string name="no_results">لا توجد نتائج</string>
-    <string name="current_location">موقعي الحالي</string>
-    <string name="location_source_gps">GPS</string>
-    <string name="location_source_manual">يدوي</string>
-    <string name="location_source_default">افتراضي</string>
+    <string name="settings_summer_time">التوقيت الصيفي</string>
+    <string name="summer_time_desc">إضافة ساعة واحدة (+1) إلى جميع المواقيت.</string>
 
-    <string name="permission_title">إذن الموقع</string>
-    <string name="permission_message">نستخدم موقعك لحساب مواقيت الصلاة واتجاه القبلة بدقة. يمكنك أيضاً إدخال الإحداثيات يدوياً من الإعدادات.</string>
-    <string name="allow">سماح</string>
-    <string name="later">لاحقاً</string>
-    <string name="permission_denied">تم رفض إذن الموقع. يمكنك إدخال الإحداثيات يدوياً من الإعدادات.</string>
-
-    <string name="calc_error_title">تعذر الحساب</string>
-    <string name="calc_error_message">تعذر حساب المواقيت لهذا الموقع والتاريخ. جرّب خط عرض أقل أو طريقة حساب أخرى.</string>
-
-    <string name="settings_about_title">عن التطبيق</string>
-    <string name="settings_about_body">مواقيتي نسخة تجريبية تحسب المواقيت فلكياً على الجهاز دون إنترنت. لا توجد إشعارات أو أذان في هذه النسخة.</string>
+    <string name="settings_about_title">حول التطبيق</string>
+    <string name="settings_about_body">يعرض «مواقيتي بلس» المواقيت وفق الجدول الرسمي الفلسطيني، مطابقة للتطبيق الأصلي دقيقة بدقيقة. يعمل التطبيق دون اتصال بالإنترنت ولا يطلب أي أذونات.</string>
+    <string name="settings_version">الإصدار %1$s</string>
 </resources>

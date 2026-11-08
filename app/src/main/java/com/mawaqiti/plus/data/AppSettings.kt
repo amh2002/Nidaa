@@ -1,32 +1,24 @@
 package com.mawaqiti.plus.data
 
-import com.mawaqiti.plus.engine.AsrMadhab
-import com.mawaqiti.plus.engine.CalculationMethod
-import com.mawaqiti.plus.engine.CalculationSettings
-import com.mawaqiti.plus.engine.HighLatitudeRule
+enum class AppLanguage(val tag: String) {
+    ARABIC("ar"),
+    ENGLISH("en");
 
-enum class LocationSource { DEFAULT, GPS, MANUAL }
-
-data class AppSettings(
-    val method: CalculationMethod = CalculationMethod.MWL,
-    val asrMadhab: AsrMadhab = AsrMadhab.SHAFI,
-    val highLatitudeRule: HighLatitudeRule = HighLatitudeRule.NIGHT_MIDDLE,
-    val customFajrAngle: Double = 18.0,
-    val customIshaAngle: Double = 17.0,
-    val latitude: Double = 31.7683,
-    val longitude: Double = 35.2137,
-    val cityNameAr: String = "القدس",
-    val cityNameEn: String = "Al-Quds",
-    val locationSource: LocationSource = LocationSource.DEFAULT,
-    val onboardingDone: Boolean = false,
-    val imsakOffsetMinutes: Int = 10
-) {
-    fun toCalculationSettings(): CalculationSettings = CalculationSettings(
-        method = method,
-        asrMadhab = asrMadhab,
-        highLatitudeRule = highLatitudeRule,
-        customFajrAngle = customFajrAngle,
-        customIshaAngle = customIshaAngle,
-        imsakOffsetMinutes = imsakOffsetMinutes
-    )
+    companion object {
+        fun fromTag(tag: String?): AppLanguage =
+            entries.firstOrNull { it.tag.equals(tag, ignoreCase = true) } ?: ARABIC
+    }
 }
+
+/**
+ * Everything the beta persists. Times and the qibla bearing are derived from
+ * [cityOrder] alone, so there is no latitude/longitude state to keep in sync.
+ */
+data class AppSettings(
+    val cityOrder: Int = City.DEFAULT_ORDER,
+    /** Manual +1 hour toggle, shown only for Palestine. Default OFF. */
+    val summerTime: Boolean = false,
+    val language: AppLanguage = AppLanguage.ARABIC,
+    /** False only before the very first launch picks Arabic explicitly. */
+    val languageInitialized: Boolean = false
+)

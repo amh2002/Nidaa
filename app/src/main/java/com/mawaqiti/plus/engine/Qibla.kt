@@ -17,6 +17,10 @@ object Qibla {
 
     /** Initial great-circle bearing from (lat, lon) to the Kaaba, degrees clockwise from north. */
     fun bearing(latitude: Double, longitude: Double): Double {
+        // At the Kaaba itself the bearing is undefined; return north instead of
+        // amplifying a few metres of coordinate noise into a random angle.
+        if (distanceKm(latitude, longitude) < 0.5) return 0.0
+
         val phi1 = latitude * DEG
         val phi2 = KAABA_LATITUDE * DEG
         val deltaLambda = (KAABA_LONGITUDE - longitude) * DEG

@@ -1,26 +1,26 @@
 package com.mawaqiti.plus
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.data.CityRepository
-import com.mawaqiti.plus.data.LocationHelper
-import com.mawaqiti.plus.data.LocationSource
+import com.mawaqiti.plus.data.Country
 import com.mawaqiti.plus.data.SettingsRepository
-import com.mawaqiti.plus.engine.AsrMadhab
-import com.mawaqiti.plus.engine.CalculationMethod
-import com.mawaqiti.plus.engine.HighLatitudeRule
-import com.mawaqiti.plus.engine.PrayerDay
-import com.mawaqiti.plus.engine.PrayerEngine
+import com.mawaqiti.plus.engine.table.TableDay
+import com.mawaqiti.plus.engine.table.TableEngine
 import java.time.LocalDate
-import java.time.ZoneId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -30,140 +30,76 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     private val settingsRepository = SettingsRepository(application)
     private val cityRepository = CityRepository(application)
 
-    val settings: StateFlow<AppSettings> = settingsRepository.settings
+    /** All 90 extracted entries, ready for the two-step cascade. */
+    val cities: List<City> = cityRepository.all()
+
+    private val _today = MutableStateFlow(LocalDate.now())
+    val today: StateFlow<LocalDate> = _today.asStateFlow()
+
+    /** Null until DataStore has emitted; used to make first-launch language setup atomic. */
+    val settingsState: StateFlow<AppSettings?> = settingsRepository.settings
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val settings: StateFlow<AppSettings> = settingsState
+        .map { it ?: AppSettings() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
-    private val _loaded = MutableStateFlow(false)
-    val loaded: StateFlow<Boolean> = _loaded.asStateFlow()
+    val city: StateFlow<City> = settings
+        .map { cityRepository.byOrder(it.cityOrder) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, cityRepository.defaultCity())
 
-    private val _day = MutableStateFlow<PrayerDay?>(null)
-    val day: StateFlow<PrayerDay?> = _day.asStateFlow()
-
-    private val _hasError = MutableStateFlow(false)
-    val hasError: StateFlow<Boolean> = _hasError.asStateFlow()
-
-    private val _locating = MutableStateFlow(false)
-    val locating: StateFlow<Boolean> = _locating.asStateFlow()
-
-    private val _messageRes = MutableStateFlow<Int?>(null)
-    val messageRes: StateFlow<Int?> = _messageRes.asStateFlow()
-
-    val cities: List<City> = cityRepository.all()
+    val day: StateFlow<TableDay> = combine(settings, city, _today) { value, selected, date ->
+        val summer = value.summerTime && selected.country == Country.PS
+        TableEngine.day(
+            profile = selected.profile,
+            minDiff = selected.minDiff,
+            date = date,
+            summerTime = summer
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        TableEngine.day(
+            profile = cityRepository.defaultCity().profile,
+            minDiff = cityRepository.defaultCity().minDiff,
+            date = LocalDate.now(),
+            summerTime = false
+        )
+    )
 
     init {
         viewModelScope.launch {
-            settingsRepository.settings.collect { value ->
-                _loaded.value = true
-                recompute(value)
-            }
-        }
-        viewModelScope.launch {
             while (isActive) {
-                delay(60_000)
-                if (_day.value?.date != LocalDate.now()) {
-                    recompute(settings.value)
-                }
+                delay(30_000)
+                refreshDate()
             }
         }
     }
 
-    private fun recompute(value: AppSettings) {
-        try {
-            _day.value = PrayerEngine.calculate(
-                date = LocalDate.now(),
-                latitude = value.latitude,
-                longitude = value.longitude,
-                zone = ZoneId.systemDefault(),
-                settings = value.toCalculationSettings()
-            )
-            _hasError.value = false
-        } catch (error: Exception) {
-            _day.value = null
-            _hasError.value = true
-        }
-    }
-
-    fun setMethod(method: CalculationMethod) = viewModelScope.launch {
-        settingsRepository.setMethod(method)
-    }
-
-    fun setMadhab(madhab: AsrMadhab) = viewModelScope.launch {
-        settingsRepository.setMadhab(madhab)
-    }
-
-    fun setHighLatitudeRule(rule: HighLatitudeRule) = viewModelScope.launch {
-        settingsRepository.setHighLatitudeRule(rule)
-    }
-
-    fun setCustomAngles(fajr: Double, isha: Double) = viewModelScope.launch {
-        settingsRepository.setCustomAngles(fajr, isha)
+    fun refreshDate() {
+        val now = LocalDate.now()
+        if (_today.value != now) _today.value = now
     }
 
     fun selectCity(city: City) = viewModelScope.launch {
-        settingsRepository.setLocation(
-            latitude = city.latitude,
-            longitude = city.longitude,
-            cityAr = city.nameAr,
-            cityEn = city.nameEn,
-            source = LocationSource.MANUAL
+        settingsRepository.setCityOrder(city.order)
+    }
+
+    fun setSummerTime(enabled: Boolean) = viewModelScope.launch {
+        settingsRepository.setSummerTime(enabled)
+    }
+
+    fun setLanguage(language: AppLanguage) = viewModelScope.launch {
+        settingsRepository.setLanguage(language)
+        AppCompatDelegate.setApplicationLocales(
+            LocaleListCompat.forLanguageTags(language.tag)
         )
     }
 
-    fun setManualLocation(latitude: Double, longitude: Double) = viewModelScope.launch {
-        val app = getApplication<Application>()
-        settingsRepository.setLocation(
-            latitude = latitude,
-            longitude = longitude,
-            cityAr = app.getString(R.string.current_location),
-            cityEn = app.getString(R.string.current_location),
-            source = LocationSource.MANUAL
-        )
-    }
+    fun citiesFor(country: Country, isArabic: Boolean): List<City> =
+        cityRepository.forCountry(country, isArabic)
 
-    fun refreshLocation() {
-        if (_locating.value) return
-        viewModelScope.launch {
-            _locating.value = true
-            _messageRes.value = null
-            val location = LocationHelper.currentLocation(getApplication())
-            if (location == null) {
-                _messageRes.value = R.string.location_failed
-            } else {
-                val nearest = cityRepository.nearest(location.latitude, location.longitude)
-                val app = getApplication<Application>()
-                if (nearest != null && nearest.distanceKm <= 150.0) {
-                    settingsRepository.setLocation(
-                        location.latitude,
-                        location.longitude,
-                        nearest.city.nameAr,
-                        nearest.city.nameEn,
-                        LocationSource.GPS
-                    )
-                } else {
-                    settingsRepository.setLocation(
-                        location.latitude,
-                        location.longitude,
-                        app.getString(R.string.current_location),
-                        app.getString(R.string.current_location),
-                        LocationSource.GPS
-                    )
-                }
-            }
-            _locating.value = false
-        }
-    }
+    fun cityCount(country: Country): Int = cityRepository.countFor(country)
 
-    fun completeOnboarding() = viewModelScope.launch {
-        settingsRepository.setOnboardingDone(true)
-    }
-
-    fun notifyPermissionDenied() {
-        _messageRes.value = R.string.permission_denied
-    }
-
-    fun clearMessage() {
-        _messageRes.value = null
-    }
-
-    fun searchCities(query: String): List<City> = cityRepository.search(query)
+    fun cityByOrder(order: Int): City = cityRepository.byOrder(order)
 }

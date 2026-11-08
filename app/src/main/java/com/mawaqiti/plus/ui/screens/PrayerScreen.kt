@@ -1,6 +1,7 @@
 package com.mawaqiti.plus.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,10 +16,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,35 +34,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mawaqiti.plus.R
-import com.mawaqiti.plus.data.AppSettings
-import com.mawaqiti.plus.engine.PrayerDay
-import com.mawaqiti.plus.engine.PrayerMoment
-import com.mawaqiti.plus.engine.PrayerName
-import com.mawaqiti.plus.ui.components.cityDisplayName
-import com.mawaqiti.plus.ui.components.isArabicLocale
-import com.mawaqiti.plus.ui.components.methodLabel
-import java.time.Duration
-import java.time.Instant
+import com.mawaqiti.plus.data.City
+import com.mawaqiti.plus.engine.table.TableDay
+import com.mawaqiti.plus.engine.table.TableEngine
+import com.mawaqiti.plus.engine.table.TableEvent
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DecimalStyle
 import java.util.Locale
 import kotlinx.coroutines.delay
 
 @Composable
 fun PrayerScreen(
-    settings: AppSettings,
-    day: PrayerDay?,
-    hasError: Boolean,
-    onRefreshLocation: () -> Unit
+    city: City,
+    day: TableDay,
+    date: LocalDate,
+    isArabic: Boolean,
+    onChooseCity: () -> Unit
 ) {
-    val isArabic = isArabicLocale()
-    val now = rememberNow()
+    val now = rememberClock()
+    val next = remember(day, now) { nextPrayer(day, now) }
     val scroll = rememberScrollState()
 
     Column(
@@ -69,40 +68,34 @@ fun PrayerScreen(
             .fillMaxSize()
             .verticalScroll(scroll)
     ) {
-        Header(settings = settings, day = day, isArabic = isArabic)
+        Header(city = city, date = date, isArabic = isArabic, onChooseCity = onChooseCity)
 
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-            when {
-                hasError -> ErrorCard()
-                day == null -> Box(
-                    modifier = Modifier.fillMaxWidth().height(220.dp),
-                    contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator() }
-
-                else -> {
-                    val next = findNextPrayer(day, now)
-                    NextPrayerCard(day = day, next = next, isArabic = isArabic)
-                    Spacer(Modifier.height(14.dp))
-                    PrayerTimesCard(day = day, nextName = next.name)
-                    Spacer(Modifier.height(14.dp))
-                    ExtraTimesRow(day = day)
-                    Spacer(Modifier.height(14.dp))
-                    Text(
-                        text = methodLabel(settings.method),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(24.dp))
-                }
-            }
+            NextPrayerCard(next = next)
+            Spacer(Modifier.height(14.dp))
+            PrayerTimesCard(day = day, nextEvent = next.event)
+            Spacer(Modifier.height(14.dp))
+            LastThirdCard(minutes = day.lastThird)
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.official_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-private fun Header(settings: AppSettings, day: PrayerDay?, isArabic: Boolean) {
+private fun Header(
+    city: City,
+    date: LocalDate,
+    isArabic: Boolean,
+    onChooseCity: () -> Unit
+) {
     val colors = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
@@ -123,10 +116,7 @@ private fun Header(settings: AppSettings, day: PrayerDay?, isArabic: Boolean) {
                     color = colors.onPrimary
                 )
                 Spacer(Modifier.width(10.dp))
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = colors.secondary
-                ) {
+                Surface(shape = RoundedCornerShape(50), color = colors.secondary) {
                     Text(
                         text = stringResource(R.string.beta_label),
                         style = MaterialTheme.typography.labelSmall,
@@ -135,55 +125,91 @@ private fun Header(settings: AppSettings, day: PrayerDay?, isArabic: Boolean) {
                     )
                 }
             }
-            Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Filled.Place,
-                    contentDescription = null,
-                    tint = colors.onPrimary.copy(alpha = 0.85f)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    text = cityDisplayName(settings),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = colors.onPrimary
-                )
+            Spacer(Modifier.height(12.dp))
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = colors.onPrimary.copy(alpha = 0.14f),
+                modifier = Modifier.clickable(onClick = onChooseCity)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Place,
+                        contentDescription = null,
+                        tint = colors.onPrimary
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = city.label(isArabic),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colors.onPrimary
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Filled.ExpandMore,
+                        contentDescription = stringResource(R.string.city_chip_desc),
+                        tint = colors.onPrimary
+                    )
+                }
             }
-            if (day != null) {
-                val locale = if (isArabic) Locale("ar") else Locale.ENGLISH
-                val pattern = if (isArabic) "EEEE، d MMMM yyyy" else "EEEE, d MMMM yyyy"
-                Text(
-                    text = day.date.format(DateTimeFormatter.ofPattern(pattern, locale)),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onPrimary.copy(alpha = 0.85f)
-                )
-            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = date.format(dateFormatter(isArabic)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onPrimary.copy(alpha = 0.85f)
+            )
         }
     }
 }
 
-private data class NextPrayer(val name: PrayerName, val moment: PrayerMoment, val secondsLeft: Long)
+private data class NextPrayer(
+    val event: TableEvent,
+    val minutes: Int,
+    val tomorrow: Boolean,
+    val secondsLeft: Long
+)
 
-private fun findNextPrayer(day: PrayerDay, now: Instant): NextPrayer {
-    val candidates = day.prayers + listOf(PrayerName.FAJR to day.tomorrowFajr)
-    val next = candidates.firstOrNull { it.second.dateTime.toInstant().isAfter(now) }
-        ?: (PrayerName.FAJR to day.tomorrowFajr)
-    val seconds = Duration.between(now, next.second.dateTime.toInstant()).seconds
-    return NextPrayer(next.first, next.second, seconds.coerceAtLeast(0))
+private fun nextPrayer(day: TableDay, now: LocalTime): NextPrayer {
+    val nowSeconds = now.toSecondOfDay().toLong()
+    val today = listOf(
+        TableEvent.FAJR to day.fajr,
+        TableEvent.SUNRISE to day.sunrise,
+        TableEvent.DHUHR to day.dhuhr,
+        TableEvent.ASR to day.asr,
+        TableEvent.MAGHRIB to day.maghrib,
+        TableEvent.ISHA to day.isha
+    )
+    val event = today.firstOrNull { it.second * 60L > nowSeconds }
+    if (event != null) {
+        return NextPrayer(
+            event = event.first,
+            minutes = event.second,
+            tomorrow = false,
+            secondsLeft = event.second * 60L - nowSeconds
+        )
+    }
+    return NextPrayer(
+        event = TableEvent.FAJR,
+        minutes = day.fajrTomorrow,
+        tomorrow = true,
+        secondsLeft = day.fajrTomorrow * 60L + 86_400L - nowSeconds
+    )
 }
 
 @Composable
-private fun prayerLabel(name: PrayerName): String = when (name) {
-    PrayerName.FAJR -> stringResource(R.string.prayer_fajr)
-    PrayerName.SUNRISE -> stringResource(R.string.prayer_sunrise)
-    PrayerName.DHUHR -> stringResource(R.string.prayer_dhuhr)
-    PrayerName.ASR -> stringResource(R.string.prayer_asr)
-    PrayerName.MAGHRIB -> stringResource(R.string.prayer_maghrib)
-    PrayerName.ISHA -> stringResource(R.string.prayer_isha)
+private fun prayerLabel(event: TableEvent): String = when (event) {
+    TableEvent.FAJR -> stringResource(R.string.prayer_fajr)
+    TableEvent.SUNRISE -> stringResource(R.string.prayer_sunrise)
+    TableEvent.DHUHR -> stringResource(R.string.prayer_dhuhr)
+    TableEvent.ASR -> stringResource(R.string.prayer_asr)
+    TableEvent.MAGHRIB -> stringResource(R.string.prayer_maghrib)
+    TableEvent.ISHA -> stringResource(R.string.prayer_isha)
 }
 
 @Composable
-private fun NextPrayerCard(day: PrayerDay, next: NextPrayer, isArabic: Boolean) {
+private fun NextPrayerCard(next: NextPrayer) {
     val colors = MaterialTheme.colorScheme
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -203,13 +229,13 @@ private fun NextPrayerCard(day: PrayerDay, next: NextPrayer, isArabic: Boolean) 
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = prayerLabel(next.name),
+                    text = prayerLabel(next.event),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onPrimaryContainer
                 )
                 Text(
-                    text = next.moment.display(),
+                    text = TableEngine.format(next.minutes),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onPrimaryContainer
@@ -233,14 +259,14 @@ private fun NextPrayerCard(day: PrayerDay, next: NextPrayer, isArabic: Boolean) 
 }
 
 @Composable
-private fun PrayerTimesCard(day: PrayerDay, nextName: PrayerName) {
+private fun PrayerTimesCard(day: TableDay, nextEvent: TableEvent) {
     val rows = listOf(
-        PrayerName.FAJR to day.fajr,
-        PrayerName.SUNRISE to day.sunrise,
-        PrayerName.DHUHR to day.dhuhr,
-        PrayerName.ASR to day.asr,
-        PrayerName.MAGHRIB to day.maghrib,
-        PrayerName.ISHA to day.isha
+        TableEvent.FAJR to day.fajr,
+        TableEvent.SUNRISE to day.sunrise,
+        TableEvent.DHUHR to day.dhuhr,
+        TableEvent.ASR to day.asr,
+        TableEvent.MAGHRIB to day.maghrib,
+        TableEvent.ISHA to day.isha
     )
     val colors = MaterialTheme.colorScheme
 
@@ -256,11 +282,11 @@ private fun PrayerTimesCard(day: PrayerDay, nextName: PrayerName) {
                 color = colors.primary
             )
             Spacer(Modifier.height(6.dp))
-            rows.forEachIndexed { index, (name, moment) ->
+            rows.forEachIndexed { index, (event, minutes) ->
                 if (index > 0) {
                     HorizontalDivider(color = colors.outline.copy(alpha = 0.12f))
                 }
-                val highlighted = name == nextName
+                val highlighted = event == nextEvent
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -273,14 +299,14 @@ private fun PrayerTimesCard(day: PrayerDay, nextName: PrayerName) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = prayerLabel(name),
+                        text = prayerLabel(event),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Normal,
                         color = colors.onSurface,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = moment.display(),
+                        text = TableEngine.format(minutes),
                         style = MaterialTheme.typography.headlineMedium.copy(fontSize = 30.sp),
                         fontWeight = FontWeight.Bold,
                         color = if (highlighted) colors.primary else colors.onSurface
@@ -292,51 +318,26 @@ private fun PrayerTimesCard(day: PrayerDay, nextName: PrayerName) {
 }
 
 @Composable
-private fun ExtraTimesRow(day: PrayerDay) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        ExtraCard(
-            title = stringResource(R.string.last_third),
-            value = day.lastThird.display(),
-            modifier = Modifier.weight(1f)
-        )
-        ExtraCard(
-            title = stringResource(R.string.imsak),
-            value = day.imsak.display(),
-            modifier = Modifier.weight(1f)
-        )
-        ExtraCard(
-            title = stringResource(R.string.midnight),
-            value = day.midnight.display(),
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun ExtraCard(title: String, value: String, modifier: Modifier = Modifier) {
+private fun LastThirdCard(minutes: Int) {
     val colors = MaterialTheme.colorScheme
     Card(
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
+                text = stringResource(R.string.last_third),
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                modifier = Modifier.weight(1f)
             )
-            Spacer(Modifier.height(4.dp))
             Text(
-                text = value,
-                style = MaterialTheme.typography.titleLarge,
+                text = TableEngine.format(minutes),
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurfaceVariant
             )
@@ -344,37 +345,19 @@ private fun ExtraCard(title: String, value: String, modifier: Modifier = Modifie
     }
 }
 
-@Composable
-private fun ErrorCard() {
-    val colors = MaterialTheme.colorScheme
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = colors.errorContainer),
-        shape = RoundedCornerShape(20.dp)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = stringResource(R.string.calc_error_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = colors.onErrorContainer,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = stringResource(R.string.calc_error_message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.onErrorContainer
-            )
-        }
-    }
+private fun dateFormatter(isArabic: Boolean): DateTimeFormatter {
+    val locale = if (isArabic) Locale.forLanguageTag("ar") else Locale.ENGLISH
+    val pattern = if (isArabic) "EEEE، d MMMM yyyy" else "EEEE, d MMMM yyyy"
+    // Latin digits in both languages, matching the original app.
+    return DateTimeFormatter.ofPattern(pattern, locale).withDecimalStyle(DecimalStyle.STANDARD)
 }
 
 @Composable
-private fun rememberNow(): Instant {
-    var now by remember { mutableStateOf(Instant.now()) }
+private fun rememberClock(): LocalTime {
+    var now by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(Unit) {
         while (true) {
-            now = Instant.now()
+            now = LocalTime.now()
             delay(1000)
         }
     }

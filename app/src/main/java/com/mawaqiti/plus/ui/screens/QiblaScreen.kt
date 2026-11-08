@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,20 +45,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mawaqiti.plus.R
+import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.engine.Qibla
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.cos
-import kotlin.math.roundToInt
 import kotlin.math.sin
 
 @Composable
-fun QiblaScreen(latitude: Double, longitude: Double) {
+fun QiblaScreen(city: City, isArabic: Boolean) {
     val context = LocalContext.current
     var azimuth by remember { mutableFloatStateOf(0f) }
     var hasSensor by remember { mutableStateOf(true) }
-    var accuracy by remember { mutableIntStateOf(SensorManager.SENSOR_STATUS_UNRELIABLE) }
 
-    DisposableEffect(context, latitude, longitude) {
+    DisposableEffect(context) {
         val manager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         val sensor = manager?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         if (manager == null || sensor == null) {
@@ -72,22 +71,18 @@ fun QiblaScreen(latitude: Double, longitude: Double) {
                     SensorManager.getRotationMatrixFromVector(rotation, event.values)
                     val orientation = FloatArray(3)
                     SensorManager.getOrientation(rotation, orientation)
-                    val degrees = (Math.toDegrees(orientation[0].toDouble()) + 360.0) % 360.0
-                    azimuth = degrees.toFloat()
-                    accuracy = event.accuracy
+                    azimuth = ((Math.toDegrees(orientation[0].toDouble()) + 360.0) % 360.0).toFloat()
                 }
 
-                override fun onAccuracyChanged(sensor: Sensor?, accuracyNew: Int) {
-                    accuracy = accuracyNew
-                }
+                override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
             }
             manager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
             onDispose { manager.unregisterListener(listener) }
         }
     }
 
-    val bearing = remember(latitude, longitude) { Qibla.bearing(latitude, longitude) }
-    val distance = remember(latitude, longitude) { Qibla.distanceKm(latitude, longitude) }
+    val bearing = remember(city.order) { Qibla.bearing(city.latitude, city.longitude) }
+    val distance = remember(city.order) { Qibla.distanceKm(city.latitude, city.longitude) }
     val delta = Qibla.signedDelta(bearing, azimuth.toDouble())
     val aligned = abs(delta) <= 5.0
 
@@ -105,13 +100,8 @@ fun QiblaScreen(latitude: Double, longitude: Double) {
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            text = String.format(
-                java.util.Locale.getDefault(),
-                "%.4f, %.4f",
-                latitude,
-                longitude
-            ),
-            style = MaterialTheme.typography.bodySmall,
+            text = stringResource(R.string.qibla_city, city.label(isArabic)),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(18.dp))
@@ -140,7 +130,7 @@ fun QiblaScreen(latitude: Double, longitude: Double) {
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = stringResource(R.string.degrees_format, abs(delta)),
+                text = String.format(Locale.US, stringResource(R.string.degrees_format), abs(delta)),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.secondary
@@ -154,12 +144,12 @@ fun QiblaScreen(latitude: Double, longitude: Double) {
         ) {
             MetricCard(
                 title = stringResource(R.string.qibla_bearing),
-                value = stringResource(R.string.degrees_format, bearing),
+                value = String.format(Locale.US, stringResource(R.string.degrees_format), bearing),
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 title = stringResource(R.string.qibla_distance),
-                value = stringResource(R.string.km_format, distance),
+                value = String.format(Locale.US, stringResource(R.string.km_format), distance),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -167,7 +157,7 @@ fun QiblaScreen(latitude: Double, longitude: Double) {
         Spacer(Modifier.height(10.dp))
         MetricCard(
             title = stringResource(R.string.qibla_current_heading),
-            value = stringResource(R.string.degrees_format, azimuth),
+            value = String.format(Locale.US, stringResource(R.string.degrees_format), azimuth),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -197,7 +187,6 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
             style = Stroke(width = 2.dp.toPx())
         )
 
-        // Ticks, rotated with the device heading.
         for (index in 0 until 24) {
             val angle = index * 15.0
             val radians = Math.toRadians(angle - azimuth)
@@ -226,7 +215,8 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
             color = colors.onSurface.toArgb()
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
-        listOf("ش" to 0.0, "ق" to 90.0, "ج" to 180.0, "غ" to 270.0).forEach { (label, angle) ->
+        // Latin cardinal letters are unambiguous in both languages.
+        listOf("N" to 0.0, "E" to 90.0, "S" to 180.0, "W" to 270.0).forEach { (label, angle) ->
             val radians = Math.toRadians(angle - azimuth)
             val distanceFromCenter = radius - 36.dp.toPx()
             val x = center.x + (distanceFromCenter * sin(radians)).toFloat()
@@ -234,7 +224,6 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
             drawContext.canvas.nativeCanvas.drawText(label, x, y, paint)
         }
 
-        // Qibla arrow.
         val qiblaRadians = Math.toRadians(qibla - azimuth)
         val tip = Offset(
             center.x + ((radius - 6.dp.toPx()) * sin(qiblaRadians)).toFloat(),

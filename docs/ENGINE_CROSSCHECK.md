@@ -44,7 +44,7 @@ declination and can reject a solution that exists minutes later; the
 engine iterates to the event-time declination. Such cases are reported
 here and excluded from the pass/fail assertion.
 
-- London 2026-07-15 isha: ours=23:50 adhan=2026-07-16T00:07:00.597Z diff=17.01 min
+- London 2026-07-15 isha: ours=23:50 adhan=2026-07-16T00:07:00.366Z diff=17.01 min
 
 ## Worst deviations
 

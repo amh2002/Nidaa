@@ -1,81 +1,138 @@
-# مواقيتي · Mawaqiti Plus (Beta)
+# مواقيتي بلس · Mawaqiti Plus (Beta)
 
-تطبيق أوقات صلاة أوفلاين يعتمد على حساب فلكي حقيقي لموضع الشمس، مع بوصلة قبلة.
+تطبيق مواقيت صلاة يعمل دون اتصال بالإنترنت، مبني بـ Kotlin وJetpack Compose،
+ويطابق تطبيق **مواقيتي** الأصلي (`org.roki.tech.newbildqibla`) **دقيقة بدقيقة**
+لجميع المدن المدعومة، لأنه يستخدم جداول المواقيت نفسها المستخرجة من التطبيق
+الأصلي.
 
-An offline prayer-time app that computes times from the sun's real position,
-with a qibla compass. Clean-room Android implementation (Kotlin + Jetpack Compose).
+An offline prayer-time app for Android (Kotlin + Jetpack Compose) that is
+**bit-exact with the original مواقيتي app** for every supported city, using the
+same extracted 36 × 366 integer tables.
 
 ---
 
-## ⬇️ تحميل النسخة التجريبية · Download the beta
+## Download · التحميل
 
-اذهب إلى صفحة **Releases** وحمّل `MawaqitiPlus-1.0.0-beta1.apk`:
+**https://github.com/amh2002/mawaqiti-plus/releases/tag/v1.0.0-beta1**
 
-**→ https://github.com/amh2002/mawaqiti-plus/releases/tag/v1.0.0-beta1**
+`MawaqitiPlus-1.0.0-beta1.apk` · versionCode 1 · Android 7.0+ (API 24)
 
-### التثبيت · Install
+The APK is a debug-signed beta, not a Play Store release. It requests **no
+permissions** and has no network access.
 
-1. حمّل ملف APK على جهاز أندرويد (8.0 أو أحدث).
-2. عند فتح الملف، اسمح بالتثبيت من هذا المصدر (نظام أندرويد سيسألك مرة واحدة).
-3. افتح التطبيق واختر مدينتك أو اسمح بالوصول للموقع.
+### Install · التثبيت
 
-1. Download the APK on an Android 8.0+ device.
-2. Open it and allow installing from this source when Android asks.
-3. Launch the app, pick a city or allow location access.
+1. Copy the APK to the phone and open it.
+2. Allow installation from the file manager / browser when Android asks.
+3. Launch the app. It opens in Arabic on **القدس – فلسطين**.
 
-> هذا إصدار تجريبي (beta): التطبيق موقّع بمفتاح تطوير، وليس للنشر على المتجر.
-> This is a beta build signed with a debug key — not a Play Store release.
+Or over USB:
 
-## ما الجديد في هذه النسخة · What's in this beta
-
-- **محرك فلكي حقيقي** بدل جداول ثابتة: التاريخ اليولياني ← ميل الشمس ومعادلة الزمن ←
-  زوال الشمس (الظهر) ← زوايا الساعة للفجر والعشاء ← الشروق والغروب عند ‎−0.833°‎ ←
-  العصر بمعامل الظل ‎1‎ أو ‎2‎.
-- **طرق الحساب**: رابطة العالم الإسلامي (افتراضي 18°/17°)، ISNA (15°/15°)،
-  الهيئة المصرية (19.5°/17.5°)، أم القرى (18.5° والعشاء = المغرب + 90 دقيقة)،
-  كراتشي (18°/18°)، وزوايا مخصصة.
-- **قواعد خطوط العرض العالية**: منتصف الليل (افتراضي) أو حسب الزاوية.
-- **الأوقات**: الفجر، الشروق، الظهر، العصر، المغرب، العشاء، الإمساك (الفجر − 10)،
-  منتصف الليل، وبداية الثلث الأخير.
-- **بوصلة القبلة** باستخدام حساس الدوران واتجاه الكعبة
-  (‎21.422487° شمالاً، 39.826206° شرقاً‎).
-- **واجهة عربية أولاً** (RTL) مع ترجمة إنجليزية، Material 3، وضع ليلي.
-- **يعمل بدون إنترنت تماماً**: لا إذن إنترنت، ولا إعلانات، ولا تحليلات، ولا خدمات جوجل.
-
-## ما نرجو اختباره · What testers should check
-
-- هل تتطابق الأوقات مع مسجدك/تقويمك المحلي؟ (اذكر المدينة وطريقة الحساب)
-- تبديل المدينة والموقع اليدوي، والإذن بالوصول للموقع ثم رفضه.
-- دقة بوصلة القبلة في أماكن مختلفة (مع/بدون معايرة الحساس).
-- الوضع الليلي، اللغة الإنجليزية، الخطوط الكبيرة، اتجاه RTL.
-- أي تعطل أو شاشة لا تستجيب — أرفق طراز الجهاز وإصدار أندرويد.
-
-أرسل الملاحظات عبر **Issues** في هذا المستودع.
-
-## الخصوصية · Privacy
-
-- لا يوجد إذن `INTERNET` في التطبيق إطلاقاً.
-- الموقع يُستخدم محلياً فقط لتحديد الإحداثيات، ولا يُرسل لأي جهة.
-- الإعدادات تُحفظ على الجهاز عبر DataStore.
-
-## التحقق · Verification
-
-- **مقارنة مستقلة** مع مكتبة Adhan 1.2.1: **2879/2879 حدثاً ضمن ±دقيقة واحدة (100%)**
-  عبر 20 مدينة × 24 تاريخاً. التفاصيل في [`docs/ENGINE_CROSSCHECK.md`](docs/ENGINE_CROSSCHECK.md).
-- **معايرة** مع 124 جدولاً من التطبيق الأصلي دون أي تعديل صناعي للمحرك:
-  [`docs/CALIBRATION.md`](docs/CALIBRATION.md).
-- **ملاحظات الإصدار**: [`docs/BETA_NOTES.md`](docs/BETA_NOTES.md).
-
-## البناء من المصدر · Build from source
-
-```bash
-# JDK 17 + Android SDK (platform 36, build-tools 36)
-export ANDROID_HOME=/path/to/android-sdk
-./gradlew clean test assembleDebug
+```powershell
+adb install -r MawaqitiPlus-1.0.0-beta1.apk
 ```
 
-النتيجة: `app/build/outputs/apk/debug/app-debug.apk`
+---
 
-## الرخصة · License
+## What this beta does
 
-لم تُحدَّد بعد. · Not decided yet — all rights reserved until a license is added.
+- **Table engine first.** Every displayed time is a lookup in the original
+  app's tables (`w7.c`), with the original arithmetic (`p061i1.j.o()` /
+  `p061i1.j.w()`): leap-aligned day row, per-city `minDiff`, carry/borrow,
+  `hour % 24`, and `%02d:%02d`.
+- **Six times + last third + live countdown** on the main screen.
+- **Zero-typing city cascade.** Country card → read-only city dropdown.
+  Default القدس – فلسطين. No search box, no free text, no manual coordinates.
+- **Qibla compass** from `TYPE_ROTATION_VECTOR`, using the selected city's
+  coordinates (the app does not request location permission).
+- **Arabic / English in-app switch** via `AppCompatDelegate.setApplicationLocales`
+  with `locales_config.xml` and `autoStoreLocales`. RTL follows the locale.
+  Times stay in Latin digits in both languages.
+- **Manual summer time** (+1 h), default OFF, visible only for Palestine and
+  applied only to the default table profile — exactly like the original.
+- **Fully offline.** No internet permission, no ads, no analytics, no Firebase
+  or Play-services.
+
+## City coverage
+
+| Group | Entries |
+|---|---:|
+| فلسطين | 88 |
+| السعودية (مكة المكرمة، المدينة المنورة) | 2 |
+| Jordanian cities | 0 |
+
+The original APK's embedded list contains **no Jordanian city**. The beta does
+not invent `minDiff` values, so the country step offers فلسطين and السعودية
+only. Full tables, including the ten synthetic `قبل/بعد القدس` entries and the
+list of uncovered localities, are in [`docs/CITY_COVERAGE.md`](docs/CITY_COVERAGE.md).
+
+## Verification
+
+| Check | Result |
+|---|---|
+| Original app vectors (124 rows × 6 prayers) | **124 / 124 exact, 0 mismatches** |
+| 90 cities × 8 dates × summer OFF/ON | **1440 / 1440 exact, 0 mismatches** |
+| Table comparisons incl. last third / Fajr tomorrow | **12,512, 0 mismatches** |
+| Solar engine vs Adhan 1.2.1 (test-only cross-check) | **2879 / 2879 within ±1 min**, worst 0.99 min |
+| Solar MWL vs official tables (informative) | mean abs **3.24 min**, max 21 min |
+
+Details:
+
+- [`docs/TABLE_FIDELITY.md`](docs/TABLE_FIDELITY.md)
+- [`docs/CALIBRATION.md`](docs/CALIBRATION.md)
+- [`docs/ENGINE_CROSSCHECK.md`](docs/ENGINE_CROSSCHECK.md)
+
+The solar engine remains in the codebase for tests and calibration only. It is
+not reachable from the UI.
+
+## Build and test
+
+Prerequisites: JDK 17, Android SDK with API 36, Gradle wrapper (included).
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot'
+$env:ANDROID_HOME='C:\android-sdk'
+.\gradlew.bat test assembleDebug
+```
+
+The APK lands at `app/build/outputs/apk/debug/app-debug.apk`.
+
+To regenerate the reports into `docs/` (default) or another folder:
+
+```powershell
+.\gradlew.bat test -Pmawaqiti.reportDir=C:\rea_ws\report
+```
+
+## Project layout
+
+```
+app/src/main/java/com/mawaqiti/plus/
+  engine/table/TableEngine.kt       primary, bit-exact table engine
+  engine/table/PrayerTables.kt      generated 36 arrays × 366 rows
+  engine/PrayerEngine.kt            internal solar engine (test-only)
+  engine/Qibla.kt                   great-circle bearing/distance
+  data/City.kt, CityRepository.kt   90-city model + asset loader
+  data/SettingsRepository.kt        DataStore: city, language, summer time
+  ui/screens/                       Prayer, Qibla, Settings, CitySelectionDialog
+app/src/main/assets/cities.json     90 verified entries
+app/src/test/                       vector test, 1440-case sweep, calibration
+```
+
+## Known limitations
+
+- Tables repeat every year (no year input), exactly like the original app.
+- No notifications, adhan, Hijri date, or widget in this beta.
+- No GPS; the qibla bearing uses the selected city's coordinates.
+- No Jordanian cities until a verified city list is available.
+- Debug-signed APK.
+
+## Privacy
+
+No permissions, no network code, no ads, no analytics. Everything is bundled in
+the APK.
+
+## Disclaimer
+
+This is an independent clean-room port made for personal use and verification
+against the original application. It is not affiliated with the original
+publisher.

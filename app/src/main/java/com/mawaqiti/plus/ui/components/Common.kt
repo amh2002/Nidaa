@@ -13,30 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.mawaqiti.plus.R
-import com.mawaqiti.plus.data.AppSettings
-import com.mawaqiti.plus.engine.CalculationMethod
 
 @Composable
 fun isArabicLocale(): Boolean {
     val configuration = LocalConfiguration.current
     return configuration.locales.size() > 0 && configuration.locales[0].language == "ar"
-}
-
-@Composable
-fun cityDisplayName(settings: AppSettings): String =
-    if (isArabicLocale()) settings.cityNameAr else settings.cityNameEn
-
-@Composable
-fun methodLabel(method: CalculationMethod): String = when (method) {
-    CalculationMethod.MWL -> stringResource(R.string.method_mwl)
-    CalculationMethod.ISNA -> stringResource(R.string.method_isna)
-    CalculationMethod.EGYPT -> stringResource(R.string.method_egypt)
-    CalculationMethod.UMM_AL_QURA -> stringResource(R.string.method_umm_al_qura)
-    CalculationMethod.KARACHI -> stringResource(R.string.method_karachi)
-    CalculationMethod.CUSTOM -> stringResource(R.string.method_custom)
 }
 
 @Composable
