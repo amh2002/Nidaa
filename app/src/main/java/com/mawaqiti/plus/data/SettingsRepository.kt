@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.mawaqiti.plus.format.ClockFormat
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -22,6 +23,7 @@ class SettingsRepository(private val context: Context) {
         val summerTime = booleanPreferencesKey("summer_time")
         val language = stringPreferencesKey("language")
         val languageInitialized = booleanPreferencesKey("language_initialized")
+        val clockFormat = stringPreferencesKey("clock_format")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data
@@ -34,13 +36,18 @@ class SettingsRepository(private val context: Context) {
                 cityOrder = prefs[Keys.cityOrder] ?: City.DEFAULT_ORDER,
                 summerTime = prefs[Keys.summerTime] ?: false,
                 language = AppLanguage.fromTag(prefs[Keys.language]),
-                languageInitialized = prefs[Keys.languageInitialized] ?: false
+                languageInitialized = prefs[Keys.languageInitialized] ?: false,
+                clockFormat = ClockFormat.fromKey(prefs[Keys.clockFormat])
             )
         }
 
     suspend fun setCityOrder(order: Int) = edit { it[Keys.cityOrder] = order }
 
     suspend fun setSummerTime(enabled: Boolean) = edit { it[Keys.summerTime] = enabled }
+
+    suspend fun setClockFormat(format: ClockFormat) = edit {
+        it[Keys.clockFormat] = format.storageKey
+    }
 
     suspend fun setLanguage(language: AppLanguage) = edit {
         it[Keys.language] = language.tag

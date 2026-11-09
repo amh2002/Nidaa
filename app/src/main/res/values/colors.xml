@@ -2,7 +2,7 @@
 <resources>
     <color name="mawaqiti_green">#0F5132</color>
     <color name="mawaqiti_green_dark">#0A3D26</color>
-    <color name="mawaqiti_gold">#C9A227</color>
-    <color name="mawaqiti_background">#F7F5EF</color>
-    <color name="mawaqiti_background_dark">#101613</color>
+    <color name="mawaqiti_gold">#FFD98A</color>
+    <color name="mawaqiti_background">#0E1540</color>
+    <color name="mawaqiti_background_dark">#060A20</color>
 </resources>

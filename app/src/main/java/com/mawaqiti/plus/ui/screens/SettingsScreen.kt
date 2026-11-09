@@ -1,27 +1,35 @@
 package com.mawaqiti.plus.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,127 +39,249 @@ import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.data.Country
-import com.mawaqiti.plus.ui.components.SectionCard
+import com.mawaqiti.plus.engine.table.TableDay
+import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.format.TimeFormatter
+import com.mawaqiti.plus.ui.components.GlassCard
+import com.mawaqiti.plus.ui.theme.SkyPalette
+import com.mawaqiti.plus.ui.theme.skyPalette
+import java.time.LocalTime
 
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
     city: City,
+    day: TableDay,
     isArabic: Boolean,
+    onBack: () -> Unit,
     onOpenCityPicker: () -> Unit,
     onSelectLanguage: (AppLanguage) -> Unit,
+    onSelectClockFormat: (ClockFormat) -> Unit,
     onSummerTimeChange: (Boolean) -> Unit
 ) {
+    val palette = skyPalette
+    val previewMinutes = nextPreviewMinutes(day)
+    val preview = TimeFormatter.format(previewMinutes, settings.clockFormat, isArabic)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(horizontal = 18.dp)
     ) {
-        Text(
-            text = stringResource(R.string.tab_settings),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        ScreenTopBar(title = stringResource(R.string.settings_title), palette = palette, onBack = onBack)
 
-        SectionCard(title = stringResource(R.string.settings_city_title)) {
+        // City
+        GlassCard(contentPadding = PaddingValues(0.dp)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onOpenCityPicker),
+                    .clickable(onClick = onOpenCityPicker)
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Filled.Place,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = palette.accent,
+                    modifier = Modifier.size(22.dp)
                 )
-                Spacer(Modifier.height(0.dp))
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 10.dp)
-                ) {
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_city_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = palette.textMuted
+                    )
+                    Spacer(Modifier.height(2.dp))
                     Text(
                         text = city.label(isArabic),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_city_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = palette.text
                     )
                 }
                 Text(
                     text = stringResource(R.string.settings_city_change),
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = palette.accent
                 )
                 Icon(
-                    imageVector = Icons.Filled.ChevronRight,
+                    imageVector = Icons.Filled.ChevronLeft,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = palette.accent
                 )
             }
         }
 
-        SectionCard(title = stringResource(R.string.settings_language)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = isArabic,
-                    onClick = { onSelectLanguage(AppLanguage.ARABIC) },
-                    label = { Text(stringResource(R.string.language_arabic)) }
+        Spacer(Modifier.height(12.dp))
+
+        // Language
+        GlassCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_language),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = palette.text,
+                    modifier = Modifier.weight(1f)
                 )
-                FilterChip(
-                    selected = !isArabic,
-                    onClick = { onSelectLanguage(AppLanguage.ENGLISH) },
-                    label = { Text(stringResource(R.string.language_english)) }
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ChoicePill(
+                        label = stringResource(R.string.language_arabic),
+                        selected = isArabic,
+                        palette = palette,
+                        onClick = { onSelectLanguage(AppLanguage.ARABIC) }
+                    )
+                    ChoicePill(
+                        label = stringResource(R.string.language_english),
+                        selected = !isArabic,
+                        palette = palette,
+                        onClick = { onSelectLanguage(AppLanguage.ENGLISH) }
+                    )
+                }
             }
             Spacer(Modifier.height(6.dp))
             Text(
                 text = stringResource(R.string.language_desc),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = palette.textMuted
             )
         }
 
+        Spacer(Modifier.height(12.dp))
+
+        // Clock format
+        GlassCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_clock_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = palette.text,
+                    modifier = Modifier.weight(1f)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ChoicePill(
+                        label = stringResource(R.string.clock_24),
+                        selected = settings.clockFormat == ClockFormat.H24,
+                        palette = palette,
+                        onClick = { onSelectClockFormat(ClockFormat.H24) }
+                    )
+                    ChoicePill(
+                        label = stringResource(R.string.clock_12),
+                        selected = settings.clockFormat == ClockFormat.H12,
+                        palette = palette,
+                        onClick = { onSelectClockFormat(ClockFormat.H12) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.clock_preview) + ": " + preview,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = palette.accent
+            )
+        }
+
+        // Summer time: Palestine only.
         if (city.country == Country.PS) {
-            SectionCard(title = stringResource(R.string.settings_summer_time)) {
+            Spacer(Modifier.height(12.dp))
+            GlassCard {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = stringResource(R.string.summer_time_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_summer_time),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = palette.text
+                        )
+                        Spacer(Modifier.height(3.dp))
+                        Text(
+                            text = stringResource(R.string.summer_time_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = palette.textMuted
+                        )
+                    }
+                    Spacer(Modifier.width(10.dp))
                     Switch(
                         checked = settings.summerTime,
-                        onCheckedChange = onSummerTimeChange
+                        onCheckedChange = onSummerTimeChange,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = SkyPalette.BrandGreen,
+                            checkedBorderColor = SkyPalette.BrandGreen,
+                            uncheckedThumbColor = palette.textMuted,
+                            uncheckedTrackColor = palette.text.copy(alpha = 0.16f),
+                            uncheckedBorderColor = palette.text.copy(alpha = 0.30f)
+                        )
                     )
                 }
             }
         }
 
-        SectionCard(title = stringResource(R.string.settings_about_title)) {
+        Spacer(Modifier.height(16.dp))
+
+        // About
+        GlassCard {
             Text(
-                text = stringResource(R.string.settings_about_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = stringResource(R.string.settings_about_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = palette.accent
             )
             Spacer(Modifier.height(8.dp))
             Text(
+                text = stringResource(R.string.settings_about_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textMuted
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(
                 text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.secondary
+                color = palette.accent
             )
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(24.dp))
     }
+}
+
+@Composable
+private fun ChoicePill(
+    label: String,
+    selected: Boolean,
+    palette: SkyPalette,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (selected) SkyPalette.BrandGreen else palette.text.copy(alpha = 0.08f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) Color.White else palette.text,
+            maxLines = 1
+        )
+    }
+}
+
+/** The hero's next time, reused for the live clock-format preview. */
+private fun nextPreviewMinutes(day: TableDay): Int {
+    val nowSeconds = LocalTime.now().toSecondOfDay()
+    val events = listOf(day.fajr, day.sunrise, day.dhuhr, day.asr, day.maghrib, day.isha)
+    return events.firstOrNull { it * 60 > nowSeconds } ?: day.fajrTomorrow
 }

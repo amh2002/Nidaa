@@ -12,8 +12,13 @@ android {
         applicationId = "com.mawaqiti.plus"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0-beta1"
+        versionCode = 2
+        versionName = "1.0.0-beta2"
+
+        // Visual verification only: -Pmawaqiti.skyPhase=dawn|day|golden|night.
+        // Empty in every shipped build, so the theme always follows the clock.
+        val skyPhaseOverride = (project.findProperty("mawaqiti.skyPhase") as String?) ?: ""
+        buildConfigField("String", "SKY_PHASE_OVERRIDE", "\"$skyPhaseOverride\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

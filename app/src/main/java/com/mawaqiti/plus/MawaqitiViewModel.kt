@@ -13,7 +13,10 @@ import com.mawaqiti.plus.data.Country
 import com.mawaqiti.plus.data.SettingsRepository
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.engine.table.TableEngine
+import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.ui.theme.SkyPhase
 import java.time.LocalDate
+import java.time.LocalTime
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,11 +33,14 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     private val settingsRepository = SettingsRepository(application)
     private val cityRepository = CityRepository(application)
 
-    /** All 90 extracted entries, ready for the two-step cascade. */
+    /** All 90 extracted entries, ready for the country → city picker. */
     val cities: List<City> = cityRepository.all()
 
     private val _today = MutableStateFlow(LocalDate.now())
     val today: StateFlow<LocalDate> = _today.asStateFlow()
+
+    private val _nowMinutes = MutableStateFlow(minutesNow())
+    val nowMinutes: StateFlow<Int> = _nowMinutes.asStateFlow()
 
     /** Null until DataStore has emitted; used to make first-launch language setup atomic. */
     val settingsState: StateFlow<AppSettings?> = settingsRepository.settings
@@ -48,6 +54,13 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
         .map { cityRepository.byOrder(it.cityOrder) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, cityRepository.defaultCity())
 
+    private val initialDay: TableDay = TableEngine.day(
+        profile = cityRepository.defaultCity().profile,
+        minDiff = cityRepository.defaultCity().minDiff,
+        date = LocalDate.now(),
+        summerTime = false
+    )
+
     val day: StateFlow<TableDay> = combine(settings, city, _today) { value, selected, date ->
         val summer = value.summerTime && selected.country == Country.PS
         TableEngine.day(
@@ -59,11 +72,34 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     }.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        TableEngine.day(
-            profile = cityRepository.defaultCity().profile,
-            minDiff = cityRepository.defaultCity().minDiff,
-            date = LocalDate.now(),
-            summerTime = false
+        initialDay
+    )
+
+    /**
+     * A build flag (`-Pmawaqiti.skyPhase=night`) pins the phase for visual
+     * verification. It is empty in shipped builds.
+     */
+    private val phaseOverride: SkyPhase? = BuildConfig.SKY_PHASE_OVERRIDE
+        .takeIf { it.isNotBlank() }
+        ?.let { value -> SkyPhase.entries.firstOrNull { it.name.equals(value, true) } }
+
+    val skyPhase: StateFlow<SkyPhase> = combine(day, _nowMinutes) { value, minute ->
+        phaseOverride ?: SkyPhase.forMinutes(
+            minuteOfDay = minute,
+            fajr = value.fajr,
+            sunrise = value.sunrise,
+            asr = value.asr,
+            maghrib = value.maghrib
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        phaseOverride ?: SkyPhase.forMinutes(
+            minutesNow(),
+            initialDay.fajr,
+            initialDay.sunrise,
+            initialDay.asr,
+            initialDay.maghrib
         )
     )
 
@@ -71,14 +107,15 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             while (isActive) {
                 delay(30_000)
-                refreshDate()
+                refreshClock()
             }
         }
     }
 
-    fun refreshDate() {
+    fun refreshClock() {
         val now = LocalDate.now()
         if (_today.value != now) _today.value = now
+        _nowMinutes.value = minutesNow()
     }
 
     fun selectCity(city: City) = viewModelScope.launch {
@@ -87,6 +124,10 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
 
     fun setSummerTime(enabled: Boolean) = viewModelScope.launch {
         settingsRepository.setSummerTime(enabled)
+    }
+
+    fun setClockFormat(format: ClockFormat) = viewModelScope.launch {
+        settingsRepository.setClockFormat(format)
     }
 
     fun setLanguage(language: AppLanguage) = viewModelScope.launch {
@@ -102,4 +143,6 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     fun cityCount(country: Country): Int = cityRepository.countFor(country)
 
     fun cityByOrder(order: Int): City = cityRepository.byOrder(order)
+
+    private fun minutesNow(): Int = LocalTime.now().toSecondOfDay() / 60
 }

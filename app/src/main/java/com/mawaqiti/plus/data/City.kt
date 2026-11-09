@@ -2,9 +2,10 @@ package com.mawaqiti.plus.data
 
 import com.mawaqiti.plus.engine.table.TableProfile
 
-/** Countries exposed by the zero-typing cascade. */
+/** Countries exposed by the country segmented control. */
 enum class Country(val code: String) {
     PS("PS"),
+    JO("JO"),
     SA("SA");
 
     companion object {
@@ -40,6 +41,7 @@ data class City(
 
     fun countryName(isArabic: Boolean): String = when (country) {
         Country.PS -> if (isArabic) "فلسطين" else "Palestine"
+        Country.JO -> if (isArabic) "الأردن" else "Jordan"
         Country.SA -> if (isArabic) "السعودية" else "Saudi Arabia"
     }
 

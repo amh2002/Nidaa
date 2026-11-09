@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">مواقيتي بلس</string>
-    <string name="beta_label">نسخة تجريبية</string>
+    <string name="beta_label">تجريبية</string>
 
-    <string name="tab_prayer">الصلاة</string>
-    <string name="tab_qibla">القبلة</string>
-    <string name="tab_settings">الإعدادات</string>
+    <string name="city_chip_desc">تغيير المدينة</string>
+    <string name="language_switch_desc">التبديل إلى الإنجليزية</string>
+
+    <string name="next_prayer">الصلاة القادمة</string>
+    <string name="remaining_short">متبقي</string>
+    <string name="last_third">الثلث الأخير</string>
+    <string name="official_note">المواقيت وفق الجدول الرسمي الفلسطيني، مطابقة للتطبيق الأصلي دقيقة بدقيقة.</string>
+    <string name="prayer_progress_desc">الوقت المنقضي بين الصلاتين</string>
 
     <string name="prayer_fajr">الفجر</string>
     <string name="prayer_sunrise">الشروق</string>
@@ -13,13 +18,6 @@
     <string name="prayer_asr">العصر</string>
     <string name="prayer_maghrib">المغرب</string>
     <string name="prayer_isha">العشاء</string>
-
-    <string name="next_prayer">الصلاة القادمة</string>
-    <string name="remaining">المتبقي</string>
-    <string name="last_third">الثلث الأخير من الليل</string>
-    <string name="todays_times">مواقيت اليوم</string>
-    <string name="city_chip_desc">تغيير المدينة</string>
-    <string name="official_note">المواقيت وفق الجدول الرسمي الفلسطيني</string>
 
     <string name="qibla_title">اتجاه القبلة</string>
     <string name="qibla_city">%1$s</string>
@@ -34,20 +32,26 @@
     <string name="degrees_format">%1$.0f°</string>
     <string name="km_format">%1$.0f كم</string>
 
-    <string name="country_palestine">فلسطين</string>
-    <string name="country_saudi">السعودية</string>
-    <string name="confirm">تأكيد</string>
-    <string name="cancel">إلغاء</string>
+    <string name="footer_qibla">القبلة</string>
+    <string name="footer_settings">الإعدادات</string>
+
     <string name="back">رجوع</string>
+    <string name="close">إغلاق</string>
 
-    <string name="select_city_title">اختيار المدينة</string>
-    <string name="select_country_title">اختر الدولة</string>
-    <string name="select_country_hint">الخطوة 1 من 2</string>
-    <string name="select_city_step">الخطوة 2 من 2</string>
-    <string name="select_city_hint">اختر المدينة</string>
+    <string name="city_picker_title">اختر مدينتك</string>
+    <string name="city_search_hint">ابحث عن مدينتك…</string>
+    <string name="search_desc">بحث</string>
+    <string name="clear_search">مسح البحث</string>
+    <string name="country_palestine">فلسطين</string>
+    <string name="country_jordan">الأردن</string>
+    <string name="country_saudi">السعودية</string>
+    <string name="default_city_tag">افتراضي</string>
+    <string name="no_results">لا توجد مدن مطابقة</string>
+    <string name="jordan_empty_title">لا تتوفر مدن أردنية بعد</string>
+    <string name="jordan_empty_body">قائمة المدن الأردنية الموثّقة غير متاحة في هذه النسخة، ولن نعرض توقيتًا غير مطابق للتطبيق الأصلي. اختر مدينة من فلسطين أو السعودية.</string>
     <string name="cities_count">%1$d مدينة</string>
-    <string name="no_cities">لا توجد مدن</string>
 
+    <string name="settings_title">الإعدادات</string>
     <string name="settings_city_title">المدينة</string>
     <string name="settings_city_hint">اضغط لاختيار مدينة أخرى</string>
     <string name="settings_city_change">تغيير</string>
@@ -56,6 +60,11 @@
     <string name="language_arabic">العربية</string>
     <string name="language_english">English</string>
     <string name="language_desc">تُطبَّق اللغة فورًا على كل الشاشات.</string>
+
+    <string name="settings_clock_title">نظام الساعة</string>
+    <string name="clock_24">24 ساعة</string>
+    <string name="clock_12">12 ساعة</string>
+    <string name="clock_preview">معاينة</string>
 
     <string name="settings_summer_time">التوقيت الصيفي</string>
     <string name="summer_time_desc">إضافة ساعة واحدة (+1) إلى جميع المواقيت.</string>

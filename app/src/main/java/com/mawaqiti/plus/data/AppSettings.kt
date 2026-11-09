@@ -1,5 +1,7 @@
 package com.mawaqiti.plus.data
 
+import com.mawaqiti.plus.format.ClockFormat
+
 enum class AppLanguage(val tag: String) {
     ARABIC("ar"),
     ENGLISH("en");
@@ -20,5 +22,7 @@ data class AppSettings(
     val summerTime: Boolean = false,
     val language: AppLanguage = AppLanguage.ARABIC,
     /** False only before the very first launch picks Arabic explicitly. */
-    val languageInitialized: Boolean = false
+    val languageInitialized: Boolean = false,
+    /** Display-only clock preference; default is the original app's 24h. */
+    val clockFormat: ClockFormat = ClockFormat.H24
 )

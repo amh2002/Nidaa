@@ -6,6 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,8 +20,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,13 +50,17 @@ import androidx.compose.ui.unit.sp
 import com.mawaqiti.plus.R
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.engine.Qibla
+import com.mawaqiti.plus.ui.components.GlassCard
+import com.mawaqiti.plus.ui.theme.SkyPalette
+import com.mawaqiti.plus.ui.theme.skyPalette
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
-fun QiblaScreen(city: City, isArabic: Boolean) {
+fun QiblaScreen(city: City, isArabic: Boolean, onBack: () -> Unit) {
+    val palette = skyPalette
     val context = LocalContext.current
     var azimuth by remember { mutableFloatStateOf(0f) }
     var hasSensor by remember { mutableStateOf(true) }
@@ -90,30 +97,49 @@ fun QiblaScreen(city: City, isArabic: Boolean) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 18.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 18.dp)
     ) {
-        Text(
-            text = stringResource(R.string.qibla_title),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(6.dp))
+        ScreenTopBar(title = stringResource(R.string.qibla_title), palette = palette, onBack = onBack)
+
         Text(
             text = stringResource(R.string.qibla_city, city.label(isArabic)),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = palette.textMuted,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(18.dp))
+
+        Spacer(Modifier.height(16.dp))
 
         if (!hasSensor) {
-            InfoCard(text = stringResource(R.string.qibla_sensor_missing))
+            GlassCard(emphasized = true, contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)) {
+                Text(
+                    text = stringResource(R.string.qibla_sensor_missing),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = palette.text,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         } else {
-            Box(
-                modifier = Modifier.size(310.dp),
-                contentAlignment = Alignment.Center
+            GlassCard(
+                emphasized = true,
+                corner = 22.dp,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(10.dp)
             ) {
-                QiblaDial(azimuth = azimuth, qibla = bearing, modifier = Modifier.fillMaxSize())
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .size(320.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    QiblaDial(
+                        azimuth = azimuth,
+                        qibla = bearing,
+                        palette = palette,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
 
             Spacer(Modifier.height(14.dp))
@@ -125,39 +151,45 @@ fun QiblaScreen(city: City, isArabic: Boolean) {
                 },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (aligned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
+                color = if (aligned) palette.accent else palette.text,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = String.format(Locale.US, stringResource(R.string.degrees_format), abs(delta)),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary
+                color = palette.accent,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
-        Spacer(Modifier.height(22.dp))
+        Spacer(Modifier.height(18.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             MetricCard(
                 title = stringResource(R.string.qibla_bearing),
                 value = String.format(Locale.US, stringResource(R.string.degrees_format), bearing),
+                palette = palette,
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 title = stringResource(R.string.qibla_distance),
                 value = String.format(Locale.US, stringResource(R.string.km_format), distance),
+                palette = palette,
                 modifier = Modifier.weight(1f)
             )
         }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(12.dp))
         MetricCard(
             title = stringResource(R.string.qibla_current_heading),
             value = String.format(Locale.US, stringResource(R.string.degrees_format), azimuth),
+            palette = palette,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -165,26 +197,74 @@ fun QiblaScreen(city: City, isArabic: Boolean) {
         Text(
             text = stringResource(R.string.qibla_calibrate),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            color = palette.textMuted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(22.dp))
     }
 }
 
 @Composable
-private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
+fun ScreenTopBar(title: String, palette: SkyPalette, onBack: (() -> Unit)?) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (onBack != null) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(palette.chipFill, RoundedCornerShape(50)),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back),
+                        tint = palette.text
+                    )
+                }
+            }
+            Spacer(Modifier.size(10.dp))
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = palette.text,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun QiblaDial(
+    azimuth: Float,
+    qibla: Double,
+    palette: SkyPalette,
+    modifier: Modifier = Modifier
+) {
+    val ring = palette.text.copy(alpha = 0.30f)
+    val tick = palette.text
+    val needle = palette.accent
+
     Canvas(modifier = modifier) {
         val center = Offset(size.width / 2f, size.height / 2f)
-        val radius = size.minDimension / 2f - 6.dp.toPx()
+        val radius = size.minDimension / 2f - 8.dp.toPx()
 
-        drawCircle(color = colors.surface, radius = radius, center = center)
         drawCircle(
-            color = colors.primary.copy(alpha = 0.22f),
+            color = ColorWhite.copy(alpha = 0.06f),
+            radius = radius,
+            center = center
+        )
+        drawCircle(
+            color = ring,
             radius = radius,
             center = center,
-            style = Stroke(width = 2.dp.toPx())
+            style = Stroke(width = 1.5.dp.toPx())
         )
 
         for (index in 0 until 24) {
@@ -200,11 +280,10 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
                 center.y - (innerRadius * cos(radians)).toFloat()
             )
             drawLine(
-                color = if (index % 6 == 0) colors.primary
-                else colors.primary.copy(alpha = 0.35f),
+                color = if (index % 6 == 0) tick else tick.copy(alpha = 0.35f),
                 start = inner,
                 end = outer,
-                strokeWidth = if (index % 6 == 0) 3.dp.toPx() else 1.5.dp.toPx()
+                strokeWidth = if (index % 6 == 0) 2.5.dp.toPx() else 1.5.dp.toPx()
             )
         }
 
@@ -212,7 +291,7 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
             isAntiAlias = true
             textAlign = android.graphics.Paint.Align.CENTER
             textSize = 15.sp.toPx()
-            color = colors.onSurface.toArgb()
+            color = tick.toArgb()
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
         // Latin cardinal letters are unambiguous in both languages.
@@ -226,11 +305,11 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
 
         val qiblaRadians = Math.toRadians(qibla - azimuth)
         val tip = Offset(
-            center.x + ((radius - 6.dp.toPx()) * sin(qiblaRadians)).toFloat(),
-            center.y - ((radius - 6.dp.toPx()) * cos(qiblaRadians)).toFloat()
+            center.x + ((radius - 8.dp.toPx()) * sin(qiblaRadians)).toFloat(),
+            center.y - ((radius - 8.dp.toPx()) * cos(qiblaRadians)).toFloat()
         )
         drawLine(
-            color = colors.secondary,
+            color = needle,
             start = center,
             end = tip,
             strokeWidth = 4.dp.toPx(),
@@ -238,8 +317,8 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
         )
 
         val arrowBase = Offset(
-            center.x + ((radius - 32.dp.toPx()) * sin(qiblaRadians)).toFloat(),
-            center.y - ((radius - 32.dp.toPx()) * cos(qiblaRadians)).toFloat()
+            center.x + ((radius - 34.dp.toPx()) * sin(qiblaRadians)).toFloat(),
+            center.y - ((radius - 34.dp.toPx()) * cos(qiblaRadians)).toFloat()
         )
         val perpendicular = qiblaRadians + Math.PI / 2
         val halfWidth = 11.dp.toPx()
@@ -257,11 +336,11 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
             lineTo(right.x, right.y)
             close()
         }
-        drawPath(path, colors.secondary)
+        drawPath(path, needle)
 
-        drawCircle(color = colors.primary, radius = 6.dp.toPx(), center = center)
+        drawCircle(color = needle, radius = 6.dp.toPx(), center = center)
         drawLine(
-            color = colors.secondary,
+            color = needle,
             start = Offset(center.x, center.y - radius),
             end = Offset(center.x, center.y - radius + 14.dp.toPx()),
             strokeWidth = 4.dp.toPx(),
@@ -270,21 +349,31 @@ private fun QiblaDial(azimuth: Float, qibla: Double, modifier: Modifier = Modifi
     }
 }
 
+private val ColorWhite = androidx.compose.ui.graphics.Color.White
+
 @Composable
-private fun MetricCard(title: String, value: String, modifier: Modifier = Modifier) {
-    Card(
+private fun MetricCard(
+    title: String,
+    value: String,
+    palette: SkyPalette,
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp)
+        corner = 18.dp,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            horizontal = 12.dp,
+            vertical = 12.dp
+        )
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = palette.textMuted,
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(4.dp))
@@ -292,25 +381,8 @@ private fun MetricCard(title: String, value: String, modifier: Modifier = Modifi
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = palette.text
             )
         }
-    }
-}
-
-@Composable
-private fun InfoCard(text: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.padding(18.dp),
-            textAlign = TextAlign.Center
-        )
     }
 }

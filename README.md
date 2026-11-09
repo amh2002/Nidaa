@@ -13,9 +13,9 @@ same extracted 36 × 366 integer tables.
 
 ## Download · التحميل
 
-**https://github.com/amh2002/mawaqiti-plus/releases/tag/v1.0.0-beta1**
+**https://github.com/amh2002/mawaqiti-plus/releases/tag/v1.0.0-beta2**
 
-`MawaqitiPlus-1.0.0-beta1.apk` · versionCode 1 · Android 7.0+ (API 24)
+`MawaqitiPlus-1.0.0-beta2.apk` · versionCode 2 · Android 7.0+ (API 24)
 
 The APK is a debug-signed beta, not a Play Store release. It requests **no
 permissions** and has no network access.
@@ -29,7 +29,7 @@ permissions** and has no network access.
 Or over USB:
 
 ```powershell
-adb install -r MawaqitiPlus-1.0.0-beta1.apk
+adb install -r MawaqitiPlus-1.0.0-beta2.apk
 ```
 
 ---
@@ -40,9 +40,17 @@ adb install -r MawaqitiPlus-1.0.0-beta1.apk
   app's tables (`w7.c`), with the original arithmetic (`p061i1.j.o()` /
   `p061i1.j.w()`): leap-aligned day row, per-city `minDiff`, carry/borrow,
   `hour % 24`, and `%02d:%02d`.
-- **Six times + last third + live countdown** on the main screen.
-- **Zero-typing city cascade.** Country card → read-only city dropdown.
-  Default القدس – فلسطين. No search box, no free text, no manual coordinates.
+- **Living Sky auto theme.** Dawn / Day / Golden / Night palettes follow the
+  table with a 500 ms cross-fade; glass cards, gold accents and a
+  clearance-safe night crescent band are part of the design system.
+- **Hero + grid main screen.** Next prayer with countdown and progress, the
+  other five prayers in a two-column glass grid, dashed last-third card, and
+  القبلة / الإعدادات footer buttons.
+- **Searchable city picker.** Country segmented control (فلسطين / الأردن /
+  السعودية), live case- and diacritic-insensitive search over Arabic and
+  English names, افتراضي tag on القدس, one-tap selection.
+- **12 h / 24 h clock setting.** Display-only, default 24 h, Arabic `ص/م` and
+  English `a.m./p.m.`; stored values and the engine stay 24 h.
 - **Qibla compass** from `TYPE_ROTATION_VECTOR`, using the selected city's
   coordinates (the app does not request location permission).
 - **Arabic / English in-app switch** via `AppCompatDelegate.setApplicationLocales`
@@ -50,6 +58,8 @@ adb install -r MawaqitiPlus-1.0.0-beta1.apk
   Times stay in Latin digits in both languages.
 - **Manual summer time** (+1 h), default OFF, visible only for Palestine and
   applied only to the default table profile — exactly like the original.
+- **New adaptive launcher icon** (night gradient, gold crescent + star, themed
+  monochrome layer, round and square legacy mipmaps).
 - **Fully offline.** No internet permission, no ads, no analytics, no Firebase
   or Play-services.
 
@@ -62,9 +72,10 @@ adb install -r MawaqitiPlus-1.0.0-beta1.apk
 | Jordanian cities | 0 |
 
 The original APK's embedded list contains **no Jordanian city**. The beta does
-not invent `minDiff` values, so the country step offers فلسطين and السعودية
-only. Full tables, including the ten synthetic `قبل/بعد القدس` entries and the
-list of uncovered localities, are in [`docs/CITY_COVERAGE.md`](docs/CITY_COVERAGE.md).
+not invent `minDiff` values, so the country segment **الأردن** is present but
+shows an honest empty state. Full tables, including the ten synthetic
+`قبل/بعد القدس` entries and the list of uncovered localities, are in
+[`docs/CITY_COVERAGE.md`](docs/CITY_COVERAGE.md).
 
 ## Verification
 
@@ -73,6 +84,8 @@ list of uncovered localities, are in [`docs/CITY_COVERAGE.md`](docs/CITY_COVERAG
 | Original app vectors (124 rows × 6 prayers) | **124 / 124 exact, 0 mismatches** |
 | 90 cities × 8 dates × summer OFF/ON | **1440 / 1440 exact, 0 mismatches** |
 | Table comparisons incl. last third / Fajr tomorrow | **12,512, 0 mismatches** |
+| Unit tests (engine + beta2 UI, formatter, palette, search) | **39 / 39 passed** |
+| Palette contrast (WCAG AA) | text **≥ 4.5:1**, accent **≥ 3.0:1** |
 | Solar engine vs Adhan 1.2.1 (test-only cross-check) | **2879 / 2879 within ±1 min**, worst 0.99 min |
 | Solar MWL vs official tables (informative) | mean abs **3.24 min**, max 21 min |
 
@@ -111,11 +124,19 @@ app/src/main/java/com/mawaqiti/plus/
   engine/table/PrayerTables.kt      generated 36 arrays × 366 rows
   engine/PrayerEngine.kt            internal solar engine (test-only)
   engine/Qibla.kt                   great-circle bearing/distance
+  format/TimeFormatter.kt           24 h / 12 h display formatter
   data/City.kt, CityRepository.kt   90-city model + asset loader
-  data/SettingsRepository.kt        DataStore: city, language, summer time
-  ui/screens/                       Prayer, Qibla, Settings, CitySelectionDialog
+  data/SettingsRepository.kt        DataStore: city, language, clock, summer time
+  ui/theme/Sky.kt                   phases, palettes, WCAG colour math
+  ui/theme/SkyBackground.kt         gradients, haze, night decor band
+  ui/theme/Type.kt, Theme.kt        Tajawal + Amiri, animated Living Sky theme
+  ui/components/Glass.kt            glass card + dashed outline
+  ui/CitySearch.kt                  diacritic-insensitive city search
+  ui/screens/                       Prayer, Qibla, Settings, CityPickerSheet
 app/src/main/assets/cities.json     90 verified entries
-app/src/test/                       vector test, 1440-case sweep, calibration
+app/src/main/assets/licenses/       Tajawal + Amiri OFL licences
+app/src/test/                       vector test, 1440-case sweep, calibration,
+                                     formatter, phase, palette, city-search tests
 ```
 
 ## Known limitations
@@ -123,7 +144,10 @@ app/src/test/                       vector test, 1440-case sweep, calibration
 - Tables repeat every year (no year input), exactly like the original app.
 - No notifications, adhan, Hijri date, or widget in this beta.
 - No GPS; the qibla bearing uses the selected city's coordinates.
-- No Jordanian cities until a verified city list is available.
+- No verified Jordanian cities yet (the segment shows an empty state).
+- No real backdrop blur below API 31 (glass = fill + border + sheen).
+- No on-device visual pass was possible in this environment; see
+  `report/sky_phases_preview.png` and the WCAG unit tests.
 - Debug-signed APK.
 
 ## Privacy
