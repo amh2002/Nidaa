@@ -43,6 +43,7 @@ import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.format.TimeFormatter
 import com.mawaqiti.plus.ui.components.GlassCard
+import com.mawaqiti.plus.ui.components.SettingRow
 import com.mawaqiti.plus.ui.theme.SkyPalette
 import com.mawaqiti.plus.ui.theme.skyPalette
 import java.time.LocalTime
@@ -118,16 +119,10 @@ fun SettingsScreen(
 
         // Language
         GlassCard {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            SettingRow(
+                title = stringResource(R.string.settings_language),
+                description = stringResource(R.string.language_desc)
             ) {
-                Text(
-                    text = stringResource(R.string.settings_language),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = palette.text,
-                    modifier = Modifier.weight(1f)
-                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ChoicePill(
                         label = stringResource(R.string.language_arabic),
@@ -143,28 +138,16 @@ fun SettingsScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = stringResource(R.string.language_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = palette.textMuted
-            )
         }
 
         Spacer(Modifier.height(12.dp))
 
         // Clock format
         GlassCard {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            SettingRow(
+                title = stringResource(R.string.settings_clock_title),
+                description = stringResource(R.string.clock_preview) + ": " + preview
             ) {
-                Text(
-                    text = stringResource(R.string.settings_clock_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = palette.text,
-                    modifier = Modifier.weight(1f)
-                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ChoicePill(
                         label = stringResource(R.string.clock_24),
@@ -180,37 +163,16 @@ fun SettingsScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.clock_preview) + ": " + preview,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = palette.accent
-            )
         }
 
         // Summer time: Palestine only.
         if (city.country == Country.PS) {
             Spacer(Modifier.height(12.dp))
             GlassCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                SettingRow(
+                    title = stringResource(R.string.settings_summer_time),
+                    description = stringResource(R.string.summer_time_desc)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.settings_summer_time),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = palette.text
-                        )
-                        Spacer(Modifier.height(3.dp))
-                        Text(
-                            text = stringResource(R.string.summer_time_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = palette.textMuted
-                        )
-                    }
-                    Spacer(Modifier.width(10.dp))
                     Switch(
                         checked = settings.summerTime,
                         onCheckedChange = onSummerTimeChange,
@@ -229,7 +191,7 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // About
+        // About: name + version, timetable source, creator, offline/privacy.
         GlassCard {
             Text(
                 text = stringResource(R.string.settings_about_title),
@@ -237,17 +199,37 @@ fun SettingsScreen(
                 fontWeight = FontWeight.Bold,
                 color = palette.accent
             )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.settings_about_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = palette.textMuted
-            )
             Spacer(Modifier.height(10.dp))
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = palette.text
+            )
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.labelMedium,
                 color = palette.accent
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.settings_about_timetable),
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textMuted
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.settings_about_creator),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = palette.text
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.settings_about_offline),
+                style = MaterialTheme.typography.bodySmall,
+                color = palette.textMuted
             )
         }
 
@@ -273,8 +255,7 @@ private fun ChoicePill(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) Color.White else palette.text,
-            maxLines = 1
+            color = if (selected) Color.White else palette.text
         )
     }
 }

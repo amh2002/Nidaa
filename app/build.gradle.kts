@@ -12,8 +12,8 @@ android {
         applicationId = "com.mawaqiti.plus"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.0-beta2"
+        versionCode = 3
+        versionName = "1.0.0-beta3"
 
         // Visual verification only: -Pmawaqiti.skyPhase=dawn|day|golden|night.
         // Empty in every shipped build, so the theme always follows the clock.

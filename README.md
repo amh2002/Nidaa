@@ -1,21 +1,20 @@
 # مواقيتي بلس · Mawaqiti Plus (Beta)
 
 تطبيق مواقيت صلاة يعمل دون اتصال بالإنترنت، مبني بـ Kotlin وJetpack Compose،
-ويطابق تطبيق **مواقيتي** الأصلي (`org.roki.tech.newbildqibla`) **دقيقة بدقيقة**
-لجميع المدن المدعومة، لأنه يستخدم جداول المواقيت نفسها المستخرجة من التطبيق
-الأصلي.
+ويعتمد جدول المواقيت الرسمي الفلسطيني المضمَّن داخل التطبيق لجميع المدن
+المدعومة، مع تقويم هجري حسابي (أم القرى).
 
-An offline prayer-time app for Android (Kotlin + Jetpack Compose) that is
-**bit-exact with the original مواقيتي app** for every supported city, using the
-same extracted 36 × 366 integer tables.
+An offline prayer-time app for Android (Kotlin + Jetpack Compose) built on the
+bundled official Palestinian timetable tables, with a computational Umm al-Qura
+Hijri date.
 
 ---
 
 ## Download · التحميل
 
-**https://github.com/amh2002/mawaqiti-plus/releases/tag/v1.0.0-beta2**
+**https://github.com/amh2002/mawaqiti-plus/releases/tag/v1.0.0-beta3**
 
-`MawaqitiPlus-1.0.0-beta2.apk` · versionCode 2 · Android 7.0+ (API 24)
+`MawaqitiPlus-1.0.0-beta3.apk` · versionCode 3 · Android 7.0+ (API 24)
 
 The APK is a debug-signed beta, not a Play Store release. It requests **no
 permissions** and has no network access.
@@ -29,7 +28,7 @@ permissions** and has no network access.
 Or over USB:
 
 ```powershell
-adb install -r MawaqitiPlus-1.0.0-beta2.apk
+adb install -r MawaqitiPlus-1.0.0-beta3.apk
 ```
 
 ---
@@ -57,7 +56,7 @@ adb install -r MawaqitiPlus-1.0.0-beta2.apk
   with `locales_config.xml` and `autoStoreLocales`. RTL follows the locale.
   Times stay in Latin digits in both languages.
 - **Manual summer time** (+1 h), default OFF, visible only for Palestine and
-  applied only to the default table profile — exactly like the original.
+  applied only to the default table profile.
 - **New adaptive launcher icon** (night gradient, gold crescent + star, themed
   monochrome layer, round and square legacy mipmaps).
 - **Fully offline.** No internet permission, no ads, no analytics, no Firebase
@@ -71,7 +70,7 @@ adb install -r MawaqitiPlus-1.0.0-beta2.apk
 | السعودية (مكة المكرمة، المدينة المنورة) | 2 |
 | Jordanian cities | 0 |
 
-The original APK's embedded list contains **no Jordanian city**. The beta does
+The verified embedded city list contains **no Jordanian city**. The beta does
 not invent `minDiff` values, so the country segment **الأردن** is present but
 shows an honest empty state. Full tables, including the ten synthetic
 `قبل/بعد القدس` entries and the list of uncovered localities, are in
@@ -81,10 +80,10 @@ shows an honest empty state. Full tables, including the ten synthetic
 
 | Check | Result |
 |---|---|
-| Original app vectors (124 rows × 6 prayers) | **124 / 124 exact, 0 mismatches** |
+| Reference vectors (124 rows × 6 prayers) | **124 / 124 exact, 0 mismatches** |
 | 90 cities × 8 dates × summer OFF/ON | **1440 / 1440 exact, 0 mismatches** |
 | Table comparisons incl. last third / Fajr tomorrow | **12,512, 0 mismatches** |
-| Unit tests (engine + beta2 UI, formatter, palette, search) | **39 / 39 passed** |
+| Unit tests (engine + beta3 UI, Hijri, formatter, palette, search) | **56 / 56 passed** |
 | Palette contrast (WCAG AA) | text **≥ 4.5:1**, accent **≥ 3.0:1** |
 | Solar engine vs Adhan 1.2.1 (test-only cross-check) | **2879 / 2879 within ±1 min**, worst 0.99 min |
 | Solar MWL vs official tables (informative) | mean abs **3.24 min**, max 21 min |
@@ -120,11 +119,12 @@ To regenerate the reports into `docs/` (default) or another folder:
 
 ```
 app/src/main/java/com/mawaqiti/plus/
-  engine/table/TableEngine.kt       primary, bit-exact table engine
+  engine/table/TableEngine.kt       primary, table-driven engine
   engine/table/PrayerTables.kt      generated 36 arrays × 366 rows
   engine/PrayerEngine.kt            internal solar engine (test-only)
   engine/Qibla.kt                   great-circle bearing/distance
   format/TimeFormatter.kt           24 h / 12 h display formatter
+  format/HijriDateFormatter.kt      Umm al-Qura Hijri date, AR/EN
   data/City.kt, CityRepository.kt   90-city model + asset loader
   data/SettingsRepository.kt        DataStore: city, language, clock, summer time
   ui/theme/Sky.kt                   phases, palettes, WCAG colour math
@@ -141,8 +141,10 @@ app/src/test/                       vector test, 1440-case sweep, calibration,
 
 ## Known limitations
 
-- Tables repeat every year (no year input), exactly like the original app.
-- No notifications, adhan, Hijri date, or widget in this beta.
+- Tables repeat every year (no year input); the table is indexed by day-of-year.
+- No notifications, adhan, or widget in this beta.
+- The Hijri line is computational (Umm al-Qura) and may differ by ±1 day from
+  local Palestinian moon sighting.
 - No GPS; the qibla bearing uses the selected city's coordinates.
 - No verified Jordanian cities yet (the segment shows an empty state).
 - No real backdrop blur below API 31 (glass = fill + border + sheen).
@@ -157,6 +159,5 @@ the APK.
 
 ## Disclaimer
 
-This is an independent clean-room port made for personal use and verification
-against the original application. It is not affiliated with the original
-publisher.
+This is an independent clean-room implementation made for personal use. It is
+not affiliated with any other app or publisher.

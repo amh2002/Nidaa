@@ -9,7 +9,7 @@
     <string name="next_prayer">Next prayer</string>
     <string name="remaining_short">Left</string>
     <string name="last_third">Last third</string>
-    <string name="official_note">Times follow the official Palestinian timetable, identical to the original app, minute for minute.</string>
+    <string name="official_note">Times follow the official Palestinian timetable.</string>
     <string name="prayer_progress_desc">Time elapsed between the two prayers</string>
 
     <string name="prayer_fajr">Fajr</string>
@@ -48,7 +48,7 @@
     <string name="default_city_tag">Default</string>
     <string name="no_results">No matching cities</string>
     <string name="jordan_empty_title">No Jordanian cities yet</string>
-    <string name="jordan_empty_body">A verified Jordanian city list is not available in this build, and we will not show a time that differs from the original app. Pick a city in Palestine or Saudi Arabia.</string>
+    <string name="jordan_empty_body">A verified Jordanian city list is not available in this build, and we will not show an unverified time. Pick a city in Palestine or Saudi Arabia.</string>
     <string name="cities_count">%1$d cities</string>
 
     <string name="settings_title">Settings</string>
@@ -70,6 +70,8 @@
     <string name="summer_time_desc">Adds one hour (+1) to every time.</string>
 
     <string name="settings_about_title">About</string>
-    <string name="settings_about_body">Mawaqiti Plus follows the official Palestinian timetable and matches the original app minute for minute. It works fully offline and requests no permissions.</string>
+    <string name="settings_about_timetable">Times follow the official Palestinian timetable</string>
+    <string name="settings_about_creator">App creator: Abdulrahman Hussein</string>
+    <string name="settings_about_offline">Works offline and collects no data</string>
     <string name="settings_version">Version %1$s</string>
 </resources>

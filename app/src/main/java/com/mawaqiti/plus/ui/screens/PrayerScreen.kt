@@ -48,6 +48,7 @@ import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.engine.table.TableEvent
 import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.format.HijriDateFormatter
 import com.mawaqiti.plus.format.TimeFormatter
 import com.mawaqiti.plus.ui.components.GlassCard
 import com.mawaqiti.plus.ui.components.dashedOutline
@@ -188,6 +189,19 @@ private fun Header(
         text = date.format(dateFormatter(isArabic)),
         style = MaterialTheme.typography.bodyMedium,
         color = palette.textMuted,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.End
+    )
+
+    Spacer(Modifier.height(2.dp))
+
+    // Computational Umm al-Qura date directly under the Gregorian line. It is
+    // deliberately a little smaller and dimmer than the date above; `date` is
+    // the ViewModel's local "today", so the line rolls over at local midnight.
+    Text(
+        text = HijriDateFormatter.format(date, isArabic),
+        style = MaterialTheme.typography.bodySmall,
+        color = if (palette.dark) palette.text.copy(alpha = 0.75f) else palette.textMuted,
         modifier = Modifier.fillMaxWidth(),
         textAlign = TextAlign.End
     )

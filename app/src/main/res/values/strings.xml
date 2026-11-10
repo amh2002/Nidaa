@@ -9,7 +9,7 @@
     <string name="next_prayer">الصلاة القادمة</string>
     <string name="remaining_short">متبقي</string>
     <string name="last_third">الثلث الأخير</string>
-    <string name="official_note">المواقيت وفق الجدول الرسمي الفلسطيني، مطابقة للتطبيق الأصلي دقيقة بدقيقة.</string>
+    <string name="official_note">المواقيت وفق الجدول الرسمي الفلسطيني.</string>
     <string name="prayer_progress_desc">الوقت المنقضي بين الصلاتين</string>
 
     <string name="prayer_fajr">الفجر</string>
@@ -48,7 +48,7 @@
     <string name="default_city_tag">افتراضي</string>
     <string name="no_results">لا توجد مدن مطابقة</string>
     <string name="jordan_empty_title">لا تتوفر مدن أردنية بعد</string>
-    <string name="jordan_empty_body">قائمة المدن الأردنية الموثّقة غير متاحة في هذه النسخة، ولن نعرض توقيتًا غير مطابق للتطبيق الأصلي. اختر مدينة من فلسطين أو السعودية.</string>
+    <string name="jordan_empty_body">قائمة المدن الأردنية الموثّقة غير متاحة في هذه النسخة، ولن نعرض توقيتًا غير موثّق. اختر مدينة من فلسطين أو السعودية.</string>
     <string name="cities_count">%1$d مدينة</string>
 
     <string name="settings_title">الإعدادات</string>
@@ -70,6 +70,8 @@
     <string name="summer_time_desc">إضافة ساعة واحدة (+1) إلى جميع المواقيت.</string>
 
     <string name="settings_about_title">حول التطبيق</string>
-    <string name="settings_about_body">يعرض «مواقيتي بلس» المواقيت وفق الجدول الرسمي الفلسطيني، مطابقة للتطبيق الأصلي دقيقة بدقيقة. يعمل التطبيق دون اتصال بالإنترنت ولا يطلب أي أذونات.</string>
+    <string name="settings_about_timetable">الأوقات وفق التقويم الرسمي الفلسطيني</string>
+    <string name="settings_about_creator">منشئ التطبيق: عبد الرحمن حسين</string>
+    <string name="settings_about_offline">يعمل دون اتصال بالإنترنت ولا يجمع أي بيانات</string>
     <string name="settings_version">الإصدار %1$s</string>
 </resources>
