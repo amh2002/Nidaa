@@ -9,7 +9,6 @@ import android.os.Build
 import android.provider.Settings
 import com.mawaqiti.plus.data.CityRepository
 import com.mawaqiti.plus.data.SettingsRepository
-import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlinx.coroutines.Dispatchers
@@ -181,7 +180,7 @@ object NotificationScheduler {
         now: ZonedDateTime
     ) {
         val nextMidnight = ZonedDateTime.of(
-            LocalDate.now().plusDays(1),
+            now.toLocalDate().plusDays(1),
             LocalTime.MIDNIGHT,
             now.zone
         ).plusSeconds(MIDNIGHT_SLACK_SECONDS)

@@ -7,7 +7,7 @@
 | Package | `com.mawaqiti.plus` |
 | APK | `C:\rea_ws\mawaqiti_app\dist\MawaqitiPlus-1.0.0-beta4.apk` |
 | Size | 21,865,272 bytes |
-| SHA-256 | `5635793C2B912CA6CC295CBBB7F8FD2DC185EDE697BB95B27629C0B2D58C2D36` |
+| SHA-256 | `64A3AB660715B55B03EAB4C802046A4CE4AC72C7FA6761516724F4183086ECC7` |
 | Build | debug (`assembleDebug`), not Play-store signed |
 | Minimum Android | 7.0 (API 24), target API 36 |
 | Permissions | `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `VIBRATE`, `WAKE_LOCK`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` |

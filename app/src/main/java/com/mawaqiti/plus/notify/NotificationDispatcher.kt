@@ -43,6 +43,7 @@ object NotificationDispatcher {
                 notificationId = notificationId,
                 title = title,
                 body = body,
+                stopLabel = localized.getString(R.string.notify_stop),
                 adhanUri = adhanUri
             )
         } else {

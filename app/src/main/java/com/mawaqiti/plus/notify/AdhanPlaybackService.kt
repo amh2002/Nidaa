@@ -39,7 +39,9 @@ class AdhanPlaybackService : Service() {
                 val id = intent.getIntExtra(EXTRA_NOTIFICATION_ID, DEFAULT_ID)
                 val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
                 val body = intent.getStringExtra(EXTRA_BODY).orEmpty()
-                startForegroundCompat(id, buildNotification(id, title, body))
+                val stopLabel = intent.getStringExtra(EXTRA_STOP_LABEL)
+                    ?: getString(R.string.notify_stop)
+                startForegroundCompat(id, buildNotification(id, title, body, stopLabel))
                 play(intent.getStringExtra(EXTRA_URI))
             }
         }
@@ -60,7 +62,7 @@ class AdhanPlaybackService : Service() {
         ServiceCompat.startForeground(this, id, notification, type)
     }
 
-    private fun buildNotification(id: Int, title: String, body: String): Notification {
+    private fun buildNotification(id: Int, title: String, body: String, stopLabel: String): Notification {
         val openApp = PendingIntent.getActivity(
             this,
             REQUEST_OPEN,
@@ -85,7 +87,7 @@ class AdhanPlaybackService : Service() {
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .addAction(0, getString(R.string.notify_stop), stop)
+            .addAction(0, stopLabel, stop)
             .build()
     }
 
@@ -137,6 +139,7 @@ class AdhanPlaybackService : Service() {
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_BODY = "body"
         private const val EXTRA_URI = "adhan_uri"
+        private const val EXTRA_STOP_LABEL = "stop_label"
         private const val DEFAULT_ID = 7000
         private const val REQUEST_OPEN = 6100
         private const val REQUEST_STOP = 6101
@@ -146,6 +149,7 @@ class AdhanPlaybackService : Service() {
             notificationId: Int,
             title: String,
             body: String,
+            stopLabel: String,
             adhanUri: String?
         ) {
             val intent = Intent(context, AdhanPlaybackService::class.java).apply {
@@ -153,6 +157,7 @@ class AdhanPlaybackService : Service() {
                 putExtra(EXTRA_NOTIFICATION_ID, notificationId)
                 putExtra(EXTRA_TITLE, title)
                 putExtra(EXTRA_BODY, body)
+                putExtra(EXTRA_STOP_LABEL, stopLabel)
                 putExtra(EXTRA_URI, adhanUri)
             }
             ContextCompat.startForegroundService(context, intent)
