@@ -1,6 +1,7 @@
 package com.mawaqiti.plus.data
 
 import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.notify.NotificationSettings
 
 enum class AppLanguage(val tag: String) {
     ARABIC("ar"),
@@ -24,5 +25,7 @@ data class AppSettings(
     /** False only before the very first launch picks Arabic explicitly. */
     val languageInitialized: Boolean = false,
     /** Display-only clock preference; default is the original app's 24h. */
-    val clockFormat: ClockFormat = ClockFormat.H24
+    val clockFormat: ClockFormat = ClockFormat.H24,
+    /** Per-event notification configuration, stored independently per event. */
+    val notifications: NotificationSettings = NotificationSettings()
 )

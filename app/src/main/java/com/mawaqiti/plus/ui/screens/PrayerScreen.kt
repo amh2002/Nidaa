@@ -320,6 +320,17 @@ private fun fraction(now: Long, start: Long, end: Long): Float {
     return ((now - start).toFloat() / (end - start).toFloat()).coerceIn(0f, 1f)
 }
 
+/**
+ * Vertical rhythm of the hero card. These are explicit, unit-tested values:
+ * 8 dp between the "next prayer" label and the prayer name, 4 dp between the
+ * name and its time. No fixed card height is involved, so a large font scale
+ * grows the card instead of colliding the lines.
+ */
+object HeroMetrics {
+    val LABEL_TO_NAME = 8.dp
+    val NAME_TO_TIME = 4.dp
+}
+
 @Composable
 private fun HeroCard(
     hero: HeroState,
@@ -345,13 +356,14 @@ private fun HeroCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = palette.textMuted
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(HeroMetrics.LABEL_TO_NAME))
             Text(
                 text = prayerLabel(hero.event),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = palette.text
             )
+            Spacer(Modifier.height(HeroMetrics.NAME_TO_TIME))
             Text(
                 text = TimeFormatter.format(hero.minutes, clockFormat, isArabic),
                 fontFamily = Tajawal,

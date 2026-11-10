@@ -1,22 +1,146 @@
 # BETA_NOTES.md
 
-**مواقيتي بلس / Mawaqiti Plus** — version `1.0.0-beta3` (versionCode 3)
+**مواقيتي بلس / Mawaqiti Plus** — version `1.0.0-beta4` (versionCode 4)
 
 | Item | Value |
 |---|---|
 | Package | `com.mawaqiti.plus` |
-| APK | `C:\rea_ws\mawaqiti_app\dist\MawaqitiPlus-1.0.0-beta3.apk` |
-| Size | 21,384,701 bytes |
-| SHA-256 | `8A13DF87EB4CC3770113B4DA4DDBA32A199E9D3ED8997D27EB63BDCB38E62424` |
+| APK | `C:\rea_ws\mawaqiti_app\dist\MawaqitiPlus-1.0.0-beta4.apk` |
+| Size | 21,865,272 bytes |
+| SHA-256 | `5635793C2B912CA6CC295CBBB7F8FD2DC185EDE697BB95B27629C0B2D58C2D36` |
 | Build | debug (`assembleDebug`), not Play-store signed |
 | Minimum Android | 7.0 (API 24), target API 36 |
-| Permissions | none requested (see note below) |
+| Permissions | `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `VIBRATE`, `WAKE_LOCK`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` |
 
-> `aapt2` lists `com.mawaqiti.plus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`.
+> `aapt2` also lists `com.mawaqiti.plus.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`.
 > That is a **signature-level permission defined by the app itself** and added
 > automatically by AndroidX Core; it is not a permission prompt and grants no
 > access to location, network, storage or any user data. The app still declares
 > no location/Internet permission.
+
+---
+
+## beta4 — settings framework, notifications, widget
+
+> **Verification environment.** This workspace has no Android device or
+> emulator (`adb devices` is empty and `C:\android-sdk\emulator\emulator.exe`
+> does not exist). On-device-only evidence (launcher widget, `dumpsys
+> notification`, reboot `dumpsys alarm`, real notification tray screenshots)
+> could not be captured. It is replaced with: (a) Robolectric Compose UI tests
+> for the settings framework, (b) pure JVM tests for scheduling/routing/widget
+> strings, and (c) generated Compose-accurate previews in
+> `report\screens_beta4\` and `report\hero_check\`. Those previews are labelled
+> as generated, not device screenshots.
+
+### Settings framework rule (permanent)
+
+The Settings screen is now **one scrollable list**. Every item is a
+`SettingsCard`; rows use `SettingsToggleRow` / `SegmentedPillRow`; the page ends
+with exactly one `FooterCard`. There are no Box-stacked texts, negative
+offsets, absolute positioning or fixed row heights anywhere in Settings.
+Height is always automatic, so a large font scale grows the card instead of
+piling text on top of it. Any future settings item must follow this rule.
+
+The regression guard is `SettingsFrameworkTest` (Robolectric + Compose):
+Arabic and English at fontScale 1.0 and 1.3, asserting exactly one footer text
+semantics node and that scrolling reaches the footer without clipping.
+
+### Footer double-text root cause
+
+* `app/src/main/java/com/mawaqiti/plus/ui/components/Glass.kt:62` renders
+  `GlassCard` content inside a plain `Box`.
+* The beta3 About card (`app/src/main/java/com/mawaqiti/plus/ui/screens/SettingsScreen.kt`,
+  lines 195–234) passed several sibling `Text`/`Spacer` children into that
+  `Box`. `Box` stacks children at the same top-start position, so the timetable,
+  creator and offline strings were painted on top of one another.
+
+Fix: `SettingsCard` wraps content in a `Column`, and the footer is a dedicated
+`FooterCard` with exactly one `Text` (`settings_footer`), resolved per locale
+from `values/strings.xml` / `values-en/strings.xml` and placed last with 32 dp
+bottom space.
+
+### Notifications
+
+* Master switch (default ON) plus one independent row per event: Fajr,
+  Sunrise, Dhuhr, Asr, Maghrib, Isha, Last third. Each row has its own switch,
+  exactly three modes (Adhan / Silent / Vibrate) and a **Test** button that
+  fires that event's notification in its own mode five seconds later.
+* Defaults: Fajr/Dhuhr/Asr/Maghrib/Isha = ON + Adhan; Sunrise and Last third =
+  OFF + Silent. “Apply to all” sets one mode for every enabled event.
+* Everything is stored per event in Preferences DataStore. The alarm only
+  carries the event identity; **enabled/mode are read again at fire time**, so
+  changing a mode never misfires an already-scheduled alarm.
+* `SchedulePlanner` builds the next 48 hours from `TableEngine` only (about 14
+  occurrences), honours the manual summer-time toggle, uses fixed per-event
+  request codes and unique `mawaqiti://event/<key>/<epoch>` data URIs.
+  `AlarmManager.setExactAndAllowWhileIdle` is used when exact alarms are
+  allowed; otherwise `setWindow(…, 15 min)` is used and Settings shows an
+  “Exact alarms are off” row that deep-links to
+  `ACTION_REQUEST_SCHEDULE_EXACT_ALARM`.
+* Rescheduling happens after each fired alarm, after every notification/city/
+  summer setting change, at midnight, and on boot / `TIME_SET` /
+  `TIMEZONE_CHANGED` / `DATE_CHANGED` / app update.
+* Delivery channels (exactly three): `adhan` (channel sound off; the app plays
+  the audio), `silent` (no sound, no vibration), `vibrate` (vibration only).
+  Adhan audio is a foreground service
+  (`foregroundServiceType="mediaPlayback"`, `USAGE_ALARM`), with an “إيقاف”
+  action that stops playback.
+* `POST_NOTIFICATIONS` is requested with an Arabic rationale on the first
+  Settings visit (API 33+). Settings also shows a battery-optimization hint
+  that opens the system list.
+* Adhan sound: generated license-free 4.2 s chime
+  (`res/raw/placeholder_adhan.wav`) by default; “Choose file” uses
+  `ACTION_OPEN_DOCUMENT` with a persisted read permission.
+
+### Widget
+
+Implemented with **RemoteViews**, not Glance: no extra dependency, minSdk 24
+friendly, and the 4x2 layout is simple enough to keep pixel-stable. Fixed night
+palette (`#0B102A → #141B3F`), translucent glass rows, gold `#FFD98A`, 18 dp
+corners. It shows city + wordmark, Gregorian short date + Hijri date, the next
+prayer/time in gold, and all six times in a 3-column × 2-row grid. It follows
+the 12h/24h and language settings and opens the app on tap. There is no
+per-second countdown. It refreshes on boot, after settings changes, at every
+prayer boundary, and every 30 minutes as a safety net.
+
+### How to test on a real device
+
+1. Install the beta4 APK, open **Settings**.
+2. Allow notifications in the Arabic rationale dialog.
+3. If the “Exact alarms are off” card appears, tap it and allow
+   “Alarms & reminders”.
+4. Tap the battery-optimization card and exclude Mawaqiti Plus from
+   optimization (manufacturer battery savers can still delay alarms).
+5. Use each event's **Test** button, or the debug-only **Test notifications**
+   group (Adhan / Silent / Vibrate). Each fires after ~5 seconds.
+6. Set e.g. Fajr = Adhan, Asr = Silent, Isha = Vibrate and test all three to
+   confirm independent routing.
+7. Long-press the launcher → Widgets → Mawaqiti Plus → drag the 4x2 widget.
+   Change the city or the 12h/24h setting and confirm the widget updates.
+
+### Known limitations
+
+* Widget has no live per-second countdown (by design in beta4).
+* Bundled adhan is a short placeholder chime until the user picks their own
+  audio file.
+* Exactness depends on the OS exact-alarm grant and on manufacturer battery
+  optimization; the app exposes both system settings but cannot force them.
+* No device/emulator was available, so launcher, tray and reboot evidence is
+  substituted as described above.
+
+### Verification
+
+* Unit tests: 78/78 debug + 74/74 release, 0 failures (the four Compose
+  framework tests run in debug where the test host manifest is present).
+* Fidelity unchanged: 124/124 vectors, 1440/1440 sweep, 12,512 comparisons,
+  0 mismatches.
+* Engine/table/cities diff: empty (`git diff --stat -- …/engine …/cities.json`).
+* New tests: `SchedulePlannerTest` (fixed now, summer ON/OFF, midnight wrap,
+  skip logic), `NotificationRoutingTest` (mixed modes at once), `WidgetTextTest`
+  (12h/24h × both locales), `HeroMetricsTest`, `SettingsFrameworkTest`
+  (both locales × fontScale 1.0/1.3, single footer, scroll reachable).
+* Previews: `report\screens_beta4\` (settings full/bottom + notifications
+  close-ups + 4 widget variants) and `report\hero_check\`.
 
 ---
 

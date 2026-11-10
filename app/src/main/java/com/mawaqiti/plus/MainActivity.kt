@@ -111,7 +111,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onBack = { selectedTab = 0 }
                     )
 
-                    else -> SettingsScreen(
+                    2 -> SettingsScreen(
                         settings = settings,
                         city = city,
                         day = day,
@@ -120,7 +120,14 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onOpenCityPicker = { showCityPicker = true },
                         onSelectLanguage = viewModel::setLanguage,
                         onSelectClockFormat = viewModel::setClockFormat,
-                        onSummerTimeChange = viewModel::setSummerTime
+                        onSummerTimeChange = viewModel::setSummerTime,
+                        onNotificationsEnabled = viewModel::setNotificationsEnabled,
+                        onEventEnabled = viewModel::setEventEnabled,
+                        onEventMode = viewModel::setEventMode,
+                        onApplyModeToEnabled = viewModel::applyModeToEnabledEvents,
+                        onTestEvent = viewModel::testEvent,
+                        onTestMode = viewModel::testMode,
+                        onAdhanUri = viewModel::setAdhanUri
                     )
                 }
             }

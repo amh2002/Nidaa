@@ -14,6 +14,10 @@ import com.mawaqiti.plus.data.SettingsRepository
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.engine.table.TableEngine
 import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.notify.NotificationScheduler
+import com.mawaqiti.plus.notify.NotifyEvent
+import com.mawaqiti.plus.notify.NotifyMode
+import com.mawaqiti.plus.notify.WidgetUpdater
 import com.mawaqiti.plus.ui.theme.SkyPhase
 import java.time.LocalDate
 import java.time.LocalTime
@@ -120,14 +124,17 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
 
     fun selectCity(city: City) = viewModelScope.launch {
         settingsRepository.setCityOrder(city.order)
+        scheduleNotifications()
     }
 
     fun setSummerTime(enabled: Boolean) = viewModelScope.launch {
         settingsRepository.setSummerTime(enabled)
+        scheduleNotifications()
     }
 
     fun setClockFormat(format: ClockFormat) = viewModelScope.launch {
         settingsRepository.setClockFormat(format)
+        WidgetUpdater.updateAsync(getApplication())
     }
 
     fun setLanguage(language: AppLanguage) = viewModelScope.launch {
@@ -135,6 +142,50 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
         AppCompatDelegate.setApplicationLocales(
             LocaleListCompat.forLanguageTags(language.tag)
         )
+        WidgetUpdater.updateAsync(getApplication())
+    }
+
+    fun setNotificationsEnabled(enabled: Boolean) = viewModelScope.launch {
+        settingsRepository.setNotificationsEnabled(enabled)
+        scheduleNotifications()
+    }
+
+    fun setEventEnabled(event: NotifyEvent, enabled: Boolean) = viewModelScope.launch {
+        settingsRepository.setEventEnabled(event, enabled)
+        scheduleNotifications()
+    }
+
+    fun setEventMode(event: NotifyEvent, mode: NotifyMode) = viewModelScope.launch {
+        settingsRepository.setEventMode(event, mode)
+        scheduleNotifications()
+    }
+
+    fun applyModeToEnabledEvents(mode: NotifyMode) = viewModelScope.launch {
+        settingsRepository.setModeForEnabledEvents(mode)
+        scheduleNotifications()
+    }
+
+    fun setAdhanUri(uri: String?) = viewModelScope.launch {
+        settingsRepository.setAdhanUri(uri)
+    }
+
+    /** Fires one event's notification in its own mode five seconds from now. */
+    fun testEvent(event: NotifyEvent, mode: NotifyMode) {
+        NotificationScheduler.scheduleTest(getApplication(), event, mode)
+    }
+
+    /** Debug group: one direct test per delivery type. */
+    fun testMode(mode: NotifyMode) {
+        val event = when (mode) {
+            NotifyMode.ADHAN -> NotifyEvent.MAGHRIB
+            NotifyMode.SILENT -> NotifyEvent.FAJR
+            NotifyMode.VIBRATE -> NotifyEvent.ASR
+        }
+        NotificationScheduler.scheduleTest(getApplication(), event, mode)
+    }
+
+    private suspend fun scheduleNotifications() {
+        NotificationScheduler.scheduleAll(getApplication())
     }
 
     fun citiesFor(country: Country, isArabic: Boolean): List<City> =

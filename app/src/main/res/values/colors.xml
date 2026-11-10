@@ -5,4 +5,13 @@
     <color name="mawaqiti_gold">#FFD98A</color>
     <color name="mawaqiti_background">#0E1540</color>
     <color name="mawaqiti_background_dark">#060A20</color>
+
+    <!-- beta4 widget: fixed Living Sky night palette -->
+    <color name="widget_night_top">#0B102A</color>
+    <color name="widget_night_bottom">#141B3F</color>
+    <color name="widget_gold">#FFD98A</color>
+    <color name="widget_text">#F3F5FF</color>
+    <color name="widget_text_muted">#AEB7D6</color>
+    <color name="widget_glass">#1FFFFFFF</color>
+    <color name="widget_glass_border">#33FFFFFF</color>
 </resources>
