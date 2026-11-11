@@ -28,6 +28,8 @@ class SettingsRepository(private val context: Context) {
         val language = stringPreferencesKey("language")
         val languageInitialized = booleanPreferencesKey("language_initialized")
         val clockFormat = stringPreferencesKey("clock_format")
+        /** beta5: widget language, intentionally independent of the UI language. */
+        val widgetLanguage = stringPreferencesKey("widget.lang")
         val notifyMaster = booleanPreferencesKey("notify_master")
         val adhanUri = stringPreferencesKey("notify_adhan_uri")
         fun eventEnabled(event: NotifyEvent) =
@@ -60,7 +62,8 @@ class SettingsRepository(private val context: Context) {
                         )
                     },
                     adhanUri = prefs[Keys.adhanUri]
-                )
+                ),
+                widgetLanguage = AppLanguage.fromTagOrNull(prefs[Keys.widgetLanguage])
             )
         }
 
@@ -103,6 +106,11 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setAdhanUri(uri: String?) = edit {
         if (uri == null) it.remove(Keys.adhanUri) else it[Keys.adhanUri] = uri
+    }
+
+    /** Widget-only language. Does not touch the app UI language. */
+    suspend fun setWidgetLanguage(language: AppLanguage) = edit {
+        it[Keys.widgetLanguage] = language.tag
     }
 
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {

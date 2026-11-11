@@ -9,11 +9,14 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.mawaqiti.plus"
+        // beta5 identity: the product is «نداء / Nidaa». The Kotlin namespace
+        // stays com.mawaqiti.plus on purpose (engine/tables/tests untouched);
+        // only the installed application id changes.
+        applicationId = "com.nidaa.prayer"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.0-beta4"
+        versionCode = 5
+        versionName = "1.0.0-beta5"
 
         // Visual verification only: -Pmawaqiti.skyPhase=dawn|day|golden|night.
         // Empty in every shipped build, so the theme always follows the clock.

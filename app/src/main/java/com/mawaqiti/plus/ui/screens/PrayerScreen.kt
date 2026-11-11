@@ -169,7 +169,7 @@ private fun Header(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = stringResource(R.string.app_name),
+            text = stringResource(R.string.brand_name),
             fontFamily = AmiriBold,
             fontWeight = FontWeight.Bold,
             fontSize = 32.sp,

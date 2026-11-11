@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">مواقيتي بلس</string>
+    <string name="app_name">نداء - Nidaa</string>
+    <!-- Short in-app wordmark: always the Arabic name, in both locales. -->
+    <string name="brand_name">نداء</string>
     <string name="beta_label">تجريبية</string>
 
     <string name="city_chip_desc">تغيير المدينة</string>
@@ -70,11 +72,16 @@
     <string name="summer_time_desc">إضافة ساعة واحدة (+1) إلى جميع المواقيت.</string>
 
     <string name="settings_about_title">حول التطبيق</string>
-    <string name="settings_about_timetable">الأوقات وفق التقويم الرسمي الفلسطيني</string>
-    <string name="settings_about_creator">منشئ التطبيق: عبد الرحمن حسين</string>
-    <string name="settings_about_offline">يعمل دون اتصال بالإنترنت ولا يجمع أي بيانات</string>
+    <string name="settings_about_brand">نداء · Nidaa</string>
+    <string name="settings_about_timetable">أوقات الصلاة وفق الجدول الرسمي المعتمد لفلسطين والأردن.</string>
+    <string name="settings_about_offline">يعمل دون إنترنت</string>
+    <string name="settings_about_no_data">لا يجمع أي بيانات</string>
+    <string name="settings_about_credit">تطوير: عبد الرحمن حسين — Abdulrahman Hussein</string>
     <string name="settings_version">الإصدار %1$s</string>
-    <string name="settings_footer">مواقيتي بلس — المواقيت وفق الجدول الرسمي الفلسطيني. يعمل دون اتصال بالإنترنت ولا يجمع أي بيانات.</string>
+
+    <!-- beta5: widget language (independent of the app UI language) -->
+    <string name="settings_widget_title">الويدجت</string>
+    <string name="settings_widget_desc">لغة عرض الويدجت مستقلة عن لغة التطبيق، وتُطبَّق فورًا.</string>
 
     <!-- beta4: settings framework, notifications, widget -->
     <string name="settings_notifications">التنبيهات</string>

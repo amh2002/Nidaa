@@ -1,6 +1,6 @@
 # CITY_COVERAGE.md
 
-City coverage of Mawaqiti Plus BETA, derived from the city list embedded in
+City coverage of Nidaa BETA, derived from the city list embedded in
 the original APK (`y7.C3444b`) and exported to `app/src/main/assets/cities.json`.
 
 ## Summary
@@ -180,7 +180,7 @@ select the nearest verified entry shown below.
 
 ### Jordanian cities
 
-The extracted 90-entry fallback list contains **zero Jordanian cities**. The reference app can refresh its city list from an authenticated server endpoint (`api/ref-data/cites`) that could not be retrieved during the RE. Adding JO rows here would require inventing `minDiff` values, which would break exact agreement with the verified tables, so the Jordan card is intentionally empty. A future release should ingest the server list when it is available; until then, do not approximate Jordanian times.
+The extracted 90-entry fallback list contains **zero Jordanian cities**. The original app can refresh its city list from an authenticated server endpoint (`api/ref-data/cites`) that could not be retrieved during the RE. Adding JO rows here would require inventing `minDiff` values, which would break the bit-exactness guarantee, so the Jordan card is intentionally absent from 1.0.0-beta1. A future release should ingest the server list when it is available; until then, do not approximate Jordanian times.
 
 | nameAr | nameEn | Suggested treatment |
 |---|---|---|

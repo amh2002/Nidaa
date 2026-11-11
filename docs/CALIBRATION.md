@@ -1,6 +1,6 @@
 # CALIBRATION.md
 
-Solar engine (MWL) versus the official timetable that Mawaqiti Plus
+Solar engine (MWL) versus the official timetable that Nidaa
 displays. **Informative only:** the table path is the product truth.
 
 ## Method
@@ -90,7 +90,7 @@ calculation cannot reproduce exactly.
 
 ## Why table mode is the default
 
-Across 4320 comparisons the solar MWL model differs from the official timetable by 3.24 minutes on average and up to 21 minutes. That gap is systematic (local sighting-based adjustments, city `minDiff`, and the Palestinian seasonal policy), not random. A table lookup is therefore the only way to reproduce the official timetable exactly, so it is the primary and only user-facing calculation path.
+Across 4320 comparisons the solar MWL model differs from the official timetable by 3.24 minutes on average and up to 21 minutes. That gap is systematic (local sighting-based adjustments, city `minDiff`, and the Palestinian seasonal policy), not random. A table lookup is therefore the only way to guarantee minute-for-minute agreement with the original app, so it is the primary and only user-facing calculation path.
 
 The solar engine stays in the codebase purely for the independent
 cross-check in `ENGINE_CROSSCHECK.md`; it is not reachable from the UI.

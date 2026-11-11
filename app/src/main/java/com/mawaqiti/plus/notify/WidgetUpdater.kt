@@ -25,6 +25,14 @@ import kotlinx.coroutines.launch
 /**
  * Fills every placed widget with the current city, settings and table day.
  *
+ * beta5 rules:
+ *  - The widget language comes from `widget.lang` (independent of the UI
+ *    language); it selects one of two fully mirrored layouts, so the Arabic
+ *    reading order is guaranteed on every launcher.
+ *  - Row 1 always renders the wordmark «نداء» and the city on opposite edges
+ *    with a fixed 12 dp gap built into the layout.
+ *  - The size is fixed at 4x2 (`resizeMode="none"`), so no adaptive variants.
+ *
  * RemoteViews was chosen over Glance on purpose: it needs no new dependency,
  * works on minSdk 24, and the 4x2 layout is simple enough that RemoteViews is
  * easier to keep pixel-stable. The widget never runs a per-second countdown.
@@ -36,6 +44,12 @@ object WidgetUpdater {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             runCatching { update(app) }
         }
+    }
+
+    /** Layout id for a widget language. Pure, so the choice is unit-testable. */
+    fun layoutFor(language: AppLanguage): Int = when (language) {
+        AppLanguage.ARABIC -> R.layout.widget_mawaqiti_ar
+        AppLanguage.ENGLISH -> R.layout.widget_mawaqiti_en
     }
 
     suspend fun update(context: Context) {
@@ -54,23 +68,27 @@ object WidgetUpdater {
             summerTime = settings.summerTime && city.country == Country.PS
         )
 
-        val isArabic = settings.language == AppLanguage.ARABIC
-        val localized = NotificationText.localizedContext(context, settings.language)
+        // Widget-only language: follows the UI language until the user picks one.
+        val widgetLanguage = settings.effectiveWidgetLanguage
+        val widgetIsArabic = widgetLanguage == AppLanguage.ARABIC
+        val localized = NotificationText.localizedContext(context, widgetLanguage)
         val nowMinutes = LocalTime.now().let { it.hour * 60 + it.minute }
         val (nextEvent, nextMinutes) = WidgetText.nextPrayer(day, nowMinutes)
 
-        val views = RemoteViews(context.packageName, R.layout.widget_mawaqiti)
-        views.setTextViewText(R.id.widget_city, city.displayName(isArabic))
-        views.setTextViewText(R.id.widget_wordmark, localized.getString(R.string.app_name))
+        val views = RemoteViews(context.packageName, layoutFor(widgetLanguage))
+        // The wordmark is always the short Arabic name, in both widget languages.
+        views.setTextViewText(R.id.widget_wordmark, localized.getString(R.string.brand_name))
+        views.setTextViewText(R.id.widget_city, city.displayName(widgetIsArabic))
         views.setTextViewText(
             R.id.widget_date,
-            WidgetText.gregorian(today, isArabic) + " · " + WidgetText.hijri(today, isArabic)
+            WidgetText.gregorian(today, widgetIsArabic) + " · " +
+                WidgetText.hijri(today, widgetIsArabic)
         )
         views.setTextViewText(
             R.id.widget_next,
             localized.getString(R.string.widget_next) + " · " +
                 localized.getString(WidgetText.labelRes(nextEvent)) + " " +
-                WidgetText.clock(nextMinutes, settings.clockFormat, isArabic)
+                WidgetText.clock(nextMinutes, settings.clockFormat, widgetIsArabic)
         )
 
         for (event in WidgetText.allEvents()) {
@@ -79,7 +97,7 @@ object WidgetUpdater {
             views.setTextViewText(nameId, localized.getString(WidgetText.labelRes(event)))
             views.setTextViewText(
                 timeId,
-                WidgetText.clock(day.minutesFor(event), settings.clockFormat, isArabic)
+                WidgetText.clock(day.minutesFor(event), settings.clockFormat, widgetIsArabic)
             )
         }
 

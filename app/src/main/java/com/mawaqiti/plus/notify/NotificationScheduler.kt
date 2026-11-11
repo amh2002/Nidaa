@@ -31,9 +31,9 @@ import kotlinx.coroutines.sync.withLock
  */
 object NotificationScheduler {
 
-    const val ACTION_FIRE = "com.mawaqiti.plus.action.FIRE_PRAYER"
-    const val ACTION_TEST = "com.mawaqiti.plus.action.TEST_NOTIFICATION"
-    const val ACTION_MIDNIGHT = "com.mawaqiti.plus.action.MIDNIGHT"
+    const val ACTION_FIRE = "com.nidaa.prayer.action.FIRE_PRAYER"
+    const val ACTION_TEST = "com.nidaa.prayer.action.TEST_NOTIFICATION"
+    const val ACTION_MIDNIGHT = "com.nidaa.prayer.action.MIDNIGHT"
 
     const val EXTRA_EVENT = "event"
     const val EXTRA_MINUTES = "minutes"

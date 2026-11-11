@@ -1,5 +1,185 @@
 # BETA_NOTES.md
 
+**نداء | Nidaa** — latest release `1.0.0-beta5` (versionCode 5), 11 Nov 2026
+
+| Item | Value |
+|---|---|
+| Package | `com.nidaa.prayer` |
+| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta5.apk` |
+| Size | 21,903,686 bytes |
+| SHA-256 | `B2216695D12EC28D7519B254CF71C0F5CB3989A5BF4D113A8914FA59436E1483` |
+| Build | debug (`assembleDebug`), not Play-store signed |
+| Minimum Android | 7.0 (API 24), target API 36 |
+| Launcher label | `نداء - Nidaa` (identical in every locale) |
+| Suggested store title | «نداء | Nidaa - أوقات الصلاة» |
+
+---
+
+## beta5 — rename, "the Call" icon, About restructure, widget fixes
+
+> **Uninstall beta4 first.** beta5 changes the `applicationId` from
+> `com.mawaqiti.plus` to `com.nidaa.prayer`. Android therefore sees a different
+> app: `adb install -r` over beta4 fails with
+> `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. Uninstall beta4, then install beta5.
+> Widgets and notification settings from beta4 do not migrate.
+
+### Rename mapping
+
+| Surface | beta4 | beta5 |
+|---|---|---|
+| Product name (Arabic) | مواقيتي بلس | **نداء** |
+| Product name (Latin) | Mawaqiti Plus | **Nidaa** (never translated to "Call") |
+| `applicationId` | `com.mawaqiti.plus` | **`com.nidaa.prayer`** |
+| Kotlin namespace | `com.mawaqiti.plus` | **unchanged** `com.mawaqiti.plus` (engine, tables and tests stay byte-identical) |
+| Launcher label (`app_name`, both locales) | مواقيتي بلس / Mawaqiti Plus | **`نداء - Nidaa`** (one non-localized value) |
+| Application + widget receiver label | `@string/app_name` (localized) | `@string/app_name` (single value) |
+| Home hero wordmark | `@string/app_name` | **`@string/brand_name` = نداء** |
+| Widget row 1 wordmark | `@string/app_name` | **`@string/brand_name` = نداء** |
+| About title | `@string/app_name` | **`نداء · Nidaa`** (`settings_about_brand`) |
+| About timetable line | "Times follow the official Palestinian timetable" | **one line covering both countries**: «أوقات الصلاة وفق الجدول الرسمي المعتمد لفلسطين والأردن.» / "Prayer times per the official tables for Palestine and Jordan." |
+| About credit | "App creator: Abdulrahman Hussein" between two claims | **own separated last line**: «تطوير: عبد الرحمن حسين — Abdulrahman Hussein» |
+| Footer card | `settings_footer` duplicated the About claims | **deleted**; About is the last list item |
+| Intent actions | `com.mawaqiti.plus.action.*` | **`com.nidaa.prayer.action.*`** |
+| Gradle root project | `MawaqitiPlus` | **`Nidaa`** |
+| APK name | `MawaqitiPlus-1.0.0-beta4.apk` | **`Nidaa-1.0.0-beta5.apk`** |
+| README / docs | Mawaqiti Plus | Nidaa |
+
+Why the namespace stays: renaming `com.mawaqiti.plus` across
+`engine/table/*` and the fidelity tests would rewrite the guarded engine files
+and destroy the "engine untouched" proof. Only the installed identity changes.
+Consequence: `com.mawaqiti.plus` still appears in `package`/`import`
+declarations and in fully-qualified class names inside generated reports; that
+is the Kotlin package, not the app identity.
+
+Bidi note: `app_name` is stored once as `نداء - Nidaa`. On an Arabic (RTL)
+launcher the label is laid out right-to-left, so it reads «نداء - Nidaa» with
+نداء first; on an English launcher it reads left-to-right. No translation is
+involved.
+
+### Icon — "the Call" (نداء الصلاة)
+
+Replaces the old monogram entirely: **no text or letters inside the icon.**
+
+* **Background** (`drawable/ic_launcher_background.xml`): vertical night
+  gradient `#060A20 → #101838 → #1D2C62` plus a radial `#FFD98A` glow at ~18 %
+  peak opacity centred on the crescent, so the gold sits in light.
+* **Foreground** (`drawable/ic_launcher_foreground.xml`): a gold `#FFD98A`
+  crescent in the upper-right, then **three thin concentric arcs** with rounded
+  caps at 70 / 45 / 25 % opacity radiating from the crescent — the adhan
+  travelling outwards — plus three tiny four-point stars at 40–60 % opacity.
+  Every element is inside the 66 dp safe zone (radius 33 around 54,54), so
+  circle, squircle and rounded-square masks never clip it.
+* **Monochrome** (`drawable/ic_launcher_monochrome.xml`): identical geometry in
+  one white ink for Android 13+ themed icons; the platform tints it.
+* **Legacy PNGs** (API 24–25): `mipmap-{m,h,x,xx,xxx}dpi/ic_launcher.png` and
+  `ic_launcher_round.png`, rendered from the same geometry by
+  `C:\rea_ws\tools\nidaa_icons.py` with rounded-square and circular masks.
+* Meaning: the prayer call rises from the night sky and keeps travelling —
+  the three arcs are the sound, the crescent is the sky it is called under.
+
+Mask previews: `report/icons/beta5/icon_mask_circle.png`,
+`icon_mask_squircle.png`, `icon_mask_rounded.png`, `icon_monochrome.png`,
+`icon_monochrome_themed.png`, `icon_safe_zone.png`.
+
+### About restructure
+
+beta4 rendered the timetable/offline/no-data claims twice: once inside the
+About card (with the creator line wedged between them) and again in a separate
+footer card. beta5 removes the footer card completely and makes the About card
+the **last** list item, so each claim exists in exactly one place:
+
+1. title `نداء · Nidaa`
+2. `الإصدار 1.0.0-beta5` / `Version 1.0.0-beta5`
+3. **one** description: «أوقات الصلاة وفق الجدول الرسمي المعتمد لفلسطين
+   والأردن.» / "Prayer times per the official tables for Palestine and Jordan."
+4. two non-interactive info chips: «يعمل دون إنترنت» / "Fully offline" and
+   «لا يجمع أي بيانات» / "Collects no data"
+5. divider, then the credit alone at the bottom:
+   «تطوير: عبد الرحمن حسين — Abdulrahman Hussein»
+
+No links, no licences, no store text. The footer card component stays in the
+framework (unused) for any future legal footer, and `FooterCard` is no longer
+rendered. `SettingsFrameworkTest` now asserts: timetable claim exactly once,
+zero footer nodes, credit reachable by scrolling — for ar/en at fontScale 1.0
+and 1.3.
+
+### Widget fixes
+
+**W1 — row 1 overlap.** The old layout put the wordmark and city in the same
+weighted row without a guaranteed gap, producing "مواقيتي بلسطولكرم". Now row 1
+is two separate views anchored to opposite edges with a fixed **12 dp**
+`<Space>` (`@dimen/widget_row_gap`) between them; the city uses
+`layout_weight=1`, `maxLines=1`, `ellipsize=end`, and both are vertically
+centred. The guaranteed gap and truncation are asserted by `WidgetLayoutTest`
+(Robolectric inflation) and rendered with the longest real city name,
+«البعينة (نجيدات)» / "Al-Bu'eina (Nujeidat)".
+
+**W2 — reading order.** Two completely mirrored layouts are shipped and chosen
+at update time:
+
+| | Arabic (`widget_mawaqiti_ar.xml`) | English (`widget_mawaqiti_en.xml`) |
+|---|---|---|
+| Row 1 | wordmark right, city left | wordmark left, city right |
+| Row 2 | gold next-prayer pill right, date left | pill left, date right |
+| Row A | right→left: الفجر، الشروق، الظهر | left→right: Fajr, Sunrise, Dhuhr |
+| Row B | right→left: العصر، المغرب، العشاء | left→right: Asr, Maghrib, Isha |
+
+Both layouts force `layoutDirection="ltr"` and mirror explicitly in XML, so
+the result is identical on every launcher. Latin digits and the 12 h/24 h
+setting are respected in both.
+
+**W3 — widget language.** A new Settings card «الويدجت / Widget» contains one
+`SegmentedPillRow` with exactly two choices: العربية / English. The value is
+stored in DataStore as **`widget.lang`** (`ar`/`en`). `AppSettings.widgetLanguage`
+is nullable: `null` means "never chosen", and `effectiveWidgetLanguage` then
+follows the app language — exactly "default = the app's current language at
+first render" without writing a value at first launch. Changing it calls
+`WidgetUpdater.updateAsync` immediately (no waiting for the next prayer), it is
+independent of the UI language, all widget strings resolve from the chosen
+language's resources (prayer names, city, Gregorian, Hijri, «القادمة/Next»), and
+the launcher label is unaffected. Guarded by `WidgetLanguageTest`.
+
+**W4 — fixed size.** `res/xml/mawaqiti_widget_info.xml` now declares
+`android:resizeMode="none"`, `targetCellWidth=4`, `targetCellHeight=2`
+(API 31+), `minWidth=250dp`, `minHeight=110dp` for older APIs, and
+`widgetCategory="home_screen"`. Launchers show no resize handles, so there are
+no collapsed/expanded variants.
+
+### beta5 verification
+
+| Check | Result |
+|---|---|
+| Reference vectors | **124 / 124**, 0 mismatches |
+| 90-city sweep (8 dates × summer OFF/ON) | **1440 / 1440**, 0 mismatches |
+| Table comparisons (incl. last third, Fajr tomorrow) | **12,512**, 0 mismatches |
+| Unit tests | **94 / 94 passed** (19 suites) |
+| Engine/table diff | `git status` shows **zero** changes under `engine/` or `assets/cities.json` |
+| Old brand in code/resources | **0** occurrences of «مواقيتي بلس», "Mawaqiti Plus", "MawaqitiPlus" |
+| APK identity | `aapt2 dump badging`: `package: name='com.nidaa.prayer' versionCode='5' versionName='1.0.0-beta5'` |
+| Label | `application-label:'نداء - Nidaa'` and identical for **every** locale |
+| Widget XML in APK | `resizeMode=0x00000000` (none), `targetCellWidth=4`, `targetCellHeight=2`, `widgetCategory=1` |
+| Spot check, القدس 2026-01-01 | engine `fajr=05:12 maghrib=16:52 isha=18:13` = CSV `T004` (05:12 / 16:52 / 18:13) |
+
+> **Verification environment (unchanged).** There is still no Android device
+> and no emulator binary in this workspace, so device-only evidence
+> (launcher label, Arabic app-drawer search, real launcher masks, widget
+> long-press, `dumpsys package`, `dumpsys alarm`) could not be captured. It is
+> substituted with `aapt2` inspection of the shipped APK, Robolectric inflation
+> and Compose tests, and generated previews in `report/screens_beta5/` and
+> `report/icons/beta5/`:
+>
+> * `launcher_home_ar.png` — icon + label «نداء - Nidaa»
+> * `launcher_search_ar.png` — Arabic search for «نداء» finds the app
+> * `icon_masks.png`, `icon_mask_*.png`, `icon_monochrome*.png`, `icon_safe_zone.png`
+> * `settings_{ar,en}_{1.0,1.3}_bottom.png` — About card, claims once, credit alone
+> * `widget_{ar,en}_{12h,24h}.png` — both reading orders and clock formats
+> * `widget_{ar,en}_24h_long_city.png` — longest city name, no touching
+> * `widget_long_press.png` — selection outline only, no resize handles
+
+---
+
+## beta4 — version 1.0.0-beta4
+
 **مواقيتي بلس / Mawaqiti Plus** — version `1.0.0-beta4` (versionCode 4)
 
 | Item | Value |
@@ -21,6 +201,8 @@
 ---
 
 ## beta4 — settings framework, notifications, widget
+
+_(beta4 detail sections follow; beta5 above supersedes the footer/About parts.)_
 
 > **Verification environment.** This workspace has no Android device or
 > emulator (`adb devices` is empty and `C:\android-sdk\emulator\emulator.exe`

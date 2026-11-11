@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      beta5 W1: the guaranteed minimum gap between the widget wordmark and the
+      city name in row 1. It is a resource so WidgetLayoutTest can assert that
+      the inflated spacer really is 12 dp on every density.
+    -->
+    <dimen name="widget_row_gap">12dp</dimen>
+</resources>

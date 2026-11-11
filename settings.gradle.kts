@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MawaqitiPlus"
+rootProject.name = "Nidaa"
 include(":app")

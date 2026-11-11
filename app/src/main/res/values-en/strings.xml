@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Mawaqiti Plus</string>
+    <string name="app_name">نداء - Nidaa</string>
+    <!-- Short in-app wordmark: always the Arabic name, in both locales. -->
+    <string name="brand_name">نداء</string>
     <string name="beta_label">BETA</string>
 
     <string name="city_chip_desc">Change city</string>
@@ -70,11 +72,16 @@
     <string name="summer_time_desc">Adds one hour (+1) to every time.</string>
 
     <string name="settings_about_title">About</string>
-    <string name="settings_about_timetable">Times follow the official Palestinian timetable</string>
-    <string name="settings_about_creator">App creator: Abdulrahman Hussein</string>
-    <string name="settings_about_offline">Works offline and collects no data</string>
+    <string name="settings_about_brand">نداء · Nidaa</string>
+    <string name="settings_about_timetable">Prayer times per the official tables for Palestine and Jordan.</string>
+    <string name="settings_about_offline">Fully offline</string>
+    <string name="settings_about_no_data">Collects no data</string>
+    <string name="settings_about_credit">تطوير: عبد الرحمن حسين — Abdulrahman Hussein</string>
     <string name="settings_version">Version %1$s</string>
-    <string name="settings_footer">Mawaqiti Plus — Times follow the official Palestinian timetable. Works offline and collects no data.</string>
+
+    <!-- beta5: widget language (independent of the app UI language) -->
+    <string name="settings_widget_title">Widget</string>
+    <string name="settings_widget_desc">The widget language is independent from the app language and applies immediately.</string>
 
     <!-- beta4: settings framework, notifications, widget -->
     <string name="settings_notifications">Notifications</string>
@@ -106,7 +113,7 @@
     <string name="notify_test_silent">Silent</string>
     <string name="notify_test_vibrate">Vibrate</string>
     <string name="notify_rationale_title">Enable notifications</string>
-    <string name="notify_rationale_body">Mawaqiti Plus needs notification permission to show each prayer time. We use notifications for nothing else.</string>
+    <string name="notify_rationale_body">Nidaa needs notification permission to show each prayer time. We use notifications for nothing else.</string>
     <string name="notify_rationale_allow">Allow</string>
     <string name="notify_rationale_later">Later</string>
     <string name="notify_title_prayer">It is time for %1$s prayer</string>

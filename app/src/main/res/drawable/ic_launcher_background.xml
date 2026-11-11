@@ -1,33 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  «نداء / Nidaa» icon — background layer.
+
+  Concept: the call of the prayer echoing under the Living Sky night sky.
+  Deep night gradient (#060A20 -> #1D2C62) with a warm gold (#FFD98A) radial
+  glow at ~18% opacity behind the crescent, so the foreground crescent and its
+  sound arcs sit in light rather than on a flat backdrop.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="linear"
                 android:startX="0"
                 android:startY="0"
-                android:endX="108"
+                android:endX="0"
                 android:endY="108"
                 android:startColor="#060A20"
-                android:centerColor="#0E1540"
+                android:centerColor="#101838"
                 android:endColor="#1D2C62" />
         </aapt:attr>
     </path>
-    <path android:pathData="M86,14 m-64,0 a64,64 0 1,0 128,0 a64,64 0 1,0 -128,0">
+
+    <!-- Gold glow, centred on the crescent (64,41), ~18% at its core. -->
+    <path android:pathData="M64,41 m-58,0 a58,58 0 1,0 116,0 a58,58 0 1,0 -116,0">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="radial"
-                android:centerX="86"
-                android:centerY="14"
-                android:gradientRadius="64"
-                android:startColor="#40C77B4A"
-                android:centerColor="#1AC77B4A"
-                android:endColor="#00C77B4A" />
+                android:centerX="64"
+                android:centerY="41"
+                android:gradientRadius="58"
+                android:startColor="#2EFFD98A"
+                android:centerColor="#14FFD98A"
+                android:endColor="#00FFD98A" />
         </aapt:attr>
     </path>
 </vector>

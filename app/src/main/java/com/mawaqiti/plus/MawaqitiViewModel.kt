@@ -169,6 +169,15 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
         settingsRepository.setAdhanUri(uri)
     }
 
+    /**
+     * Widget-only language. Re-renders the widget immediately (no waiting for
+     * the next prayer boundary) and never touches the app UI language.
+     */
+    fun setWidgetLanguage(language: AppLanguage) = viewModelScope.launch {
+        settingsRepository.setWidgetLanguage(language)
+        WidgetUpdater.updateAsync(getApplication())
+    }
+
     /** Fires one event's notification in its own mode five seconds from now. */
     fun testEvent(event: NotifyEvent, mode: NotifyMode) {
         NotificationScheduler.scheduleTest(getApplication(), event, mode)

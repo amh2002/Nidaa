@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -65,7 +66,7 @@ import com.mawaqiti.plus.format.TimeFormatter
 import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.notify.NotifyEvent
 import com.mawaqiti.plus.notify.NotifyMode
-import com.mawaqiti.plus.ui.components.FooterCard
+import com.mawaqiti.plus.ui.components.InfoChip
 import com.mawaqiti.plus.ui.components.PillOption
 import com.mawaqiti.plus.ui.components.SegmentedPillRow
 import com.mawaqiti.plus.ui.components.SettingsCard
@@ -94,6 +95,7 @@ fun SettingsScreen(
     onOpenCityPicker: () -> Unit,
     onSelectLanguage: (AppLanguage) -> Unit,
     onSelectClockFormat: (ClockFormat) -> Unit,
+    onSelectWidgetLanguage: (AppLanguage) -> Unit,
     onSummerTimeChange: (Boolean) -> Unit,
     onNotificationsEnabled: (Boolean) -> Unit,
     onEventEnabled: (NotifyEvent, Boolean) -> Unit,
@@ -168,6 +170,7 @@ fun SettingsScreen(
         onOpenCityPicker = onOpenCityPicker,
         onSelectLanguage = onSelectLanguage,
         onSelectClockFormat = onSelectClockFormat,
+        onSelectWidgetLanguage = onSelectWidgetLanguage,
         onSummerTimeChange = onSummerTimeChange,
         onNotificationsEnabled = onNotificationsEnabled,
         onEventEnabled = onEventEnabled,
@@ -219,6 +222,7 @@ fun SettingsList(
     onOpenCityPicker: () -> Unit,
     onSelectLanguage: (AppLanguage) -> Unit,
     onSelectClockFormat: (ClockFormat) -> Unit,
+    onSelectWidgetLanguage: (AppLanguage) -> Unit,
     onSummerTimeChange: (Boolean) -> Unit,
     onNotificationsEnabled: (Boolean) -> Unit,
     onEventEnabled: (NotifyEvent, Boolean) -> Unit,
@@ -238,6 +242,7 @@ fun SettingsList(
     val notifications = settings.notifications
     val modes = remember { listOf(NotifyMode.ADHAN, NotifyMode.SILENT, NotifyMode.VIBRATE) }
     var applyMode by remember { mutableStateOf(NotifyMode.ADHAN) }
+    val widgetLanguage = settings.effectiveWidgetLanguage
 
     Column(
         modifier = Modifier
@@ -341,7 +346,36 @@ fun SettingsList(
             }
         }
 
-        // 4. Summer time: Palestine only.
+        ItemGap()
+
+        // 4. Widget language: exactly two choices, independent of the UI language.
+        //    Changing it re-renders the widget immediately.
+        SettingsCard {
+            SettingRowBlock(
+                title = stringResource(R.string.settings_widget_title),
+                description = stringResource(R.string.settings_widget_desc)
+            ) {
+                SegmentedPillRow(
+                    options = listOf(
+                        PillOption(
+                            stringResource(R.string.language_arabic),
+                            widgetLanguage == AppLanguage.ARABIC
+                        ),
+                        PillOption(
+                            stringResource(R.string.language_english),
+                            widgetLanguage == AppLanguage.ENGLISH
+                        )
+                    ),
+                    onSelect = { index ->
+                        onSelectWidgetLanguage(
+                            if (index == 0) AppLanguage.ARABIC else AppLanguage.ENGLISH
+                        )
+                    }
+                )
+            }
+        }
+
+        // 5. Summer time: Palestine only.
         if (city.country == Country.PS) {
             ItemGap()
             SettingsCard {
@@ -535,46 +569,60 @@ fun SettingsList(
 
         ItemGap()
 
-        // 11. About.
-        SettingsCard(title = stringResource(R.string.settings_about_title)) {
+        // 11. About — the LAST item of the list. The claims live here exactly
+        //     once; the old standalone footer card is gone.
+        SettingsCard(
+            title = stringResource(R.string.settings_about_title),
+            modifier = Modifier.testTag("settings_about")
+        ) {
             Text(
-                text = stringResource(R.string.app_name),
+                text = stringResource(R.string.settings_about_brand),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = palette.text
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.labelMedium,
                 color = palette.accent
             )
             Spacer(Modifier.height(12.dp))
+            // Single source of truth for the timetable claim (both countries).
             Text(
                 text = stringResource(R.string.settings_about_timetable),
                 style = MaterialTheme.typography.bodyMedium,
-                color = palette.textMuted
+                color = palette.text,
+                modifier = Modifier.testTag("settings_about_claim")
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                InfoChip(
+                    text = stringResource(R.string.settings_about_offline),
+                    modifier = Modifier.weight(1f)
+                )
+                InfoChip(
+                    text = stringResource(R.string.settings_about_no_data),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(14.dp))
+            // Credit is visually separated and always the very last line.
+            HorizontalDivider(color = palette.text.copy(alpha = 0.12f))
+            Spacer(Modifier.height(10.dp))
             Text(
-                text = stringResource(R.string.settings_about_creator),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = palette.text
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.settings_about_offline),
+                text = stringResource(R.string.settings_about_credit),
                 style = MaterialTheme.typography.bodySmall,
-                color = palette.textMuted
+                color = palette.textMuted,
+                modifier = Modifier.testTag("settings_about_credit")
             )
         }
 
-        ItemGap()
-
-        // 12. Footer: exactly one string, resolved from resources, last item.
-        FooterCard(text = stringResource(R.string.settings_footer))
-
+        // Framework bottom padding: About is the last item.
         Spacer(Modifier.height(32.dp))
     }
 }

@@ -120,6 +120,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onOpenCityPicker = { showCityPicker = true },
                         onSelectLanguage = viewModel::setLanguage,
                         onSelectClockFormat = viewModel::setClockFormat,
+                        onSelectWidgetLanguage = viewModel::setWidgetLanguage,
                         onSummerTimeChange = viewModel::setSummerTime,
                         onNotificationsEnabled = viewModel::setNotificationsEnabled,
                         onEventEnabled = viewModel::setEventEnabled,

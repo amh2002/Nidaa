@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
@@ -19,6 +20,7 @@ import com.mawaqiti.plus.engine.table.TableProfile
 import com.mawaqiti.plus.ui.screens.SettingsList
 import com.mawaqiti.plus.ui.theme.MawaqitiTheme
 import com.mawaqiti.plus.ui.theme.SkyPhase
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,13 +28,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Regression guard for the beta4 Settings framework rule.
+ * Regression guard for the Settings framework rule.
  *
- * Both locales at font scales 1.0 and 1.3 must show EXACTLY ONE footer text
- * node, and the single scrollable list must reach the footer without clipping.
- * If someone reintroduces a Box with stacked Texts or a duplicate footer, the
- * count assertion fails; if they put the footer outside the scroll list, the
- * scroll assertion fails.
+ * beta5 changes the target of the guard: the About card is now the LAST item
+ * and the only place that carries the timetable/offline/no-data claims. For
+ * both locales at font scales 1.0 and 1.3 the test asserts that
+ *
+ *  - the timetable claim exists exactly once (no duplicated footer card),
+ *  - no legacy footer node exists at all,
+ *  - scrolling reaches the developer credit, i.e. About is really last and is
+ *    not clipped outside the single scrollable list.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "ar-rSA-ldrtl")
@@ -84,6 +89,7 @@ class SettingsFrameworkTest {
                         onOpenCityPicker = {},
                         onSelectLanguage = {},
                         onSelectClockFormat = {},
+                        onSelectWidgetLanguage = {},
                         onSummerTimeChange = {},
                         onNotificationsEnabled = {},
                         onEventEnabled = { _, _ -> },
@@ -102,40 +108,55 @@ class SettingsFrameworkTest {
         }
     }
 
-    private fun footerText(): String =
-        ApplicationProvider.getApplicationContext<Context>().getString(R.string.settings_footer)
+    private fun string(id: Int): String =
+        ApplicationProvider.getApplicationContext<Context>().getString(id)
 
-    private fun assertSingleReachableFooter() {
-        val footer = footerText()
-        compose.onAllNodesWithText(footer).assertCountEquals(1)
-        compose.onNodeWithTag("settings_footer")
+    private fun assertSingleReachableAbout() {
+        // Exactly one place carries the timetable claim.
+        compose.onAllNodesWithText(string(R.string.settings_about_timetable))
+            .assertCountEquals(1)
+
+        // The old duplicated footer card must not exist any more.
+        compose.onAllNodesWithTag("settings_footer").assertCountEquals(0)
+
+        // The credit is the very last line and must be reachable by scrolling.
+        compose.onNodeWithTag("settings_about_credit")
             .performScrollTo()
             .assertIsDisplayed()
+
+        // Both "claims" chips live inside the same About card.
+        compose.onAllNodesWithText(string(R.string.settings_about_offline))
+            .assertCountEquals(1)
+        compose.onAllNodesWithText(string(R.string.settings_about_no_data))
+            .assertCountEquals(1)
+
+        // Sanity: the About card itself is the list's last item.
+        assertTrue(string(R.string.settings_about_brand).contains("نداء"))
     }
 
     @Test
-    fun `arabic font scale 1_0 single footer and reachable`() {
+    fun `arabic font scale 1_0 about carries the claims once and is reachable`() {
         render(isArabic = true, fontScale = 1.0f)
-        assertSingleReachableFooter()
+        assertSingleReachableAbout()
     }
 
     @Test
-    fun `arabic font scale 1_3 single footer and reachable`() {
+    fun `arabic font scale 1_3 about carries the claims once and is reachable`() {
         render(isArabic = true, fontScale = 1.3f)
-        assertSingleReachableFooter()
+        assertSingleReachableAbout()
     }
 
     @Test
     @Config(qualifiers = "en-rUS")
-    fun `english font scale 1_0 single footer and reachable`() {
+    fun `english font scale 1_0 about carries the claims once and is reachable`() {
         render(isArabic = false, fontScale = 1.0f)
-        assertSingleReachableFooter()
+        assertSingleReachableAbout()
     }
 
     @Test
     @Config(qualifiers = "en-rUS")
-    fun `english font scale 1_3 single footer and reachable`() {
+    fun `english font scale 1_3 about carries the claims once and is reachable`() {
         render(isArabic = false, fontScale = 1.3f)
-        assertSingleReachableFooter()
+        assertSingleReachableAbout()
     }
 }

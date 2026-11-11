@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Widget layout, ARABIC reading order (the default).
+
+  The layout direction is forced to LTR and every row is mirrored explicitly in
+  the XML, so the visual order is identical on every launcher and every API
+  level, regardless of the host locale. The English twin is
+  widget_mawaqiti_en.xml; WidgetUpdater picks one at update time from the
+  widget-only `widget.lang` setting.
+
+  Fixed 4x2 geometry: android:resizeMode="none" in the provider XML, so no
+  collapsed/expanded variants are needed.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
+    android:layoutDirection="ltr"
     android:orientation="vertical"
     android:padding="12dp">
 
-    <!-- Row 1: city + wordmark -->
+    <!-- Row 1: city on the LEFT edge, wordmark on the RIGHT edge.
+         A fixed 12dp Space is the guaranteed minimum gap between them. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,22 +34,28 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:gravity="start|center_vertical"
             android:maxLines="1"
             android:textColor="@color/widget_text"
             android:textSize="15sp"
             android:textStyle="bold" />
 
+        <Space
+            android:layout_width="@dimen/widget_row_gap"
+            android:layout_height="1dp" />
+
         <TextView
             android:id="@+id/widget_wordmark"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
+            android:gravity="end|center_vertical"
             android:maxLines="1"
             android:textColor="@color/widget_gold"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Row 2: date + next prayer -->
+    <!-- Row 2: date on the LEFT, gold next-prayer pill on the RIGHT. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -49,9 +69,14 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:gravity="start|center_vertical"
             android:maxLines="1"
             android:textColor="@color/widget_text_muted"
             android:textSize="11sp" />
+
+        <Space
+            android:layout_width="8dp"
+            android:layout_height="1dp" />
 
         <TextView
             android:id="@+id/widget_next"
@@ -69,7 +94,7 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Row 3: first three times -->
+    <!-- Row A, right -> left: الفجر، الشروق، الظهر (so Dhuhr is leftmost here). -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -88,7 +113,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/widget_fajr_name"
+                android:id="@+id/widget_dhuhr_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
@@ -96,7 +121,7 @@
                 android:textSize="10sp" />
 
             <TextView
-                android:id="@+id/widget_fajr_time"
+                android:id="@+id/widget_dhuhr_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
@@ -138,7 +163,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/widget_dhuhr_name"
+                android:id="@+id/widget_fajr_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
@@ -146,7 +171,7 @@
                 android:textSize="10sp" />
 
             <TextView
-                android:id="@+id/widget_dhuhr_time"
+                android:id="@+id/widget_fajr_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
@@ -156,7 +181,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Row 4: last three times -->
+    <!-- Row B, right -> left: العصر، المغرب، العشاء (so Isha is leftmost here). -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -175,7 +200,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/widget_asr_name"
+                android:id="@+id/widget_isha_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
@@ -183,7 +208,7 @@
                 android:textSize="10sp" />
 
             <TextView
-                android:id="@+id/widget_asr_time"
+                android:id="@+id/widget_isha_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
@@ -225,7 +250,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/widget_isha_name"
+                android:id="@+id/widget_asr_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
@@ -233,7 +258,7 @@
                 android:textSize="10sp" />
 
             <TextView
-                android:id="@+id/widget_isha_time"
+                android:id="@+id/widget_asr_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"

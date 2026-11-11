@@ -36,8 +36,9 @@ import com.mawaqiti.plus.ui.theme.skyPalette
  *
  * The Settings screen is ONE scrollable list. Every item is a [SettingsCard];
  * rows inside it use [SettingsToggleRow] / [SegmentedPillRow]; the page ends
- * with exactly one [FooterCard]. Nothing here stacks children in a Box or uses
- * offsets/fixed heights, so two texts can never paint over each other again.
+ * with the About card (or, if a legal footer is ever needed, exactly one
+ * [FooterCard]). Nothing here stacks children in a Box or uses offsets/fixed
+ * heights, so two texts can never paint over each other again.
  */
 @Composable
 fun SettingsCard(
@@ -191,8 +192,37 @@ fun SettingsSmallButton(
 }
 
 /**
+ * Non-interactive info chip for the About card ("Fully offline",
+ * "Collects no data"). It is content inside a [SettingsCard], never a page
+ * item, and it has automatic height, so a large font scale wraps instead of
+ * clipping.
+ */
+@Composable
+fun InfoChip(text: String, modifier: Modifier = Modifier) {
+    val palette = skyPalette
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(palette.text.copy(alpha = 0.07f))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = palette.text,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/**
  * Exactly one Text, always the last list item. The test tag is what the
  * regression guard counts: it must resolve to a single semantics node.
+ *
+ * beta5 note: the Settings page no longer renders a footer card — its claims
+ * moved into the single About card, so nothing is duplicated. The component
+ * stays in the framework for any future legal footer.
  */
 @Composable
 fun FooterCard(text: String, modifier: Modifier = Modifier) {

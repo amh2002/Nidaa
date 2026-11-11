@@ -166,7 +166,7 @@ class CalibrationTest {
         val builder = StringBuilder()
         builder.appendLine("# CALIBRATION.md")
         builder.appendLine()
-        builder.appendLine("Solar engine (MWL) versus the official timetable that Mawaqiti Plus")
+        builder.appendLine("Solar engine (MWL) versus the official timetable that Nidaa")
         builder.appendLine("displays. **Informative only:** the table path is the product truth.")
         builder.appendLine()
         builder.appendLine("## Method")

@@ -120,7 +120,7 @@ class TableFidelityTest {
         builder.appendLine("# TABLE_FIDELITY.md")
         builder.appendLine()
         builder.appendLine("Bit-exactness of `TableEngine`, the primary calculation path of")
-        builder.appendLine("Mawaqiti Plus BETA.")
+        builder.appendLine("Nidaa BETA.")
         builder.appendLine()
         builder.appendLine("## Engine")
         builder.appendLine()

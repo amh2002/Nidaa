@@ -1,7 +1,7 @@
 # TABLE_FIDELITY.md
 
 Bit-exactness of `TableEngine`, the primary calculation path of
-Mawaqiti Plus BETA.
+Nidaa BETA.
 
 ## Engine
 

@@ -133,8 +133,8 @@ class AdhanPlaybackService : Service() {
     }
 
     companion object {
-        private const val ACTION_START = "com.mawaqiti.plus.action.START_ADHAN"
-        private const val ACTION_STOP = "com.mawaqiti.plus.action.STOP_ADHAN"
+        private const val ACTION_START = "com.nidaa.prayer.action.START_ADHAN"
+        private const val ACTION_STOP = "com.nidaa.prayer.action.STOP_ADHAN"
         private const val EXTRA_NOTIFICATION_ID = "notification_id"
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_BODY = "body"

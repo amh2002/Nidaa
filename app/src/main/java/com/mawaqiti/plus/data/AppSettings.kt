@@ -10,6 +10,10 @@ enum class AppLanguage(val tag: String) {
     companion object {
         fun fromTag(tag: String?): AppLanguage =
             entries.firstOrNull { it.tag.equals(tag, ignoreCase = true) } ?: ARABIC
+
+        /** Null when [tag] is absent or not one of the two known tags. */
+        fun fromTagOrNull(tag: String?): AppLanguage? =
+            entries.firstOrNull { it.tag.equals(tag, ignoreCase = true) }
     }
 }
 
@@ -27,5 +31,15 @@ data class AppSettings(
     /** Display-only clock preference; default is the original app's 24h. */
     val clockFormat: ClockFormat = ClockFormat.H24,
     /** Per-event notification configuration, stored independently per event. */
-    val notifications: NotificationSettings = NotificationSettings()
-)
+    val notifications: NotificationSettings = NotificationSettings(),
+    /**
+     * Widget-only language override (`widget.lang` in DataStore). Null means
+     * "never chosen": the widget then follows [language], which is exactly the
+     * spec's "default = the app's current language at first render".
+     */
+    val widgetLanguage: AppLanguage? = null
+) {
+    /** The language the widget must render with right now. */
+    val effectiveWidgetLanguage: AppLanguage
+        get() = widgetLanguage ?: language
+}
