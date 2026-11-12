@@ -56,7 +56,6 @@ class AlarmReceiver : BroadcastReceiver() {
             minutes = minutes,
             clockFormat = settings.clockFormat,
             language = settings.language,
-            adhanUri = settings.notifications.adhanUri,
             isTest = false
         )
     }
@@ -77,7 +76,6 @@ class AlarmReceiver : BroadcastReceiver() {
             minutes = displayMinutes,
             clockFormat = settings.clockFormat,
             language = settings.language,
-            adhanUri = settings.notifications.adhanUri,
             isTest = true
         )
     }

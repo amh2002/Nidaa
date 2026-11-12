@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -102,8 +101,7 @@ fun SettingsScreen(
     onEventMode: (NotifyEvent, NotifyMode) -> Unit,
     onApplyModeToEnabled: (NotifyMode) -> Unit,
     onTestEvent: (NotifyEvent, NotifyMode) -> Unit,
-    onTestMode: (NotifyMode) -> Unit,
-    onAdhanUri: (String?) -> Unit
+    onTestMode: (NotifyMode) -> Unit
 ) {
     val context = LocalContext.current
     var statusTick by remember { mutableIntStateOf(0) }
@@ -144,20 +142,6 @@ fun SettingsScreen(
         }
     }
 
-    val adhanPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
-            runCatching {
-                context.contentResolver.takePersistableUriPermission(
-                    uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            }
-            onAdhanUri(uri.toString())
-        }
-    }
-
     SettingsList(
         settings = settings,
         city = city,
@@ -178,8 +162,6 @@ fun SettingsScreen(
         onApplyModeToEnabled = onApplyModeToEnabled,
         onTestEvent = onTestEvent,
         onTestMode = onTestMode,
-        onAdhanUri = onAdhanUri,
-        onChooseAdhan = { adhanPicker.launch(arrayOf("audio/*")) },
         onOpenExactAlarmSettings = { NotificationScheduler.openExactAlarmSettings(context) },
         onOpenNotificationSettings = { openNotificationSettings(context) },
         onOpenBatterySettings = { openBatterySettings(context) }
@@ -230,8 +212,6 @@ fun SettingsList(
     onApplyModeToEnabled: (NotifyMode) -> Unit,
     onTestEvent: (NotifyEvent, NotifyMode) -> Unit,
     onTestMode: (NotifyMode) -> Unit,
-    onAdhanUri: (String?) -> Unit,
-    onChooseAdhan: () -> Unit,
     onOpenExactAlarmSettings: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onOpenBatterySettings: () -> Unit
@@ -390,7 +370,7 @@ fun SettingsList(
 
         ItemGap()
 
-        // 5. Notifications master switch.
+        // 6. Notifications master switch.
         SettingsCard(
             title = stringResource(R.string.settings_notifications),
             description = stringResource(R.string.settings_notifications_desc)
@@ -403,7 +383,7 @@ fun SettingsList(
             )
         }
 
-        // 6. One card per event, each with its own switch, mode and test button.
+        // 7. One card per event, each with its own switch, mode and test button.
         for (event in NotifyEvent.entries) {
             ItemGap()
             val current = notifications.forEvent(event)
@@ -455,7 +435,7 @@ fun SettingsList(
 
         ItemGap()
 
-        // 7. Apply one mode to every enabled event.
+        // 8. Apply one mode to every enabled event.
         SettingsCard(
             title = stringResource(R.string.notify_apply_all),
             description = stringResource(R.string.notify_apply_all_desc)
@@ -478,38 +458,6 @@ fun SettingsList(
         }
 
         ItemGap()
-
-        // 8. Adhan sound: bundled chime by default, user file optional.
-        SettingsCard(title = stringResource(R.string.notify_adhan_sound)) {
-            Text(
-                text = if (notifications.adhanUri == null) {
-                    stringResource(R.string.notify_adhan_default)
-                } else {
-                    stringResource(R.string.notify_adhan_custom) + ": " +
-                        (Uri.parse(notifications.adhanUri).lastPathSegment ?: "")
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = palette.text
-            )
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                SettingsSmallButton(
-                    label = stringResource(R.string.notify_choose_file),
-                    onClick = onChooseAdhan,
-                    modifier = Modifier.weight(1f)
-                )
-                if (notifications.adhanUri != null) {
-                    SettingsSmallButton(
-                        label = stringResource(R.string.notify_adhan_default),
-                        onClick = { onAdhanUri(null) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
 
         // 9. System status rows, only when they need attention.
         if (!canScheduleExact) {

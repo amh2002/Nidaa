@@ -72,7 +72,6 @@ fun PrayerScreen(
     isArabic: Boolean,
     clockFormat: ClockFormat,
     onChooseCity: () -> Unit,
-    onToggleLanguage: () -> Unit,
     onOpenQibla: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -97,8 +96,7 @@ fun PrayerScreen(
             date = date,
             isArabic = isArabic,
             palette = palette,
-            onChooseCity = onChooseCity,
-            onToggleLanguage = onToggleLanguage
+            onChooseCity = onChooseCity
         )
 
         SkyDecorBand()
@@ -159,8 +157,7 @@ private fun Header(
     date: LocalDate,
     isArabic: Boolean,
     palette: SkyPalette,
-    onChooseCity: () -> Unit,
-    onToggleLanguage: () -> Unit
+    onChooseCity: () -> Unit
 ) {
     Spacer(Modifier.height(10.dp))
     Row(
@@ -176,11 +173,10 @@ private fun Header(
             lineHeight = 42.sp,
             color = palette.text
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            CityChip(city = city, isArabic = isArabic, palette = palette, onClick = onChooseCity)
-            Spacer(Modifier.width(8.dp))
-            LanguagePill(isArabic = isArabic, palette = palette, onClick = onToggleLanguage)
-        }
+        // beta6: the "EN / ع" language pill is gone. Language is changed in
+        // Settings only; the header row keeps the wordmark and the city chip on
+        // opposite ends, so removing the pill leaves no gap or misalignment.
+        CityChip(city = city, isArabic = isArabic, palette = palette, onClick = onChooseCity)
     }
 
     Spacer(Modifier.height(8.dp))
@@ -245,29 +241,6 @@ private fun CityChip(
             contentDescription = stringResource(R.string.city_chip_desc),
             tint = palette.text,
             modifier = Modifier.size(18.dp)
-        )
-    }
-}
-
-@Composable
-private fun LanguagePill(
-    isArabic: Boolean,
-    palette: SkyPalette,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(38.dp)
-            .clip(CircleShape)
-            .background(palette.chipFill)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = if (isArabic) "EN" else "ع",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = palette.text
         )
     }
 }

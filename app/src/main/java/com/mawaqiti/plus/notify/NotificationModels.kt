@@ -56,12 +56,14 @@ data class EventNotification(
 /**
  * All notification state. Defaults are the beta4 specification:
  * Fajr/Dhuhr/Asr/Maghrib/Isha = ON + Adhan, Sunrise/Last third = OFF + Silent.
+ *
+ * beta6: there is no per-user adhan file any more. The adhan always comes from
+ * `res/raw/adhan.mp3`, so the mode (adhan / vibrate / silent) is the only
+ * delivery choice left.
  */
 data class NotificationSettings(
     val masterEnabled: Boolean = true,
-    val events: Map<NotifyEvent, EventNotification> = DEFAULT_EVENTS,
-    /** Persisted content URI of a user-picked Adhan file; null = bundled chime. */
-    val adhanUri: String? = null
+    val events: Map<NotifyEvent, EventNotification> = DEFAULT_EVENTS
 ) {
     fun forEvent(event: NotifyEvent): EventNotification =
         events[event] ?: DEFAULT_EVENTS.getValue(event)

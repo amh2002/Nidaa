@@ -1,19 +1,193 @@
 # BETA_NOTES.md
 
-**نداء | Nidaa** — latest release `1.0.0-beta5` (versionCode 5), 11 Nov 2026
+**نداء | Nidaa** — latest release `1.0.0-beta6` (versionCode 6), 12 Nov 2026
 
 | Item | Value |
 |---|---|
 | Package | `com.nidaa.prayer` |
-| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta5.apk` |
-| Size | 21,903,686 bytes |
-| SHA-256 | `B2216695D12EC28D7519B254CF71C0F5CB3989A5BF4D113A8914FA59436E1483` |
+| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta6.apk` |
+| Size | 21,740,847 bytes |
+| SHA-256 | `5515301B7508B911A018B861D8436AA74F7011FE6A30FCE2792C68659D9EA1D8` |
 | Build | debug (`assembleDebug`), not Play-store signed |
 | Minimum Android | 7.0 (API 24), target API 36 |
 | Launcher label | `نداء - Nidaa` (identical in every locale) |
 | Suggested store title | «نداء | Nidaa - أوقات الصلاة» |
 
 ---
+
+## beta6 — owner's adhan, lock-screen notifications, no EN pill, widget crash fix (W5)
+
+**Install over beta5.** `applicationId` stays `com.nidaa.prayer`, so
+`adb install -r Nidaa-1.0.0-beta6.apk` upgrades in place and keeps the app data.
+Widgets placed by **beta4** are orphans (beta4's `applicationId` was
+`com.mawaqiti.plus`): remove the old widget from the home screen once and add
+the beta6 one. Widgets added in beta5 update in place.
+
+### 1. The owner's adhan is the only adhan
+
+| Item | Value |
+|---|---|
+| Source | `C:\rea_ws\adan\adan_nasr_alk6amy.mp3` (owner's recording) |
+| Shipped | `app/src/main/res/raw/adhan.mp3` (lower-case resource name) |
+| Size | 208,717 bytes |
+| SHA-256 | `83CEC6D89CD83564225C3A9745A93716E21E68CF3612FE3C6295AD0F40F4FAFA` |
+| Container | MP3 with ID3v2 header (`49 44 33 03 00`) |
+
+Removed completely:
+
+* the «صوت الأذان / Adhan sound» card and its «اختيار ملف / Choose file» and
+  «الافتراضي / Default» buttons,
+* the Storage Access Framework picker (`ActivityResultContracts.OpenDocument`),
+  `takePersistableUriPermission`, `releasePersistableUriPermission` on the old
+  grant, and the `notify_adhan_uri` DataStore key,
+* the `adhanUri` parameter threaded through `NotificationDispatcher`,
+  `AlarmReceiver`, `AdhanPlaybackService` and `NotificationSettings`,
+* the placeholder chime (`res/raw/placeholder_adhan.wav`).
+
+The four strings behind the picker (`notify_adhan_sound`,
+`notify_adhan_default`, `notify_adhan_custom`, `notify_choose_file`) are gone
+from both locales. Playback is always
+`MediaPlayer` on `resources.openRawResourceFd(R.raw.adhan)` with
+`AudioAttributes.USAGE_ALARM`, inside the existing foreground service. A decode
+failure stops the service instead of leaving it alive.
+
+**Per-event modes are unchanged**: each of the six prayers can still be
+`أذان / Adhan`, `اهتزاز / Vibrate` or `صامت / Silent`, independently.
+
+### 2. Notifications are visible on the lock screen
+
+| Channel (new id) | Importance | Sound | Vibration | Lock screen |
+|---|---|---|---|---|
+| `adhan_v2` | HIGH | none (app plays the audio) | off | **PUBLIC** |
+| `silent_v2` | **DEFAULT** | none | off | **PUBLIC** |
+| `vibrate_v2` | HIGH | none | on | **PUBLIC** |
+
+*Every* posted notification also sets
+`NotificationCompat.VISIBILITY_PUBLIC` (prayer notifications and the adhan
+foreground-service notification).
+
+**Why versioned ids.** Android notification channels are immutable: once
+created, importance, sound and lock-screen visibility cannot be changed by
+re-creating a channel with the same id. The owner's device already has the
+beta4/beta5 `adhan` / `silent` / `vibrate` channels, so beta6:
+
+1. deletes the legacy ids at every startup (idempotent, wrapped in `runCatching`),
+2. creates `adhan_v2` / `silent_v2` / `vibrate_v2` with the new behaviour.
+
+The result is exactly three channels in system settings, with no duplicate
+"Adhan" entry that could not show on the lock screen. `silent` moved from LOW to
+DEFAULT because Android hides low-importance notifications on the lock screen.
+The API 33+ `POST_NOTIFICATIONS` request is unchanged.
+
+### 3. No language button on the main screen
+
+The `EN / ع` pill is deleted from the prayer-screen header, together with its
+`LanguagePill` composable, the `onToggleLanguage` parameter and the extra inner
+`Row` that grouped it with the city chip. The header row keeps the wordmark and
+the `CityChip` on opposite ends via `Arrangement.SpaceBetween`, so there is no
+layout gap or misalignment.
+
+Language is changed **only** in Settings → اللغة / Language, through the
+existing `SegmentedPillRow`. `AppCompatDelegate.setApplicationLocales` and
+`locales_config.xml` are untouched.
+
+### 4. W5 — "Problem loading widget": root cause is BOTH
+
+a) **Orphaned beta4 instances.** `git diff v1.0.0-beta4 v1.0.0-beta5 --
+app/build.gradle.kts` shows `applicationId com.mawaqiti.plus` →
+`com.nidaa.prayer`. Beta4's widget receiver component was
+`com.mawaqiti.plus/com.mawaqiti.plus.notify.MawaqitiWidgetProvider`; after the
+rename no process can update it, so the launcher shows its cached error
+placeholder.
+
+b) **A real beta5 inflation defect.** Beta5 added
+`widget_mawaqiti_ar.xml` and rewrote the English layout; both used
+`<Space android:layout_width="@dimen/widget_row_gap" .../>` for the W1 gap.
+`android.widget.Space` is **not** annotated
+`android.widget.RemoteViews.RemoteView`. `RemoteViews` implements
+`LayoutInflater.Filter` (verified with `javap`: `public class
+android.widget.RemoteViews implements android.view.LayoutInflater$Filter`) and
+its `onLoadClass` accepts only `@RemoteView` classes, so the launcher threw
+`InflateException: Class not allowed to be inflated android.widget.Space` and
+rendered "Problem loading widget". Beta4's single layout had no `<Space>` —
+which is why the crash appeared exactly in beta5.
+
+**Fix.** The gap is now a margin (`layout_marginEnd="@dimen/widget_row_gap"` on
+the Arabic city, `layout_marginStart` on the English city; 8 dp margins on row
+2). The guaranteed 12 dp separation and the beta5 reading order are unchanged.
+
+**Hardening (Phase C).**
+
+* Every widget id is updated inside its own `try/catch`.
+* Before pushing, the updater inflates the layout with the platform's own rule:
+  `RemoteViews(pkg, layoutId).onLoadClass(clazz)` used as a
+  `LayoutInflater.Filter`. A class the launcher would reject is caught here.
+* On any failure the updater pushes `res/layout/widget_mawaqiti_fallback.xml`:
+  `LinearLayout` + two `TextView`s, static background drawable, city and
+  next-prayer time in the system typeface, no font resource, no spacer view.
+  "Problem loading widget" is not an outcome this updater can produce.
+* `MawaqitiWidgetProvider` handles the broadcast with `goAsync()` on a
+  coroutine (never blocking the broadcast thread) and closes the
+  `PendingResult` in `finally`; `onReceive` is guarded too.
+* Every failure is recorded with widget id, app version, API level, device and
+  the **full original stack trace**:
+  `Log.e("MawaqitiWidget", …)` and
+  `<external files dir>/widget-crash.log`.
+  Pull it with:
+  `adb pull /sdcard/Android/data/com.nidaa.prayer/files/widget-crash.log`.
+  The desktop counterpart of that file is `report/log.md`, which holds this
+  beta's audit findings.
+
+### Guard — beta5 widget behaviour kept
+
+* fixed 4x2 (`resizeMode="none"`, `targetCellWidth=4`, `targetCellHeight=2`),
+* `widget.lang` AR/EN independent of the UI language; when it is unset the
+  widget follows the UI language (beta5 semantics, asserted by
+  `WidgetLanguageTest`); Arabic is the default only on the hard-failure path,
+* AR layout right→left, EN layout mirrored left→right, forced LTR,
+* row 1: wordmark and city on opposite ends, 12 dp minimum gap, city ellipsized
+  to one line.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| Unit tests | **102 tests / 21 suites / 0 failures** |
+| Fidelity gate (pre-build) | **124/124 CSV, 118,368/118,368 core, 0 mismatches** |
+| Compile | `clean test assembleDebug` → **BUILD SUCCESSFUL** |
+| APK | `dist/Nidaa-1.0.0-beta6.apk`, 21,740,847 bytes |
+| SHA-256 | `5515301B7508B911A018B861D8436AA74F7011FE6A30FCE2792C68659D9EA1D8` |
+| `aapt2 dump badging` | `com.nidaa.prayer`, versionCode 6, `1.0.0-beta6`, min 24, target 36 |
+| Widget provider XML | `resizeMode=0x0`, target 4x2, min 250x110 dp, `widgetCategory=home_screen`, `initialLayout=previewLayout=widget_mawaqiti_ar` |
+| Widget receiver | `exported=false`, `APPWIDGET_UPDATE` + `android.appwidget.provider` meta-data |
+| APK contents | `res/raw/adhan.mp3`, `widget_mawaqiti_{ar,en,fallback}.xml` present |
+| Engine/assets | `git status` clean for `engine/` and `cities.json` |
+
+> **Verification environment (unchanged).** There is still no Android device
+> and no emulator binary in this workspace (`adb devices` is empty,
+> `C:\android-sdk\emulator\emulator.exe` is absent). Device-only evidence
+> (real launcher inflation, lock-screen rendering, long-press resize handles,
+> `dumpsys notification`) could not be captured. It is substituted with
+> Robolectric tests (the platform RemoteViews filter is exercised directly),
+> the `aapt2` inspection above, and generated previews in
+> `report/screens_beta6/`: widget AR/EN in 12h/24h, the longest city name, the
+> new fallback widget, and the header without the language pill.
+
+### What to check on a real device
+
+1. Install `Nidaa-1.0.0-beta6.apk` over beta5 (same package).
+2. Wait for a prayer (or use the debug test buttons in Settings) and confirm the
+   owner's adhan plays; confirm Settings no longer offers a file picker.
+3. Lock the screen before a notification: Adhan, Silent and Vibrate must all
+   show their content on the lock screen (Silent is DEFAULT importance now).
+4. Open the app: the header has the wordmark and the city chip only — no
+   `EN / ع` button. Change the language from Settings and confirm the UI follows.
+5. Remove the beta4 widget, add the beta6 widget: it must show city, date and
+   the six times — never "Problem loading widget". Long-press shows no resize
+   handles.
+6. If anything still fails, pull
+   `/sdcard/Android/data/com.nidaa.prayer/files/widget-crash.log` and send it
+   with the exact Android build and launcher name.
 
 ## beta5 — rename, "the Call" icon, About restructure, widget fixes
 

@@ -31,7 +31,6 @@ class SettingsRepository(private val context: Context) {
         /** beta5: widget language, intentionally independent of the UI language. */
         val widgetLanguage = stringPreferencesKey("widget.lang")
         val notifyMaster = booleanPreferencesKey("notify_master")
-        val adhanUri = stringPreferencesKey("notify_adhan_uri")
         fun eventEnabled(event: NotifyEvent) =
             booleanPreferencesKey("notify_${event.storageKey}_enabled")
         fun eventMode(event: NotifyEvent) =
@@ -60,8 +59,7 @@ class SettingsRepository(private val context: Context) {
                                 ?.let(NotifyMode::fromKey)
                                 ?: default.mode
                         )
-                    },
-                    adhanUri = prefs[Keys.adhanUri]
+                    }
                 ),
                 widgetLanguage = AppLanguage.fromTagOrNull(prefs[Keys.widgetLanguage])
             )
@@ -104,13 +102,35 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    suspend fun setAdhanUri(uri: String?) = edit {
-        if (uri == null) it.remove(Keys.adhanUri) else it[Keys.adhanUri] = uri
-    }
-
     /** Widget-only language. Does not touch the app UI language. */
     suspend fun setWidgetLanguage(language: AppLanguage) = edit {
         it[Keys.widgetLanguage] = language.tag
+    }
+
+    /**
+     * beta6 migration, run once at process start.
+     *
+     * Earlier betas let the user pick an adhan file through the Storage Access
+     * Framework and persisted the resulting `content://` URI under
+     * `notify_adhan_uri`, together with a persisted read grant. That feature is
+     * gone: the app has exactly one adhan source (`res/raw/adhan.mp3`). This
+     * removes the stale key and returns it so the caller can release the grant.
+     */
+    suspend fun purgeLegacyAdhanUri(): String? {
+        var stored: String? = null
+        context.dataStore.edit { prefs ->
+            stored = prefs[LEGACY_ADHAN_URI_KEY]
+            prefs.remove(LEGACY_ADHAN_URI_KEY)
+        }
+        return stored
+    }
+
+    private companion object {
+        /**
+         * Migration-only key. It is deliberately not part of [AppSettings]:
+         * nothing can read, write or display a custom adhan file any more.
+         */
+        val LEGACY_ADHAN_URI_KEY = stringPreferencesKey("notify_adhan_uri")
     }
 
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {

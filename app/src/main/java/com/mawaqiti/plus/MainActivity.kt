@@ -96,11 +96,6 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         isArabic = isArabic,
                         clockFormat = settings.clockFormat,
                         onChooseCity = { showCityPicker = true },
-                        onToggleLanguage = {
-                            viewModel.setLanguage(
-                                if (isArabic) AppLanguage.ENGLISH else AppLanguage.ARABIC
-                            )
-                        },
                         onOpenQibla = { selectedTab = 1 },
                         onOpenSettings = { selectedTab = 2 }
                     )
@@ -127,8 +122,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onEventMode = viewModel::setEventMode,
                         onApplyModeToEnabled = viewModel::applyModeToEnabledEvents,
                         onTestEvent = viewModel::testEvent,
-                        onTestMode = viewModel::testMode,
-                        onAdhanUri = viewModel::setAdhanUri
+                        onTestMode = viewModel::testMode
                     )
                 }
             }

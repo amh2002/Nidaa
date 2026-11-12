@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  beta6 / W5 fallback layout.
+
+  This is the layout the provider pushes when anything at all goes wrong while
+  building the full 4x2 widget (missing resource, unreadable settings, a
+  RemoteViews action failure, or a layout that the launcher's RemoteViews
+  inflater rejects). It is deliberately the smallest possible valid RemoteViews
+  tree:
+
+    * LinearLayout + TextView only — both are annotated @RemoteView,
+    * one static shape drawable as the background,
+    * plain system typeface (no custom font resource),
+    * no spacer view, no nested weights, no optional attributes.
+
+  It always shows the city and the next-prayer time, so the launcher never has
+  to render "Problem loading widget".
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_fallback_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical"
+    android:layoutDirection="ltr"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/widget_fallback_city"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/widget_text"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_fallback_next"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/widget_gold"
+        android:textSize="14sp" />
+</LinearLayout>

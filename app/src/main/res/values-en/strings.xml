@@ -97,10 +97,6 @@
     <string name="notify_apply_all">Apply to all</string>
     <string name="notify_apply_all_desc">Set the chosen mode for every enabled event.</string>
     <string name="notify_apply">Apply</string>
-    <string name="notify_adhan_sound">Adhan sound</string>
-    <string name="notify_adhan_default">Short test chime</string>
-    <string name="notify_adhan_custom">Custom file</string>
-    <string name="notify_choose_file">Choose file</string>
     <string name="notify_exact_title">Exact alarms are off</string>
     <string name="notify_exact_desc">Tap to allow precise alarm scheduling.</string>
     <string name="notify_permission_title">Notification permission is off</string>

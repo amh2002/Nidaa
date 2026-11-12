@@ -27,7 +27,6 @@ object NotificationDispatcher {
         minutes: Int,
         clockFormat: ClockFormat,
         language: AppLanguage,
-        adhanUri: String?,
         isTest: Boolean
     ) {
         val isArabic = language == AppLanguage.ARABIC
@@ -43,8 +42,7 @@ object NotificationDispatcher {
                 notificationId = notificationId,
                 title = title,
                 body = body,
-                stopLabel = localized.getString(R.string.notify_stop),
-                adhanUri = adhanUri
+                stopLabel = localized.getString(R.string.notify_stop)
             )
         } else {
             postQuiet(context, notificationId, mode, title, body)
@@ -82,7 +80,7 @@ object NotificationDispatcher {
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setPriority(
                 if (mode == NotifyMode.VIBRATE) NotificationCompat.PRIORITY_HIGH
-                else NotificationCompat.PRIORITY_LOW
+                else NotificationCompat.PRIORITY_DEFAULT
             )
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 

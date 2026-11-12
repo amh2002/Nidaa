@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -41,7 +42,7 @@ class WidgetLayoutTest {
 
     private fun text(view: View): TextView = view as TextView
 
-    /** Row 1 = wordmark/city, row 2 = date/pill, row A = 0..2, row B = 3. */
+    /** Row 1 = wordmark/city, row 2 = date/pill, row A = 2, row B = 3. */
     private fun assertRowOne(layout: Int, wordmarkFirst: Boolean) {
         val root = inflate(layout)
         val row1 = row(root, 0)
@@ -62,10 +63,10 @@ class WidgetLayoutTest {
 
         if (wordmarkFirst) {
             assertEquals(0, wordmarkIndex)
-            assertEquals(2, cityIndex)
+            assertEquals(1, cityIndex)
         } else {
             assertEquals(0, cityIndex)
-            assertEquals(2, wordmarkIndex)
+            assertEquals(1, wordmarkIndex)
         }
 
         assertEquals(
@@ -75,11 +76,20 @@ class WidgetLayoutTest {
             0.001f
         )
 
-        // Exactly one spacer sits between them: the guaranteed 12 dp gap.
-        assertEquals(1, Math.abs(wordmarkIndex - cityIndex) - 1)
-        val spacer = row1.getChildAt(1) as View
-        assertEquals(context.resources.getDimensionPixelSize(R.dimen.widget_row_gap).toFloat(),
-            spacer.layoutParams.width.toFloat(), 0.01f)
+        // beta6: the guaranteed 12 dp gap is a margin on the city, not a
+        // spacer view — Space is not @RemoteView and broke RemoteViews inflation.
+        assertEquals(
+            "row 1 must contain exactly the wordmark and the city",
+            2,
+            row1.childCount
+        )
+        val params = city.layoutParams as LinearLayout.LayoutParams
+        val gap = context.resources.getDimensionPixelSize(R.dimen.widget_row_gap)
+        if (wordmarkFirst) {
+            assertEquals("city must keep 12dp clear of the wordmark", gap, params.marginStart)
+        } else {
+            assertEquals("city must keep 12dp clear of the wordmark", gap, params.marginEnd)
+        }
 
         // W1: the city can never wrap or paint over the wordmark.
         assertEquals(1, text(city).maxLines)
@@ -173,5 +183,24 @@ class WidgetLayoutTest {
         // 4 cells ≈ 250 dp, 2 cells ≈ 110 dp (70 * n - 30 rule).
         assertEquals("250dp", attr("minWidth"))
         assertEquals("110dp", attr("minHeight"))
+    }
+
+    @Test
+    fun `no widget layout references a font resource or a non RemoteViews spacer`() {
+        // beta6 / W5: @font/ breaks RemoteViews inflation on API 24-25 and a
+        // Space view is rejected by the platform filter — both are banned.
+        for (name in listOf(
+            "widget_mawaqiti_ar",
+            "widget_mawaqiti_en",
+            "widget_mawaqiti_fallback"
+        )) {
+            val xml = File("src/main/res/layout/$name.xml").readText()
+            assertFalse("$name must not use @font/", xml.contains("@font/"))
+            assertFalse(
+                "$name must not contain a Space element",
+                Regex("<\\s*Space\\b").containsMatchIn(xml)
+            )
+            assertFalse("$name must not use android:fontFamily", xml.contains("fontFamily"))
+        }
     }
 }

@@ -97,8 +97,6 @@ class SettingsFrameworkTest {
                         onApplyModeToEnabled = {},
                         onTestEvent = { _, _ -> },
                         onTestMode = {},
-                        onAdhanUri = {},
-                        onChooseAdhan = {},
                         onOpenExactAlarmSettings = {},
                         onOpenNotificationSettings = {},
                         onOpenBatterySettings = {}

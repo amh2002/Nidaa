@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
@@ -41,8 +40,11 @@ class AdhanPlaybackService : Service() {
                 val body = intent.getStringExtra(EXTRA_BODY).orEmpty()
                 val stopLabel = intent.getStringExtra(EXTRA_STOP_LABEL)
                     ?: getString(R.string.notify_stop)
+                // Channels may have been removed (app data cleared / beta6
+                // migration): make sure they exist before the foreground post.
+                NotificationChannels.ensure(this)
                 startForegroundCompat(id, buildNotification(id, title, body, stopLabel))
-                play(intent.getStringExtra(EXTRA_URI))
+                play()
             }
         }
         return START_NOT_STICKY
@@ -91,7 +93,12 @@ class AdhanPlaybackService : Service() {
             .build()
     }
 
-    private fun play(uriString: String?) {
+    /**
+     * beta6: exactly one adhan source exists, `res/raw/adhan.mp3` (the owner's
+     * recording). The user-facing sound picker and every persisted SAF URI are
+     * gone, so there is no fallback branch and no content:// path here.
+     */
+    private fun play() {
         stopPlayback()
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
@@ -100,19 +107,16 @@ class AdhanPlaybackService : Service() {
         player = MediaPlayer().apply {
             setAudioAttributes(attributes)
             try {
-                if (!uriString.isNullOrBlank()) {
-                    setDataSource(this@AdhanPlaybackService, Uri.parse(uriString))
-                } else {
-                    val descriptor = resources.openRawResourceFd(R.raw.placeholder_adhan)
-                        ?: throw IllegalStateException("missing placeholder chime")
-                    descriptor.use {
-                        setDataSource(it.fileDescriptor, it.startOffset, it.length)
-                    }
+                val descriptor = resources.openRawResourceFd(R.raw.adhan)
+                    ?: throw IllegalStateException("res/raw/adhan.mp3 is missing")
+                descriptor.use {
+                    setDataSource(it.fileDescriptor, it.startOffset, it.length)
                 }
                 prepare()
                 start()
                 setOnCompletionListener { stopEverything() }
             } catch (error: Exception) {
+                // A decode failure must never leave a foreground service alive.
                 stopEverything()
             }
         }
@@ -138,7 +142,6 @@ class AdhanPlaybackService : Service() {
         private const val EXTRA_NOTIFICATION_ID = "notification_id"
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_BODY = "body"
-        private const val EXTRA_URI = "adhan_uri"
         private const val EXTRA_STOP_LABEL = "stop_label"
         private const val DEFAULT_ID = 7000
         private const val REQUEST_OPEN = 6100
@@ -149,8 +152,7 @@ class AdhanPlaybackService : Service() {
             notificationId: Int,
             title: String,
             body: String,
-            stopLabel: String,
-            adhanUri: String?
+            stopLabel: String
         ) {
             val intent = Intent(context, AdhanPlaybackService::class.java).apply {
                 action = ACTION_START
@@ -158,7 +160,6 @@ class AdhanPlaybackService : Service() {
                 putExtra(EXTRA_TITLE, title)
                 putExtra(EXTRA_BODY, body)
                 putExtra(EXTRA_STOP_LABEL, stopLabel)
-                putExtra(EXTRA_URI, adhanUri)
             }
             ContextCompat.startForegroundService(context, intent)
         }

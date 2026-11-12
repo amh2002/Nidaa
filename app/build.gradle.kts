@@ -15,8 +15,8 @@ android {
         applicationId = "com.nidaa.prayer"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0.0-beta5"
+        versionCode = 6
+        versionName = "1.0.0-beta6"
 
         // Visual verification only: -Pmawaqiti.skyPhase=dawn|day|golden|night.
         // Empty in every shipped build, so the theme always follows the clock.

@@ -30,15 +30,15 @@ class NotificationRoutingTest {
     )
 
     @Test
-    fun `mixed modes map to three distinct channels`() {
+    fun `mixed modes map to three distinct versioned channels`() {
         val plan = NotificationRouting.deliveryPlan(mixedSettings())
 
-        assertEquals("adhan", plan[NotifyEvent.FAJR])
-        assertEquals("silent", plan[NotifyEvent.DHUHR])
-        assertEquals("vibrate", plan[NotifyEvent.ASR])
-        assertEquals("adhan", plan[NotifyEvent.MAGHRIB])
-        assertEquals("vibrate", plan[NotifyEvent.ISHA])
-        assertEquals("silent", plan[NotifyEvent.SUNRISE])
+        assertEquals("adhan_v2", plan[NotifyEvent.FAJR])
+        assertEquals("silent_v2", plan[NotifyEvent.DHUHR])
+        assertEquals("vibrate_v2", plan[NotifyEvent.ASR])
+        assertEquals("adhan_v2", plan[NotifyEvent.MAGHRIB])
+        assertEquals("vibrate_v2", plan[NotifyEvent.ISHA])
+        assertEquals("silent_v2", plan[NotifyEvent.SUNRISE])
     }
 
     @Test

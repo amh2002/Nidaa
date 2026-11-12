@@ -97,10 +97,6 @@
     <string name="notify_apply_all">تطبيق على الكل</string>
     <string name="notify_apply_all_desc">تعيين الوضع المحدد لكل الأوقات المفعّلة.</string>
     <string name="notify_apply">تطبيق</string>
-    <string name="notify_adhan_sound">صوت الأذان</string>
-    <string name="notify_adhan_default">نغمة تجريبية قصيرة</string>
-    <string name="notify_adhan_custom">ملف مخصص</string>
-    <string name="notify_choose_file">اختيار ملف</string>
     <string name="notify_exact_title">التنبيهات الدقيقة غير مفعلة</string>
     <string name="notify_exact_desc">اضغط للسماح بجدولة التنبيهات في وقتها بدقة.</string>
     <string name="notify_permission_title">إذن الإشعارات غير مفعل</string>

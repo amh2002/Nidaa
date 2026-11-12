@@ -165,10 +165,6 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
         scheduleNotifications()
     }
 
-    fun setAdhanUri(uri: String?) = viewModelScope.launch {
-        settingsRepository.setAdhanUri(uri)
-    }
-
     /**
      * Widget-only language. Re-renders the widget immediately (no waiting for
      * the next prayer boundary) and never touches the app UI language.
