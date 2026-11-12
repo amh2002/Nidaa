@@ -15,8 +15,8 @@ android {
         applicationId = "com.nidaa.prayer"
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.0.0-beta6"
+        versionCode = 7
+        versionName = "1.0.0-beta7"
 
         // Visual verification only: -Pmawaqiti.skyPhase=dawn|day|golden|night.
         // Empty in every shipped build, so the theme always follows the clock.
@@ -105,7 +105,10 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
     if (name.contains("Release")) {
         // The Compose test host activity is supplied by ui-test-manifest,
         // which is a debug-only dependency. Pure/JVM tests still run here.
-        filter { excludeTestsMatching("com.mawaqiti.plus.SettingsFrameworkTest") }
+        filter {
+            excludeTestsMatching("com.mawaqiti.plus.SettingsFrameworkTest")
+            excludeTestsMatching("com.mawaqiti.plus.MasterNotificationsGateTest")
+        }
     }
     testLogging {
         events("passed", "failed", "skipped")

@@ -88,6 +88,7 @@
     <string name="settings_notifications_desc">تنبيه لكل وقت، مع اختيار الأذان أو الصامت أو الاهتزاز.</string>
     <string name="notifications_master">تشغيل التنبيهات</string>
     <string name="notifications_master_desc">إيقاف هذا المفتاح يوقف كل تنبيهات الأوقات.</string>
+    <string name="notifications_off_caption">التنبيهات مطفأة — فعّلها لتعديل أوضاع الصلوات</string>
     <string name="notifications_event_enabled">تنبيه هذا الوقت</string>
     <string name="notify_mode_adhan">الأذان</string>
     <string name="notify_mode_silent">صامت</string>

@@ -13,25 +13,25 @@ import org.junit.Test
 /**
  * Phase C fidelity gate for the table engine.
  *
- * 1. Every row of `test_vectors.csv` (124 rows, the original app's own output)
- *    must match to the minute.
+ * 1. Every row of `test_vectors.csv` (392 rows: the 124 original-app vectors
+ *    plus 268 beta7 live-reference rows) must match to the minute.
  * 2. Every case of `table_expected.json` (90 cities x 8 dates x summer on/off
  *    = 1440 cases) must match the Python reference exactly.
  */
 class TableFidelityTest {
 
     @Test
-    fun all124VectorsMatchExactly() {
+    fun all392VectorsMatchExactly() {
         val evaluation = TableTestData.evaluate(TableTestData.loadVectors())
 
-        assertEquals("vector row count", 124, evaluation.total)
+        assertEquals("vector row count", 392, evaluation.total)
         assertEquals(
             "vector rows that match on all six prayers:\n" +
                 evaluation.mismatches.take(20).joinToString("\n"),
-            124,
+            392,
             evaluation.passed
         )
-        assertTrue("no vector comparisons were executed", evaluation.comparisons >= 124 * 6)
+        assertTrue("no vector comparisons were executed", evaluation.comparisons >= 392 * 6)
     }
 
     @Test
@@ -39,7 +39,7 @@ class TableFidelityTest {
         val vectors = TableTestData.evaluate(TableTestData.loadVectors())
         val sweep = evaluateSweep()
 
-        assertEquals("vector rows", 124, vectors.total)
+        assertEquals("vector rows", 392, vectors.total)
         assertEquals(0, vectors.failed)
         assertEquals("sweep cases", 1440, sweep.cases)
         assertEquals(
@@ -137,7 +137,7 @@ class TableFidelityTest {
         builder.appendLine()
         builder.appendLine("## 1. Original app vectors")
         builder.appendLine()
-        builder.appendLine("`app/src/test/resources/test_vectors.csv` holds 124 recorded day/city/profile")
+        builder.appendLine("`app/src/test/resources/test_vectors.csv` holds 392 recorded day/city/profile")
         builder.appendLine("combinations generated from the extracted tables and `p061i1.j` arithmetic.")
         builder.appendLine()
         builder.appendLine("| Metric | Result |")

@@ -18,15 +18,15 @@ Nidaa BETA.
 
 ## 1. Original app vectors
 
-`app/src/test/resources/test_vectors.csv` holds 124 recorded day/city/profile
+`app/src/test/resources/test_vectors.csv` holds 392 recorded day/city/profile
 combinations generated from the extracted tables and `p061i1.j` arithmetic.
 
 | Metric | Result |
 |---|---:|
-| Rows | 124 |
-| Rows matching on all six prayers | **124 / 124** |
-| Prayer comparisons (6 per row) | 744 |
-| Additional derived checks (last third + Fajr tomorrow) | 248 |
+| Rows | 392 |
+| Rows matching on all six prayers | **392 / 392** |
+| Prayer comparisons (6 per row) | 2352 |
+| Additional derived checks (last third + Fajr tomorrow) | 784 |
 | Mismatches | **0** |
 
 ## 2. Full city sweep
@@ -55,7 +55,7 @@ cross-checked against the independent Adhan library; see
 
 ## Verdict
 
-**PASS.** 124/124 original vectors and 1440/1440 sweep cases are bit-exact, with zero mismatches across 12512 comparisons.
+**PASS.** 392/392 original vectors and 1440/1440 sweep cases are bit-exact, with zero mismatches across 14656 comparisons.
 
 ## Reproduce
 

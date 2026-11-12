@@ -33,7 +33,7 @@ removed in this comparison so that only the astronomical model is measured.
 | dhuhr | 480 | 480 | 1.00 | 0.49 |
 | asr | 480 | 480 | 1.00 | 0.48 |
 | maghrib | 480 | 480 | 1.00 | 0.48 |
-| isha | 480 | 479 | 17.02 | 0.54 |
+| isha | 480 | 479 | 17.00 | 0.54 |
 
 ## Grazing-twilight cases
 
@@ -44,7 +44,7 @@ declination and can reject a solution that exists minutes later; the
 engine iterates to the event-time declination. Such cases are reported
 here and excluded from the pass/fail assertion.
 
-- London 2026-07-15 isha: ours=23:50 adhan=2026-07-16T00:07:00.960Z diff=17.02 min
+- London 2026-07-15 isha: ours=23:50 adhan=2026-07-16T00:07:00.114Z diff=17.00 min
 
 ## Worst deviations
 
@@ -53,21 +53,21 @@ separately above and excluded from the pass/fail assertion.
 
 | City | Date | Event | Deviation (min) |
 |---|---|---|---:|
-| London | 2026-07-15 | isha *(grazing)* | 17.02 |
-| Cape Town | 2026-06-01 | fajr | 1.00 |
-| Cape Town | 2026-06-01 | dhuhr | 1.00 |
-| Cape Town | 2026-06-01 | asr | 1.00 |
-| Cape Town | 2026-06-01 | maghrib | 1.00 |
-| Cape Town | 2026-06-15 | fajr | 1.00 |
-| Cape Town | 2026-06-15 | isha | 1.00 |
-| Cape Town | 2026-07-01 | fajr | 1.00 |
-| Cape Town | 2026-07-01 | sunrise | 1.00 |
-| Cape Town | 2026-07-01 | dhuhr | 1.00 |
-| Cape Town | 2026-07-01 | asr | 1.00 |
-| Cape Town | 2026-07-01 | maghrib | 1.00 |
-| Cape Town | 2026-07-01 | isha | 1.00 |
-| Cape Town | 2026-07-15 | fajr | 1.00 |
-| Cape Town | 2026-07-15 | sunrise | 1.00 |
+| London | 2026-07-15 | isha *(grazing)* | 17.00 |
+| Quito | 2026-01-01 | sunrise | 1.00 |
+| Quito | 2026-01-01 | asr | 1.00 |
+| Quito | 2026-01-15 | sunrise | 1.00 |
+| Quito | 2026-01-15 | dhuhr | 1.00 |
+| Quito | 2026-01-15 | asr | 1.00 |
+| Quito | 2026-01-15 | maghrib | 1.00 |
+| Quito | 2026-02-01 | dhuhr | 1.00 |
+| Quito | 2026-02-01 | maghrib | 1.00 |
+| Quito | 2026-02-15 | sunrise | 1.00 |
+| Quito | 2026-03-01 | fajr | 1.00 |
+| Quito | 2026-03-01 | dhuhr | 1.00 |
+| Quito | 2026-03-15 | sunrise | 1.00 |
+| Quito | 2026-03-15 | maghrib | 1.00 |
+| Quito | 2026-04-01 | sunrise | 1.00 |
 
 ## Cities covered
 

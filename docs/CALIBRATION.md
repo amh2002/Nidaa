@@ -28,45 +28,45 @@ calculation cannot reproduce exactly.
 
 | n | Mean (min) | Min (min) | Max (min) | Mean abs (min) | SD | Max abs (min) |
 |---:|---:|---:|---:|---:|---:|---:|
-| 4320 | -0.75 | -21 | 9 | 3.24 | 4.04 | 21 |
+| 4320 | -0.75 | -21 | 9 | 3.04 | 3.82 | 21 |
 
 ## Per event
 
 | Event | n | Mean (min) | Min | Max | Mean abs | SD |
 |---|---:|---:|---:|---:|---:|---:|
-| fajr | 720 | +0.76 | -9 | 7 | 2.25 | 2.67 |
-| sunrise | 720 | +3.26 | -4 | 9 | 3.40 | 2.20 |
-| dhuhr | 720 | +0.85 | -5 | 7 | 1.54 | 1.84 |
-| asr | 720 | +0.84 | -7 | 7 | 2.01 | 2.39 |
-| maghrib | 720 | -5.84 | -14 | 0 | 5.84 | 2.53 |
-| isha | 720 | -4.35 | -21 | 2 | 4.39 | 2.86 |
+| fajr | 720 | +0.76 | -6 | 7 | 1.92 | 2.23 |
+| sunrise | 720 | +3.26 | -3 | 9 | 3.32 | 1.91 |
+| dhuhr | 720 | +0.85 | -5 | 7 | 1.15 | 1.32 |
+| asr | 720 | +0.84 | -5 | 7 | 1.61 | 1.90 |
+| maghrib | 720 | -5.84 | -11 | 0 | 5.84 | 2.09 |
+| isha | 720 | -4.35 | -21 | 2 | 4.38 | 2.64 |
 
 ## Per country
 
 | Country | n | Mean (min) | Mean abs (min) | Max abs (min) |
 |---|---:|---:|---:|---:|
-| PS | 4224 | -0.72 | 3.24 | 14 |
+| PS | 4224 | -0.72 | 3.04 | 11 |
 | SA | 96 | -2.05 | 3.05 | 21 |
 
 ## Cities with the largest mean absolute deviation
 
 | City | Country | minDiff | Mean abs (min) | Mean (min) |
 |---|---|---:|---:|---:|
-| 3 min after Al-Quds | PS | 3 | 5.48 | -5.48 |
-| Acre | PS | 3 | 5.21 | -5.00 |
-| 3 min before Al-Quds | PS | -7 | 4.73 | +4.52 |
-| 2 min after Al-Quds | PS | 2 | 4.48 | -4.48 |
-| Rafah | PS | -2 | 4.19 | +3.40 |
-| 2 min before Al-Quds | PS | -6 | 4.15 | +3.52 |
-| Beit She'an | PS | 0 | 3.98 | -3.69 |
-| Dura | PS | 2 | 3.81 | -3.69 |
-| Khan Yunis | PS | -1 | 3.77 | +2.19 |
-| Sakhnin | PS | 0 | 3.77 | -2.85 |
-| Gaza | PS | -2 | 3.77 | +2.52 |
-| 1 min before Al-Quds | PS | -5 | 3.73 | +2.52 |
-| Yatta | PS | -4 | 3.69 | +2.10 |
-| Jaffa | PS | -3 | 3.67 | +2.38 |
-| Nazareth | PS | 0 | 3.65 | -2.94 |
+| 5 min after Al-Quds | PS | 3 | 5.48 | -5.48 |
+| 5 min before Al-Quds | PS | -7 | 4.73 | +4.52 |
+| 4 min after Al-Quds | PS | 2 | 4.48 | -4.48 |
+| 4 min before Al-Quds | PS | -6 | 4.15 | +3.52 |
+| 3 min before Al-Quds | PS | -5 | 3.73 | +2.52 |
+| 3 min after Al-Quds | PS | 1 | 3.65 | -3.48 |
+| Bir al-Maksur | PS | 0 | 3.58 | -2.67 |
+| 2 min before Al-Quds | PS | -4 | 3.40 | +1.52 |
+| Sakhnin | PS | -1 | 3.27 | -1.85 |
+| Al-Bayada | PS | -2 | 3.25 | -1.00 |
+| Acre | PS | -1 | 3.25 | -1.00 |
+| Tamra | PS | -3 | 3.23 | +0.44 |
+| Kafr Yasif | PS | -2 | 3.21 | -0.42 |
+| Makkah | SA | 0 | 3.17 | -2.25 |
+| Al-Ba'na | PS | -2 | 3.17 | -0.79 |
 
 ## Largest individual deviations
 
@@ -84,13 +84,13 @@ calculation cannot reproduce exactly.
 | Madinah | 2027-01-01 | isha | -14.00 |
 | Madinah | 2027-12-31 | isha | -14.00 |
 | Madinah | 2028-12-31 | isha | -14.00 |
-| Acre | 2027-12-31 | maghrib | -14.00 |
-| Acre | 2027-01-01 | maghrib | -13.00 |
-| Acre | 2028-12-31 | maghrib | -13.00 |
+| Bir al-Maksur | 2027-12-31 | maghrib | -11.00 |
+| 5 min after Al-Quds | 2027-03-01 | maghrib | -11.00 |
+| 5 min after Al-Quds | 2027-06-21 | maghrib | -11.00 |
 
 ## Why table mode is the default
 
-Across 4320 comparisons the solar MWL model differs from the official timetable by 3.24 minutes on average and up to 21 minutes. That gap is systematic (local sighting-based adjustments, city `minDiff`, and the Palestinian seasonal policy), not random. A table lookup is therefore the only way to guarantee minute-for-minute agreement with the original app, so it is the primary and only user-facing calculation path.
+Across 4320 comparisons the solar MWL model differs from the official timetable by 3.04 minutes on average and up to 21 minutes. That gap is systematic (local sighting-based adjustments, city `minDiff`, and the Palestinian seasonal policy), not random. A table lookup is therefore the only way to guarantee minute-for-minute agreement with the original app, so it is the primary and only user-facing calculation path.
 
 The solar engine stays in the codebase purely for the independent
 cross-check in `ENGINE_CROSSCHECK.md`; it is not reachable from the UI.

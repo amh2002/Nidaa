@@ -1,13 +1,13 @@
 # BETA_NOTES.md
 
-**نداء | Nidaa** — latest release `1.0.0-beta6` (versionCode 6), 12 Nov 2026
+**نداء | Nidaa** — latest release `1.0.0-beta7` (versionCode 7), 12 Nov 2026
 
 | Item | Value |
 |---|---|
 | Package | `com.nidaa.prayer` |
-| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta6.apk` |
-| Size | 21,740,847 bytes |
-| SHA-256 | `5515301B7508B911A018B861D8436AA74F7011FE6A30FCE2792C68659D9EA1D8` |
+| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta7.apk` |
+| Size | 21,710,815 bytes |
+| SHA-256 | `8FA91968042F68CABC896E8896A7D71AF357D7B1B760D1259697935454F0D833` |
 | Build | debug (`assembleDebug`), not Play-store signed |
 | Minimum Android | 7.0 (API 24), target API 36 |
 | Launcher label | `نداء - Nidaa` (identical in every locale) |
@@ -15,7 +15,117 @@
 
 ---
 
-## beta6 — owner's adhan, lock-screen notifications, no EN pill, widget crash fix (W5)
+## beta7 — live city constants, true-crescent icon, master-notifications lock
+
+**Install over beta6.** `applicationId` and versioned notification channels are
+unchanged, so `adb install -r Nidaa-1.0.0-beta7.apk` upgrades in place.
+
+### 1. Per-city constants now come from the live reference data
+
+Betas 1–6 built `cities.json` from the **stale offline fallback array** embedded
+in the reference APK (`y7/C3444b.java`). The reference app actually fetches its
+city table at runtime:
+
+```
+GET https://mawagets.net/api/ref-data/cites      (CityDto: _id, cityname, seq_no, min_diff)
+```
+
+The engine (`p061i1/j.java`) applies exactly one per-city correction:
+
+```java
+int minDiff = city.getMinDiff() + i11;
+```
+
+There is no second per-city field (`seq_no` is ordering only) and no per-city
+`switch (getId())` override. The live table differs from the stale array on
+**67 of 90 cities**; all 67 are now taken verbatim from the live payload.
+
+| City | Old (stale) | New (live) |
+|---|---|---|
+| طولكرم / Tulkarm | 0 | -1 |
+| نابلس / Nablus | 0 | -2 |
+| رام الله / Ramallah | 0 | -2 |
+| القدس / Jerusalem (control) | -2 | -2 (unchanged) |
+
+Full 90-row table, the 67-row fixed table and the engine evidence:
+`C:\rea_ws\report\reference_cities.txt`.
+
+**Parity:** the real Kotlin `TableEngine` is compared with the Python oracle
+(`reference_impl/prayer_times.py`, the w7.c tables + `p061i1.j.o/w` port) for
+all 90 cities on 2024-02-29, 2025-02-28, 2025-03-01 and 2025-06-21 — fajr,
+sunrise, dhuhr, asr, maghrib, isha, last third of the night and tomorrow's
+fajr. Final `HH:MM` strings identical: **360/360 day rows, 2880/2880 time
+strings, 0 mismatches, PASS** (`docs/city_parity_report.txt`).
+
+`CityParityTest` hardcodes the 90 live constants entry-by-entry.
+`test_vectors.csv` gains 268 rows (67 corrected cities × 4 dates) for 392
+total; the mandatory JS↔Python gate passes with 0 mismatches.
+
+### 2. Launcher icon: one true crescent
+
+The icon was rebuilt by `C:\rea_ws\scripts\make_icon.py` from geometry, not by
+stacking shapes. The crescent is a **single closed path** — outer moon arc
+A→B, concave cutting arc B→A, `Z` — with no cover-up disc and no `evenOdd`
+fill rule:
+
+```
+M55.14,63.5 A17.5,17.5 0 1 1 49.67,33.44 A15.5,15.5 0 0 0 55.14,63.5 Z
+```
+
+* background: vertical gradient `#060A20` → `#1D2C62`
+* crescent: `#FFD98A` (subtle `#FFE9B8` → `#FFD98A` gradient)
+* three golden sound arcs to the right, 70% / 45% / 25% alpha, round caps,
+  never touching the crescent (min gap 6.25 units)
+* three white 60–80% four-point stars
+* everything inside the 66 dp safe zone (max radius 32.44 / 33.00), no text
+
+Shipped as the adaptive icon (`mipmap-anydpi-v26/ic_launcher.xml` and
+`ic_launcher_round.xml`: gradient background, foreground vector, monochrome
+white layer) plus legacy PNGs at 48/72/96/144/192 rendered by the same script.
+Resource names are unchanged. Checked at 512 px and 48 px: one crescent, no
+dark disc, nothing touching, legible. Details: `C:\rea_ws\report\icon_beta7.txt`
+and `C:\rea_ws\report\icons\beta7\`.
+
+### 3. Master notifications OFF now locks the prayer rows
+
+Each per-prayer row observes the master notifications key reactively. While it
+is OFF the row is disabled immediately: theme-disabled colours at ~38% alpha,
+taps are ignored, and accessibility reports the row as disabled. This is
+implemented through the shared components, not ad-hoc overlays:
+
+| Component | New parameter |
+|---|---|
+| `SettingsCard` | `enabled: Boolean = true` |
+| `SettingsToggleRow` | `enabled: Boolean = true`, `toggleTestTag` |
+| `SegmentedPillRow` / `ChoicePill` | `enabled: Boolean = true`, optional `testTag` |
+| `SettingsSmallButton` | `enabled: Boolean = true` |
+
+One caption appears only while OFF, exactly one text node per language:
+
+* Arabic — «التنبيهات مطفأة — فعّلها لتعديل أوضاع الصلوات»
+* English — "Notifications are off — enable them to change prayer alert modes."
+
+Turning the master OFF does **not** reset per-prayer modes; turning it back ON
+restores the exact previous state. Unrelated settings stay untouched, and
+delivery already respected the master switch (`NotificationRouting.shouldDeliver`,
+covered by `NotificationRoutingTest`).
+
+`MasterNotificationsGateTest` (4 Compose tests) passes: disabled semantics,
+inert clicks, OFF→ON restore, both languages, font scale 1.0 and 1.3, single
+caption node.
+
+### Build
+
+* `versionCode 7`, `versionName 1.0.0-beta7`, debug `assembleDebug` on JDK 17.
+* `clean test assembleDebug` → BUILD SUCCESSFUL.
+  * debug: 108 tests / 23 suites / 0 failures
+  * release: 100 tests / 21 suites / 0 failures
+* APK: `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta7.apk`
+  (21,710,815 bytes, SHA-256 `8FA91968042F68CABC896E8896A7D71AF357D7B1B760D1259697935454F0D833`)
+* `aapt2`: `com.nidaa.prayer versionCode 7 versionName 1.0.0-beta7`,
+  label `نداء - Nidaa` in every locale.
+
+
 
 **Install over beta5.** `applicationId` stays `com.nidaa.prayer`, so
 `adb install -r Nidaa-1.0.0-beta6.apk` upgrades in place and keeps the app data.

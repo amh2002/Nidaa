@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  «نداء / Nidaa» icon — monochrome layer for Android 13+ themed icons.
-  Same geometry as ic_launcher_foreground.xml (crescent, three echo arcs,
-  three stars) in a single white ink; the platform tints it with the user's
-  wallpaper palette. No letters, no background.
--->
+<!-- Nidaa (نداء) monochrome layer: same geometry in white ink. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -13,37 +8,36 @@
 
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M49.5,41 A14.5,14.5 0 1 1 78.5,41 A14.5,14.5 0 1 1 49.5,41 Z
-                          M43.5,48.5 A13,13 0 1 0 69.5,48.5 A13,13 0 1 0 43.5,48.5 Z" />
+        android:pathData="M55.14,63.5 A17.5,17.5 0 1 1 49.67,33.44 A15.5,15.5 0 0 0 55.14,63.5 Z" />
 
     <path
-        android:pathData="M62.30,60.43 A19.5,19.5 0 0 1 46.33,32.76"
-        android:strokeColor="#D9FFFFFF"
-        android:strokeWidth="2.2"
+        android:pathData="M61.09,34.61 A23,23 0 0 1 61.09,65.39"
+        android:strokeColor="#B2FFFFFF"
+        android:strokeWidth="2.4"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
 
     <path
-        android:pathData="M61.82,65.91 A25,25 0 0 1 41.34,30.43"
-        android:strokeColor="#99FFFFFF"
-        android:strokeWidth="2.2"
+        android:pathData="M64.81,31.26 A28,28 0 0 1 64.81,68.74"
+        android:strokeColor="#73FFFFFF"
+        android:strokeWidth="2.4"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
 
     <path
-        android:pathData="M61.34,71.38 A30.5,30.5 0 0 1 36.36,28.11"
-        android:strokeColor="#66FFFFFF"
-        android:strokeWidth="2.2"
+        android:pathData="M68.52,27.92 A33,33 0 0 1 68.52,72.08"
+        android:strokeColor="#40FFFFFF"
+        android:strokeWidth="2.4"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
 
     <path
-        android:fillColor="#B3FFFFFF"
-        android:pathData="M80,54.4 L80.9,56.1 L82.6,57 L80.9,57.9 L80,59.6 L79.1,57.9 L77.4,57 L79.1,56.1 Z" />
+        android:fillColor="#B8FFFFFF"
+        android:pathData="M57.9,24 L56.04,24.54 L55.5,26.4 L54.96,24.54 L53.1,24 L54.96,23.46 L55.5,21.6 L56.04,23.46 Z" />
     <path
-        android:fillColor="#99FFFFFF"
-        android:pathData="M46,24 L46.7,25.3 L48,26 L46.7,26.7 L46,28 L45.3,26.7 L44,26 L45.3,25.3 Z" />
+        android:fillColor="#9EFFFFFF"
+        android:pathData="M81.7,38 L80.38,38.38 L80,39.7 L79.62,38.38 L78.3,38 L79.62,37.62 L80,36.3 L80.38,37.62 Z" />
     <path
-        android:fillColor="#CCFFFFFF"
-        android:pathData="M72,69.6 L72.6,70.9 L73.9,71.5 L72.6,72.1 L72,73.4 L71.4,72.1 L70.1,71.5 L71.4,70.9 Z" />
+        android:fillColor="#A8FFFFFF"
+        android:pathData="M59.9,82.5 L58.43,82.93 L58,84.4 L57.57,82.93 L56.1,82.5 L57.57,82.07 L58,80.6 L58.43,82.07 Z" />
 </vector>

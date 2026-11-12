@@ -220,6 +220,7 @@ fun SettingsList(
     val previewMinutes = nextPreviewMinutes(day)
     val preview = TimeFormatter.format(previewMinutes, settings.clockFormat, isArabic)
     val notifications = settings.notifications
+    val masterEnabled = notifications.masterEnabled
     val modes = remember { listOf(NotifyMode.ADHAN, NotifyMode.SILENT, NotifyMode.VIBRATE) }
     var applyMode by remember { mutableStateOf(NotifyMode.ADHAN) }
     val widgetLanguage = settings.effectiveWidgetLanguage
@@ -379,15 +380,29 @@ fun SettingsList(
                 title = stringResource(R.string.notifications_master),
                 description = stringResource(R.string.notifications_master_desc),
                 checked = notifications.masterEnabled,
-                onCheckedChange = onNotificationsEnabled
+                onCheckedChange = onNotificationsEnabled,
+                modifier = Modifier.testTag("notifications_master_toggle"),
+                toggleTestTag = "notifications_master_switch"
             )
+            if (!masterEnabled) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = stringResource(R.string.notifications_off_caption),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = palette.accent,
+                    modifier = Modifier.testTag("notifications_off_caption")
+                )
+            }
         }
 
         // 7. One card per event, each with its own switch, mode and test button.
         for (event in NotifyEvent.entries) {
             ItemGap()
             val current = notifications.forEvent(event)
-            SettingsCard {
+            SettingsCard(
+                enabled = masterEnabled,
+                modifier = Modifier.testTag("event_card_${event.storageKey}")
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -402,16 +417,24 @@ fun SettingsList(
                     Switch(
                         checked = current.enabled,
                         onCheckedChange = { onEventEnabled(event, it) },
+                        enabled = masterEnabled,
+                        modifier = Modifier.testTag("event_toggle_${event.storageKey}"),
                         colors = mawaqitiSwitchColors()
                     )
                 }
                 Spacer(Modifier.height(10.dp))
                 SegmentedPillRow(
                     options = modes.map { mode ->
-                        PillOption(modeLabel(mode), mode == current.mode)
+                        PillOption(
+                            modeLabel(mode),
+                            mode == current.mode,
+                            testTag = "event_mode_${event.storageKey}_${mode.storageKey}"
+                        )
                     },
                     onSelect = { index -> onEventMode(event, modes[index]) },
-                    fillWidth = true
+                    fillWidth = true,
+                    enabled = masterEnabled,
+                    modifier = Modifier.testTag("event_modes_${event.storageKey}")
                 )
                 Spacer(Modifier.height(10.dp))
                 Row(
@@ -427,6 +450,8 @@ fun SettingsList(
                     Spacer(Modifier.width(8.dp))
                     SettingsSmallButton(
                         label = stringResource(R.string.notify_test),
+                        enabled = masterEnabled,
+                        modifier = Modifier.testTag("event_test_${event.storageKey}"),
                         onClick = { onTestEvent(event, current.mode) }
                     )
                 }

@@ -88,6 +88,7 @@
     <string name="settings_notifications_desc">A notification for each event, with Adhan, silent or vibrate.</string>
     <string name="notifications_master">Enable notifications</string>
     <string name="notifications_master_desc">Turning this off silences every event notification.</string>
+    <string name="notifications_off_caption">Notifications are off — enable them to change prayer alert modes.</string>
     <string name="notifications_event_enabled">Notify for this time</string>
     <string name="notify_mode_adhan">Adhan</string>
     <string name="notify_mode_silent">Silent</string>

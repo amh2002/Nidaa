@@ -22,9 +22,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,15 +50,21 @@ fun SettingsCard(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(16.dp),
     onClick: (() -> Unit)? = null,
+    /** beta7: a disabled card dims its whole content to ~38 % and ignores clicks. */
+    enabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val palette = skyPalette
     GlassCard(
-        modifier = modifier,
+        modifier = modifier.semantics { if (!enabled) disabled() },
         contentPadding = contentPadding,
-        onClick = onClick
+        onClick = if (enabled) onClick else null
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(if (enabled) 1f else 0.38f)
+        ) {
             if (!title.isNullOrBlank()) {
                 Text(
                     text = title,
@@ -85,17 +94,20 @@ fun SettingsToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    /** Optional tag for the Switch itself (the row tag stays on the row). */
+    toggleTestTag: String? = null
 ) {
     SettingRow(
         title = title,
         description = description,
-        modifier = modifier
+        modifier = modifier.semantics { if (!enabled) disabled() }
     ) {
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             enabled = enabled,
+            modifier = if (toggleTestTag != null) Modifier.testTag(toggleTestTag) else Modifier,
             colors = mawaqitiSwitchColors()
         )
     }
@@ -114,7 +126,12 @@ fun mawaqitiSwitchColors(): SwitchColors {
     )
 }
 
-data class PillOption(val label: String, val selected: Boolean)
+data class PillOption(
+    val label: String,
+    val selected: Boolean,
+    /** Optional per-pill test tag, used by the master-off regression tests. */
+    val testTag: String? = null
+)
 
 /**
  * The segmented control used by language, clock, per-event mode and apply-all.
@@ -127,16 +144,20 @@ fun SegmentedPillRow(
     options: List<PillOption>,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    fillWidth: Boolean = false
+    fillWidth: Boolean = false,
+    /** beta7: disabled pills are inert and carry disabled accessibility semantics. */
+    enabled: Boolean = true
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.semantics { if (!enabled) disabled() },
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         options.forEachIndexed { index, option ->
             ChoicePill(
                 label = option.label,
                 selected = option.selected,
+                enabled = enabled,
+                testTag = option.testTag,
                 modifier = if (fillWidth) Modifier.weight(1f) else Modifier,
                 onClick = { onSelect(index) }
             )
@@ -149,14 +170,18 @@ fun ChoicePill(
     label: String,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    testTag: String? = null,
     onClick: () -> Unit
 ) {
     val palette = skyPalette
     Box(
         modifier = modifier
+            .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
+            .semantics { if (!enabled) disabled() }
             .clip(RoundedCornerShape(50))
             .background(if (selected) SkyPalette.BrandGreen else palette.text.copy(alpha = 0.08f))
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -174,12 +199,14 @@ fun ChoicePill(
 fun SettingsSmallButton(
     label: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     val palette = skyPalette
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
+        enabled = enabled,
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
     ) {
         Text(
