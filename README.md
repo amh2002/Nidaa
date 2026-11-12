@@ -1,4 +1,4 @@
-# نداء | Nidaa · أوقات الصلاة (Beta)
+# Nidaa — نداء · أوقات الصلاة (Beta)
 
 تطبيق مواقيت صلاة يعمل دون اتصال بالإنترنت، مبني بـ Kotlin وJetpack Compose،
 ويعتمد جدول المواقيت الرسمي المعتمد لفلسطين والأردن المضمَّن داخل التطبيق
@@ -12,9 +12,9 @@ Hijri date.
 
 ## Download · التحميل
 
-**https://github.com/amh2002/mawaqiti-plus/releases/tag/v1.0.0-beta5**
+**https://github.com/amh2002/Nidaa/releases/tag/v1.0.0-beta7**
 
-`Nidaa-1.0.0-beta5.apk` · versionCode 5 · Android 7.0+ (API 24)
+`Nidaa-1.0.0-beta7.apk` · versionCode 7 · Android 7.0+ (API 24)
 
 The APK is a debug-signed beta, not a Play Store release.
 
