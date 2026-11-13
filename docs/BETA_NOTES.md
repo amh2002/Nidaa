@@ -2,6 +2,11 @@
 
 **نداء | Nidaa** — latest release `1.0.0-beta7` (versionCode 7), 12 Nov 2026
 
+> Historical note: the beta3/beta4 sections below keep the product name that
+> those builds actually shipped with («مواقيتي بلس / Mawaqiti Plus»). Every
+> current surface — launcher label, About card, widget, channels, README — uses
+> «نداء / Nidaa» only. See `docs/RENAME_AUDIT.md`.
+
 | Item | Value |
 |---|---|
 | Package | `com.nidaa.prayer` |
