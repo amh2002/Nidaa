@@ -158,7 +158,7 @@ class WidgetLayoutTest {
     }
 
     @Test
-    fun `provider xml is a fixed 4x2 widget with no resize handles`() {
+    fun `provider xml is resizable from 3x2 to 5x3 with a picker preview`() {
         val xml = File("src/main/res/xml/mawaqiti_widget_info.xml").readText()
         val doc = DocumentBuilderFactory.newInstance()
             .apply { isNamespaceAware = true }
@@ -170,37 +170,67 @@ class WidgetLayoutTest {
             provider.getAttributeNS("http://schemas.android.com/apk/res/android", name)
                 .ifEmpty { null }
 
-        // W4: no resize handles at all.
-        assertEquals("none", attr("resizeMode"))
-        // Correct declared geometry for 4x2 on both API 31+ and older APIs.
+        // beta 7.9: the widget has resize handles in both directions.
+        assertEquals("horizontal|vertical", attr("resizeMode"))
+        // Declared default geometry for 4x2 (API 31+ uses the target cells).
         assertEquals("4", attr("targetCellWidth"))
         assertEquals("2", attr("targetCellHeight"))
         assertEquals("home_screen", attr("widgetCategory"))
         assertEquals("@string/widget_description", attr("description"))
         assertEquals("@layout/widget_mawaqiti_ar", attr("initialLayout"))
         assertEquals("@layout/widget_mawaqiti_ar", attr("previewLayout"))
+        assertNotNull("older pickers still need a PNG preview", attr("previewImage"))
 
         // 4 cells ≈ 250 dp, 2 cells ≈ 110 dp (70 * n - 30 rule).
         assertEquals("250dp", attr("minWidth"))
         assertEquals("110dp", attr("minHeight"))
+
+        // Horizontal 3…5 columns; vertical minimum is the smallest height the
+        // two prayer rows render complete at system fontScale 1.3 (180 dp).
+        assertEquals("180dp", attr("minResizeWidth"))
+        assertEquals("180dp", attr("minResizeHeight"))
+        assertEquals("320dp", attr("maxResizeWidth"))
+        assertEquals("320dp", attr("maxResizeHeight"))
+    }
+
+    @Test
+    fun `the api 26 layout autosizes every text and keeps weight rows`() {
+        for (name in listOf("widget_mawaqiti_ar", "widget_mawaqiti_en")) {
+            val xml = File("src/main/res/layout-v26/$name.xml").readText()
+            assertTrue(
+                "$name must use TextView autosizing on API 26+",
+                xml.contains("android:autoSizeTextType=\"uniform\"")
+            )
+            assertTrue(
+                "$name prayer rows must be weight based",
+                xml.contains("android:layout_weight=\"1\"")
+            )
+        }
     }
 
     @Test
     fun `no widget layout references a font resource or a non RemoteViews spacer`() {
         // beta6 / W5: @font/ breaks RemoteViews inflation on API 24-25 and a
         // Space view is rejected by the platform filter — both are banned.
-        for (name in listOf(
-            "widget_mawaqiti_ar",
-            "widget_mawaqiti_en",
-            "widget_mawaqiti_fallback"
-        )) {
-            val xml = File("src/main/res/layout/$name.xml").readText()
-            assertFalse("$name must not use @font/", xml.contains("@font/"))
-            assertFalse(
-                "$name must not contain a Space element",
-                Regex("<\\s*Space\\b").containsMatchIn(xml)
-            )
-            assertFalse("$name must not use android:fontFamily", xml.contains("fontFamily"))
+        for (dir in listOf("layout", "layout-v26")) {
+            for (name in listOf(
+                "widget_mawaqiti_ar",
+                "widget_mawaqiti_en",
+                "widget_mawaqiti_fallback"
+            )) {
+                val file = File("src/main/res/$dir/$name.xml")
+                if (!file.exists()) continue
+                val xml = file.readText()
+                assertFalse("$dir/$name must not use @font/", xml.contains("@font/"))
+                assertFalse(
+                    "$dir/$name must not contain a Space element",
+                    Regex("<\\s*Space\\b").containsMatchIn(xml)
+                )
+                assertFalse(
+                    "$dir/$name must not use android:fontFamily",
+                    xml.contains("fontFamily")
+                )
+            }
         }
     }
 }

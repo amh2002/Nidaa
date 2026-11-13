@@ -8,8 +8,9 @@
   widget_mawaqiti_en.xml; WidgetUpdater picks one at update time from the
   widget-only `widget.lang` setting.
 
-  Fixed 4x2 geometry: android:resizeMode="none" in the provider XML, so no
-  collapsed/expanded variants are needed.
+  API 24-25 fallback. Resizable since beta 7.9 (3x2 .. 5x3): the prayer rows
+  are weighted; text sizes stay fixed here because autosizing starts at API
+  26 (res/layout-v26 holds the autosizing twin).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"

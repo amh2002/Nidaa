@@ -34,7 +34,8 @@ import kotlinx.coroutines.launch
  *    reading order is guaranteed on every launcher.
  *  - Row 1 renders the wordmark «نداء» and the city on opposite edges with a
  *    guaranteed 12 dp gap (a margin, not a <Space> view).
- *  - The size is fixed at 4x2 (`resizeMode="none"`).
+ *  - beta 7.9: resizable 3x2 .. 5x3 (weights + autosizing); the same data set
+ *    fills the layout at any allowed size.
  *
  * beta6 / W5 hardening:
  *  - The layout is pre-flighted with the platform's own RemoteViews filter, so
