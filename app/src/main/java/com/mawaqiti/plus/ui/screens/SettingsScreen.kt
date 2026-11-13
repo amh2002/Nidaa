@@ -59,6 +59,7 @@ import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.data.Country
+import com.mawaqiti.plus.data.FontScale
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.format.TimeFormatter
@@ -94,6 +95,7 @@ fun SettingsScreen(
     onOpenCityPicker: () -> Unit,
     onSelectLanguage: (AppLanguage) -> Unit,
     onSelectClockFormat: (ClockFormat) -> Unit,
+    onSelectFontScale: (Float) -> Unit,
     onSelectWidgetLanguage: (AppLanguage) -> Unit,
     onSummerTimeChange: (Boolean) -> Unit,
     onNotificationsEnabled: (Boolean) -> Unit,
@@ -154,6 +156,7 @@ fun SettingsScreen(
         onOpenCityPicker = onOpenCityPicker,
         onSelectLanguage = onSelectLanguage,
         onSelectClockFormat = onSelectClockFormat,
+        onSelectFontScale = onSelectFontScale,
         onSelectWidgetLanguage = onSelectWidgetLanguage,
         onSummerTimeChange = onSummerTimeChange,
         onNotificationsEnabled = onNotificationsEnabled,
@@ -204,6 +207,7 @@ fun SettingsList(
     onOpenCityPicker: () -> Unit,
     onSelectLanguage: (AppLanguage) -> Unit,
     onSelectClockFormat: (ClockFormat) -> Unit,
+    onSelectFontScale: (Float) -> Unit,
     onSelectWidgetLanguage: (AppLanguage) -> Unit,
     onSummerTimeChange: (Boolean) -> Unit,
     onNotificationsEnabled: (Boolean) -> Unit,
@@ -324,6 +328,37 @@ fun SettingsList(
                         onSelectClockFormat(if (index == 0) ClockFormat.H24 else ClockFormat.H12)
                     }
                 )
+            }
+        }
+
+        ItemGap()
+
+        // 3b. Font size (beta 7.9): five steps, applied as a multiplier on the
+        //     system font scale at the app root. Split into 3 + 2 pills so the
+        //     row never overflows, even at 120 % on top of a large system scale.
+        SettingsCard {
+            SettingRowBlock(
+                title = stringResource(R.string.settings_font_title),
+                description = stringResource(R.string.settings_font_desc)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SegmentedPillRow(
+                        options = FontScale.STEPS.take(3).map { step ->
+                            PillOption(FontScale.label(step), settings.fontScale == step)
+                        },
+                        onSelect = { index -> onSelectFontScale(FontScale.STEPS[index]) },
+                        fillWidth = true
+                    )
+                    SegmentedPillRow(
+                        options = FontScale.STEPS.drop(3).map { step ->
+                            PillOption(FontScale.label(step), settings.fontScale == step)
+                        },
+                        onSelect = { index ->
+                            onSelectFontScale(FontScale.STEPS[3 + index])
+                        },
+                        fillWidth = true
+                    )
+                }
             }
         }
 

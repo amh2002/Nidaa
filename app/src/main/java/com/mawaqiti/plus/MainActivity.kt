@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -24,7 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mawaqiti.plus.data.AppLanguage
@@ -79,6 +82,15 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
 
     SetSystemBarAppearance(dark = SkyPalette.of(phase).dark)
 
+    // beta 7.9: the user's in-app multiplier composes with the system font
+    // scale; settings is observed here, so a change re-renders immediately.
+    val systemDensity = LocalDensity.current
+    CompositionLocalProvider(
+        LocalDensity provides Density(
+            density = systemDensity.density,
+            fontScale = systemDensity.fontScale * settings.fontScale
+        )
+    ) {
     Box(modifier = Modifier.fillMaxSize()) {
         LivingSkyBackground()
 
@@ -115,6 +127,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onOpenCityPicker = { showCityPicker = true },
                         onSelectLanguage = viewModel::setLanguage,
                         onSelectClockFormat = viewModel::setClockFormat,
+                        onSelectFontScale = viewModel::setFontScale,
                         onSelectWidgetLanguage = viewModel::setWidgetLanguage,
                         onSummerTimeChange = viewModel::setSummerTime,
                         onNotificationsEnabled = viewModel::setNotificationsEnabled,
@@ -137,6 +150,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
             onDismiss = { showCityPicker = false },
             onSelect = viewModel::selectCity
         )
+    }
     }
 }
 

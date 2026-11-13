@@ -89,6 +89,7 @@ class SettingsFrameworkTest {
                         onOpenCityPicker = {},
                         onSelectLanguage = {},
                         onSelectClockFormat = {},
+                        onSelectFontScale = {},
                         onSelectWidgetLanguage = {},
                         onSummerTimeChange = {},
                         onNotificationsEnabled = {},

@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -233,6 +234,11 @@ private fun CityChip(
             color = palette.text,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            // beta 7.9: keeps the whole city visible at the largest in-app scale.
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 9.sp,
+                maxFontSize = MaterialTheme.typography.titleSmall.fontSize
+            ),
             modifier = Modifier.widthIn(max = 190.dp)
         )
         Spacer(Modifier.width(3.dp))
@@ -467,6 +473,12 @@ private fun GridCard(
             color = palette.text,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            // beta 7.9: at the largest in-app × system scale the longest label
+            // ("Last third") must still be readable instead of ellipsized.
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 9.sp,
+                maxFontSize = MaterialTheme.typography.bodyMedium.fontSize
+            ),
             modifier = Modifier.weight(1f)
         )
         Spacer(Modifier.width(6.dp))

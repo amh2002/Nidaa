@@ -136,6 +136,10 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
         settingsRepository.setClockFormat(format)
         WidgetUpdater.updateAsync(getApplication())
     }
+    /** beta 7.9: in-app text size; observed by the root provider, no restart. */
+    fun setFontScale(scale: Float) = viewModelScope.launch {
+        settingsRepository.setFontScale(scale)
+    }
 
     fun setLanguage(language: AppLanguage) = viewModelScope.launch {
         settingsRepository.setLanguage(language)

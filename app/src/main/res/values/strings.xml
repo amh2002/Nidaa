@@ -68,6 +68,10 @@
     <string name="clock_12">12 ساعة</string>
     <string name="clock_preview">معاينة</string>
 
+    <!-- beta 7.9: in-app font size (multiplier over the system font scale) -->
+    <string name="settings_font_title">حجم الخط</string>
+    <string name="settings_font_desc">يُضاعف حجم خط النظام. قلّل الحجم إذا كانت أسماء الصلوات لا تظهر كاملة.</string>
+
     <string name="settings_summer_time">التوقيت الصيفي</string>
     <string name="summer_time_desc">إضافة ساعة واحدة (+1) إلى جميع المواقيت.</string>
 

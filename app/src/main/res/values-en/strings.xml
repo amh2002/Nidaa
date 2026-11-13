@@ -68,6 +68,10 @@
     <string name="clock_12">12-hour</string>
     <string name="clock_preview">Preview</string>
 
+    <!-- beta 7.9: in-app font size (multiplier over the system font scale) -->
+    <string name="settings_font_title">Font size</string>
+    <string name="settings_font_desc">Scales the system font size. Lower it when prayer names do not fit on screen.</string>
+
     <string name="settings_summer_time">Summer time</string>
     <string name="summer_time_desc">Adds one hour (+1) to every time.</string>
 

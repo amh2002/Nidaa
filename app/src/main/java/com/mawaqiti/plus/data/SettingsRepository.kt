@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -30,6 +31,8 @@ class SettingsRepository(private val context: Context) {
         val clockFormat = stringPreferencesKey("clock_format")
         /** beta5: widget language, intentionally independent of the UI language. */
         val widgetLanguage = stringPreferencesKey("widget.lang")
+        /** beta 7.9: in-app text multiplier, default 1.0. */
+        val fontScale = floatPreferencesKey("font_scale")
         val notifyMaster = booleanPreferencesKey("notify_master")
         fun eventEnabled(event: NotifyEvent) =
             booleanPreferencesKey("notify_${event.storageKey}_enabled")
@@ -49,6 +52,7 @@ class SettingsRepository(private val context: Context) {
                 language = AppLanguage.fromTag(prefs[Keys.language]),
                 languageInitialized = prefs[Keys.languageInitialized] ?: false,
                 clockFormat = ClockFormat.fromKey(prefs[Keys.clockFormat]),
+                fontScale = FontScale.normalize(prefs[Keys.fontScale] ?: FontScale.DEFAULT),
                 notifications = NotificationSettings(
                     masterEnabled = prefs[Keys.notifyMaster] ?: true,
                     events = NotifyEvent.entries.associateWith { event ->
@@ -71,6 +75,11 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setClockFormat(format: ClockFormat) = edit {
         it[Keys.clockFormat] = format.storageKey
+    }
+
+    /** beta 7.9: stores one of [FontScale.STEPS]; applied without restart. */
+    suspend fun setFontScale(scale: Float) = edit {
+        it[Keys.fontScale] = FontScale.normalize(scale)
     }
 
     suspend fun setLanguage(language: AppLanguage) = edit {

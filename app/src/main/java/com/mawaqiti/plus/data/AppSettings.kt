@@ -30,6 +30,11 @@ data class AppSettings(
     val languageInitialized: Boolean = false,
     /** Display-only clock preference; default is the original app's 24h. */
     val clockFormat: ClockFormat = ClockFormat.H24,
+    /**
+     * beta 7.9: in-app text multiplier over the system font scale
+     * (0.8 … 1.2, one of [FontScale.STEPS]).
+     */
+    val fontScale: Float = FontScale.DEFAULT,
     /** Per-event notification configuration, stored independently per event. */
     val notifications: NotificationSettings = NotificationSettings(),
     /**

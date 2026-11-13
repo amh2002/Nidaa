@@ -103,6 +103,7 @@ class MasterNotificationsGateTest {
                         onOpenCityPicker = {},
                         onSelectLanguage = {},
                         onSelectClockFormat = {},
+                        onSelectFontScale = {},
                         onSelectWidgetLanguage = {},
                         onSummerTimeChange = {},
                         onNotificationsEnabled = { enabled ->
