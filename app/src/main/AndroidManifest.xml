@@ -9,6 +9,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
+    <!-- beta 7.95: the ONLY network permission set in the app, used solely by
+         the updater package. No other feature reaches the network. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <uses-feature
         android:name="android.hardware.sensor.compass"
         android:required="false" />
@@ -21,7 +27,8 @@
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Mawaqiti">
+        android:theme="@style/Theme.Mawaqiti"
+        android:usesCleartextTraffic="false">
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
@@ -39,6 +46,23 @@
 
         <receiver
             android:name=".notify.AlarmReceiver"
+            android:exported="false" />
+
+        <!-- beta 7.95: private FileProvider for the verified APK (API 24/25
+             install path). Authority is scoped to the installed app id. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.update.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_file_paths" />
+        </provider>
+
+        <!-- beta 7.95: PackageInstaller result (API 26+). -->
+        <receiver
+            android:name=".update.InstallResultReceiver"
             android:exported="false" />
 
         <receiver

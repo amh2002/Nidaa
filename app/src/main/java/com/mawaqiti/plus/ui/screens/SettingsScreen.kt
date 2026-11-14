@@ -75,6 +75,7 @@ import com.mawaqiti.plus.ui.components.SettingsSmallButton
 import com.mawaqiti.plus.ui.components.SettingsToggleRow
 import com.mawaqiti.plus.ui.components.mawaqitiSwitchColors
 import com.mawaqiti.plus.ui.theme.skyPalette
+import com.nidaa.prayer.update.UpdateState
 import java.time.LocalTime
 
 /**
@@ -103,7 +104,14 @@ fun SettingsScreen(
     onEventMode: (NotifyEvent, NotifyMode) -> Unit,
     onApplyModeToEnabled: (NotifyMode) -> Unit,
     onTestEvent: (NotifyEvent, NotifyMode) -> Unit,
-    onTestMode: (NotifyMode) -> Unit
+    onTestMode: (NotifyMode) -> Unit,
+    updatesEnabled: Boolean = true,
+    updateState: UpdateState = UpdateState.Idle,
+    onUpdatesEnabled: (Boolean) -> Unit = {},
+    onCheckForUpdates: () -> Unit = {},
+    onDownloadUpdate: () -> Unit = {},
+    onInstallUpdate: () -> Unit = {},
+    onOpenReleasesPage: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var statusTick by remember { mutableIntStateOf(0) }
@@ -167,7 +175,14 @@ fun SettingsScreen(
         onTestMode = onTestMode,
         onOpenExactAlarmSettings = { NotificationScheduler.openExactAlarmSettings(context) },
         onOpenNotificationSettings = { openNotificationSettings(context) },
-        onOpenBatterySettings = { openBatterySettings(context) }
+        onOpenBatterySettings = { openBatterySettings(context) },
+        updatesEnabled = updatesEnabled,
+        updateState = updateState,
+        onUpdatesEnabled = onUpdatesEnabled,
+        onCheckForUpdates = onCheckForUpdates,
+        onDownloadUpdate = onDownloadUpdate,
+        onInstallUpdate = onInstallUpdate,
+        onOpenReleasesPage = onOpenReleasesPage
     )
 
     if (showRationale) {
@@ -218,7 +233,14 @@ fun SettingsList(
     onTestMode: (NotifyMode) -> Unit,
     onOpenExactAlarmSettings: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
-    onOpenBatterySettings: () -> Unit
+    onOpenBatterySettings: () -> Unit,
+    updatesEnabled: Boolean = true,
+    updateState: UpdateState = UpdateState.Idle,
+    onUpdatesEnabled: (Boolean) -> Unit = {},
+    onCheckForUpdates: () -> Unit = {},
+    onDownloadUpdate: () -> Unit = {},
+    onInstallUpdate: () -> Unit = {},
+    onOpenReleasesPage: () -> Unit = {}
 ) {
     val palette = skyPalette
     val previewMinutes = nextPreviewMinutes(day)
@@ -390,6 +412,20 @@ fun SettingsList(
                 )
             }
         }
+
+        ItemGap()
+
+        // 4b. Updates (beta 7.95): the only network feature, opt-out, with a
+        //     manual check that still works when the automatic check is off.
+        UpdatesSettingsCard(
+            enabled = updatesEnabled,
+            state = updateState,
+            onEnabledChange = onUpdatesEnabled,
+            onCheckNow = onCheckForUpdates,
+            onDownload = onDownloadUpdate,
+            onInstall = onInstallUpdate,
+            onOpenReleases = onOpenReleasesPage
+        )
 
         // 5. Summer time: Palestine only.
         if (city.country == Country.PS) {
@@ -618,6 +654,13 @@ fun SettingsList(
                     modifier = Modifier.weight(1f)
                 )
             }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = stringResource(R.string.settings_about_network),
+                style = MaterialTheme.typography.bodySmall,
+                color = palette.textMuted,
+                modifier = Modifier.testTag("settings_about_network")
+            )
             Spacer(Modifier.height(14.dp))
             // Credit is visually separated and always the very last line.
             HorizontalDivider(color = palette.text.copy(alpha = 0.12f))

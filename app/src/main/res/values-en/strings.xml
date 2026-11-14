@@ -132,4 +132,33 @@
     <string name="widget_next_label">Nidaa — Next Prayer</string>
     <string name="widget_next_caption">Next prayer</string>
     <string name="widget_next_description">The next prayer with its time and remaining time</string>
+
+    <!-- beta 7.95: isolated update checker (GitHub releases only, opt-out) -->
+    <string name="settings_updates_title">Updates</string>
+    <string name="settings_updates_desc">This section checks GitHub only for new Nidaa releases. The app contacts nothing else.</string>
+    <string name="settings_updates_auto">Automatic check</string>
+    <string name="settings_updates_auto_desc">Once every 24 hours while online. You can turn this off at any time.</string>
+    <string name="settings_updates_check_now">Check now</string>
+    <string name="settings_updates_checking">Checking for updates…</string>
+    <string name="settings_updates_up_to_date">You are on the latest version.</string>
+    <string name="settings_updates_available">New version available: %1$s</string>
+    <string name="settings_updates_download">Download update</string>
+    <string name="settings_updates_downloading">Downloading… %1$d%%</string>
+    <string name="settings_updates_downloading_unknown">Downloading…</string>
+    <string name="settings_updates_verified">The file checksum matches. Ready to install.</string>
+    <string name="settings_updates_install">Install</string>
+    <string name="settings_updates_error_network">Could not check for updates. Check your connection or open the releases page.</string>
+    <string name="settings_updates_error_checksum">The file checksum is missing or does not match — installation was refused.</string>
+    <string name="settings_updates_error_download">The download failed. Please try again.</string>
+    <string name="settings_updates_error_permission">Allow Nidaa to install apps, then try again.</string>
+    <string name="settings_updates_error_install">The installer could not start.</string>
+    <string name="settings_updates_open_releases">Open releases page</string>
+    <string name="settings_updates_banner">A new Nidaa update is available — %1$s</string>
+    <string name="settings_updates_view">View</string>
+    <string name="settings_updates_retry">Retry</string>
+    <string name="settings_about_network">Network access is used only for updates — it can be turned off</string>
+    <string name="update_notification_title">A new Nidaa update is available</string>
+    <string name="update_notification_body">Version %1$s is ready to download inside the app.</string>
+    <string name="update_channel_name">App updates</string>
+    <string name="update_channel_desc">One notification when a new Nidaa release is available.</string>
 </resources>

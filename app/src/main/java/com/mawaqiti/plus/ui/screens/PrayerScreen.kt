@@ -58,6 +58,7 @@ import com.mawaqiti.plus.ui.theme.SkyDecorBand
 import com.mawaqiti.plus.ui.theme.SkyPalette
 import com.mawaqiti.plus.ui.theme.Tajawal
 import com.mawaqiti.plus.ui.theme.skyPalette
+import com.nidaa.prayer.update.ReleaseInfo
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -74,7 +75,9 @@ fun PrayerScreen(
     clockFormat: ClockFormat,
     onChooseCity: () -> Unit,
     onOpenQibla: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    updateRelease: ReleaseInfo? = null,
+    onOpenUpdate: () -> Unit = {}
 ) {
     val palette = skyPalette
     val now = rememberClock()
@@ -99,6 +102,11 @@ fun PrayerScreen(
             palette = palette,
             onChooseCity = onChooseCity
         )
+
+        if (updateRelease != null) {
+            Spacer(Modifier.height(8.dp))
+            UpdateBanner(release = updateRelease, onOpen = onOpenUpdate)
+        }
 
         SkyDecorBand()
 

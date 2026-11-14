@@ -7,6 +7,9 @@ import com.mawaqiti.plus.data.SettingsRepository
 import com.mawaqiti.plus.notify.NotificationChannels
 import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.notify.WidgetUpdater
+import com.nidaa.prayer.update.UpdateNotifier
+import com.nidaa.prayer.update.UpdateScheduler
+import com.nidaa.prayer.update.UpdatesStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,9 +28,23 @@ class MawaqitiApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         NotificationChannels.ensure(this)
+        UpdateNotifier.ensureChannel(this)
         purgeLegacyAdhanUri()
         NotificationScheduler.scheduleAllAsync(this)
         WidgetUpdater.updateAsync(this)
+        syncUpdateSchedule()
+    }
+
+    /**
+     * beta 7.95: the 24-hour updater is ON by default; turning it off cancels
+     * the unique WorkManager request (and with it every automatic request).
+     */
+    private fun syncUpdateSchedule() {
+        val app = this
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            val enabled = runCatching { UpdatesStore(app).enabledNow() }.getOrDefault(true)
+            UpdateScheduler.sync(app, enabled)
+        }
     }
 
     /**

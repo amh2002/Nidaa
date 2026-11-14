@@ -20,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -40,6 +41,10 @@ import com.mawaqiti.plus.ui.screens.SettingsScreen
 import com.mawaqiti.plus.ui.theme.LivingSkyBackground
 import com.mawaqiti.plus.ui.theme.MawaqitiTheme
 import com.mawaqiti.plus.ui.theme.SkyPalette
+import com.nidaa.prayer.update.ReleaseInfo
+import com.nidaa.prayer.update.UpdateManager
+import com.nidaa.prayer.update.UpdateState
+import com.nidaa.prayer.update.UpdatesStore
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +69,22 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
     val today by viewModel.today.collectAsState()
     val phase by viewModel.skyPhase.collectAsState()
     val isArabic = isArabicLocale()
+
+    // beta 7.95: isolated updater state. The toggle is read from the updater's
+    // own DataStore; the banner only appears for an actually newer release.
+    val appContext = LocalContext.current.applicationContext
+    val updatesStore = remember(appContext) { UpdatesStore(appContext) }
+    val updatesEnabled by updatesStore.enabled.collectAsState(initial = true)
+    val updateState by UpdateManager.state.collectAsState()
+    val updateRelease: ReleaseInfo? = when (val current = updateState) {
+        is UpdateState.Available -> current.release
+        is UpdateState.Downloading -> current.release
+        is UpdateState.ReadyToInstall -> current.release
+        else -> null
+    }
+    LaunchedEffect(appContext) {
+        UpdateManager.loadPending(appContext)
+    }
 
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var showCityPicker by rememberSaveable { mutableStateOf(false) }
@@ -109,7 +130,9 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         clockFormat = settings.clockFormat,
                         onChooseCity = { showCityPicker = true },
                         onOpenQibla = { selectedTab = 1 },
-                        onOpenSettings = { selectedTab = 2 }
+                        onOpenSettings = { selectedTab = 2 },
+                        updateRelease = updateRelease,
+                        onOpenUpdate = { selectedTab = 2 }
                     )
 
                     1 -> QiblaScreen(
@@ -135,7 +158,16 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onEventMode = viewModel::setEventMode,
                         onApplyModeToEnabled = viewModel::applyModeToEnabledEvents,
                         onTestEvent = viewModel::testEvent,
-                        onTestMode = viewModel::testMode
+                        onTestMode = viewModel::testMode,
+                        updatesEnabled = updatesEnabled,
+                        updateState = updateState,
+                        onUpdatesEnabled = { enabled ->
+                            UpdateManager.setEnabled(appContext, enabled)
+                        },
+                        onCheckForUpdates = { UpdateManager.checkNow(appContext, manual = true) },
+                        onDownloadUpdate = { UpdateManager.download(appContext) },
+                        onInstallUpdate = { UpdateManager.install(appContext) },
+                        onOpenReleasesPage = { UpdateManager.openReleasesPage(appContext) }
                     )
                 }
             }

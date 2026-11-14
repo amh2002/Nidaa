@@ -132,4 +132,33 @@
     <string name="widget_next_label">نداء — الصلاة التالية</string>
     <string name="widget_next_caption">الصلاة التالية</string>
     <string name="widget_next_description">الصلاة التالية ووقتها والوقت المتبقي</string>
+
+    <!-- beta 7.95: isolated update checker (GitHub releases only, opt-out) -->
+    <string name="settings_updates_title">التحديثات</string>
+    <string name="settings_updates_desc">يتحقق هذا القسم من إصدارات نداء الجديدة عبر GitHub فقط. لا يتصل التطبيق بأي جهة أخرى.</string>
+    <string name="settings_updates_auto">التحقق التلقائي</string>
+    <string name="settings_updates_auto_desc">مرة واحدة كل 24 ساعة عند توفر الشبكة. يمكن إيقافه في أي وقت.</string>
+    <string name="settings_updates_check_now">تحقق الآن</string>
+    <string name="settings_updates_checking">جارٍ التحقق من التحديثات…</string>
+    <string name="settings_updates_up_to_date">أنت على أحدث إصدار.</string>
+    <string name="settings_updates_available">تحديث جديد متاح: %1$s</string>
+    <string name="settings_updates_download">تنزيل التحديث</string>
+    <string name="settings_updates_downloading">جارٍ التنزيل… %1$d%%</string>
+    <string name="settings_updates_downloading_unknown">جارٍ التنزيل…</string>
+    <string name="settings_updates_verified">تم التحقق من بصمة الملف. جاهز للتثبيت.</string>
+    <string name="settings_updates_install">تثبيت</string>
+    <string name="settings_updates_error_network">تعذر التحقق من التحديث. تحقق من اتصالك أو افتح صفحة الإصدارات.</string>
+    <string name="settings_updates_error_checksum">بصمة الملف غير مطابقة أو غير منشورة — أُلغي التثبيت.</string>
+    <string name="settings_updates_error_download">تعذر تنزيل الملف. أعد المحاولة.</string>
+    <string name="settings_updates_error_permission">اسمح لنداء بتثبيت التطبيقات، ثم أعد المحاولة.</string>
+    <string name="settings_updates_error_install">تعذر بدء التثبيت.</string>
+    <string name="settings_updates_open_releases">فتح صفحة الإصدارات</string>
+    <string name="settings_updates_banner">تحديث جديد متاح لنداء — %1$s</string>
+    <string name="settings_updates_view">عرض</string>
+    <string name="settings_updates_retry">إعادة المحاولة</string>
+    <string name="settings_about_network">الوصول للشبكة للتحديثات فقط — يمكن إيقافه</string>
+    <string name="update_notification_title">تحديث جديد متاح لنداء</string>
+    <string name="update_notification_body">الإصدار %1$s جاهز للتنزيل من داخل التطبيق.</string>
+    <string name="update_channel_name">تحديثات التطبيق</string>
+    <string name="update_channel_desc">إشعار واحد عند توفر إصدار جديد من نداء.</string>
 </resources>
