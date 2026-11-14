@@ -129,4 +129,7 @@
     <string name="notify_channel_vibrate_desc">إشعار بالاهتزاز فقط</string>
     <string name="widget_description">مواقيت الصلاة والمدينة والتاريخ الهجري</string>
     <string name="widget_next">القادمة</string>
+    <string name="widget_next_label">نداء — الصلاة التالية</string>
+    <string name="widget_next_caption">الصلاة التالية</string>
+    <string name="widget_next_description">الصلاة التالية ووقتها والوقت المتبقي</string>
 </resources>

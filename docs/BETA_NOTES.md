@@ -1,6 +1,6 @@
 # BETA_NOTES.md
 
-**نداء | Nidaa** — latest release `1.0.0-beta7` (versionCode 7), 12 Nov 2026
+**نداء | Nidaa** — latest release `1.0.0-beta7.9` (versionCode 9), 14 Nov 2026
 
 > Historical note: the beta3/beta4 sections below keep the product name that
 > those builds actually shipped with («مواقيتي بلس / Mawaqiti Plus»). Every
@@ -10,13 +10,84 @@
 | Item | Value |
 |---|---|
 | Package | `com.nidaa.prayer` |
-| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta7.apk` |
-| Size | 21,710,815 bytes |
-| SHA-256 | `8FA91968042F68CABC896E8896A7D71AF357D7B1B760D1259697935454F0D833` |
+| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta7.9.apk` |
+| Size | 21,762,128 bytes |
+| SHA-256 | `15E9E09978E666AC4CF3C3E804279DB2904C0A8AB5200BAE14D7AB99F657B4CA` |
 | Build | debug (`assembleDebug`), not Play-store signed |
 | Minimum Android | 7.0 (API 24), target API 36 |
 | Launcher label | `نداء - Nidaa` (identical in every locale) |
 | Suggested store title | «نداء | Nidaa - أوقات الصلاة» |
+
+---
+
+## beta7.9 — rename audit, font size, resizable widget, next-prayer widget
+
+**Install over beta7 (or the beta7 hotfix).** Same `applicationId`
+(`com.nidaa.prayer`), `versionCode 9`, `versionName 1.0.0-beta7.9`; no data
+migration, no channel changes.
+
+### 1. Old app name purge (audit)
+
+`docs/RENAME_AUDIT.md` records the full sweep (`مواقيتي`, `Mawaqiti`,
+`mawaqiti`, case-insensitive) across `strings.xml`, `app_name`, widget labels
+and descriptions, notification channels, the manifest label, About and README.
+**Zero** old-brand occurrences remain in shipped, user-facing content; the
+`BrandIdentityTest` suite enforces the rule on every build. The only remaining
+mentions are the beta3/beta4 archive sections in this file, which are kept
+verbatim and marked with a historical banner on purpose. Internal identifiers
+that are part of the protected engine/package identity (namespace
+`com.mawaqiti.plus`, existing widget layout filenames, DataStore name) were
+intentionally not renamed.
+
+### 2. In-app font size
+
+Settings → **Font size / حجم الخط** uses the standard settings card, two
+segmented pill rows (3 + 2) with the five steps **80 %, 90 %, 100 %, 110 %,
+120 %**. The value is stored in DataStore (`font_scale`) and applied at the app
+root as `Density(density, systemFontScale × fontScale)`, so it multiplies the
+system setting without touching it and takes effect instantly on every in-app
+screen. Default is 100 %. The prayer grid labels and the city chip autosize down
+when the combined scale reaches 1.56×, so nothing truncates or overlaps; widget
+and notification text are unaffected.
+
+### 3. Responsive main widget
+
+The 4×2 widget is now resizable: `resizeMode="horizontal|vertical"`,
+`minResize 180 × 180 dp`, `maxResize 320 × 320 dp`, default cells 4 × 2
+(`minWidth 250 dp`, `minHeight 110 dp`), `targetCellWidth/Height = 4/2`, plus
+`previewLayout` and a rendered `previewImage`. Layouts stay pure
+`LinearLayout` + weights; no fixed-dp content widths. API 26+ uses the
+autosizing twin in `res/layout-v26/` (API 24-25 keeps fixed sizes). The minimum
+resize height is clamped to the smallest size that renders complete at system
+fontScale 1.3 (180 dp); the launcher never truncates a row.
+
+### 4. Next-prayer widget
+
+A second, compact widget shows only the upcoming prayer: caption, prayer name,
+its time and a short «in Xh Ym / بعد Xس Yد» computed once per update. Footprint
+2 × 2 (`targetCell 2/2`, 110 × 110 dp), resizable 110 × 110 … 220 × 220 dp.
+`updatePeriodMillis=0`: it never ticks and schedules no new alarms. It is
+refreshed by the same `WidgetUpdater.updateAll` pass as the main widget, so
+every existing refresh point (scheduled alarms, boot, date/time changes,
+settings changes, widget add/resize) updates BOTH widgets. Both receivers now
+extend the shared `SafeWidgetProvider` (goAsync + never-throw + fallback).
+Tapping either widget opens the app. Picker label: «نداء — الصلاة التالية» /
+"Nidaa — Next Prayer".
+
+### Verification
+
+- `testDebugUnitTest`: **27 suites / 124 tests / 0 failures**.
+- `testReleaseUnitTest`: **25 suites / 116 tests / 0 failures**.
+- New guards: `FontScaleTest` (steps/labels/noise), `WidgetResponsiveTest`
+  (AR+EN, 180×180/250×180/320×320 at fontScale 1.0/1.3, no vertical clip),
+  `NextPrayerWidgetTest` (remaining-time rollover Fajr→Sunrise and
+  Isha→tomorrow's Fajr, provider XML, manifest, dual-widget update pass).
+- No device/emulator was attached, so launcher resize was verified with the
+  Robolectric measure/render harness; PNGs are in
+  `C:\rea_ws\report\widget_probe\` and `C:\rea_ws\report\next_widget_probe\`
+  (AR/EN × 1.0/1.3). A physical Huawei launcher was **not** exercised.
+- Engine and `cities.json` are byte-identical to beta7; city parity and vector
+  gates still pass.
 
 ---
 

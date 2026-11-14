@@ -66,6 +66,20 @@
                 android:resource="@xml/mawaqiti_widget_info" />
         </receiver>
 
+        <!-- beta 7.9: compact next-prayer widget. Same exported flag as the main
+             widget; refreshed only through WidgetUpdater.updateAll. -->
+        <receiver
+            android:name=".notify.NextPrayerWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_next_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_next_info" />
+        </receiver>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

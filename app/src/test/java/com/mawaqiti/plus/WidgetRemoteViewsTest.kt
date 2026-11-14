@@ -41,7 +41,8 @@ class WidgetRemoteViewsTest {
     private val shippedLayouts = listOf(
         R.layout.widget_mawaqiti_ar,
         R.layout.widget_mawaqiti_en,
-        R.layout.widget_mawaqiti_fallback
+        R.layout.widget_mawaqiti_fallback,
+        R.layout.widget_next
     )
 
     /** Exactly the platform `RemoteViews` acceptance rule. */

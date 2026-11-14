@@ -54,5 +54,31 @@ object WidgetText {
         TableEvent.ISHA -> R.string.prayer_isha
     }
 
+    /**
+     * beta 7.9: short "in Xh Ym" for the next-prayer widget, computed once at
+     * update time (the widget never ticks). Wraps around midnight so the Fajr
+     * tomorrow case is always positive.
+     */
+    fun remaining(minutesUntil: Int, isArabic: Boolean): String {
+        val left = ((minutesUntil % 1440) + 1440) % 1440
+        val hours = left / 60
+        val minutes = left % 60
+        val body = when {
+            hours > 0 && minutes > 0 ->
+                if (isArabic) "${hours}س ${minutes}د" else "${hours}h ${minutes}m"
+            hours > 0 ->
+                if (isArabic) "${hours}س" else "${hours}h"
+            else ->
+                if (isArabic) "${minutes}د" else "${minutes}m"
+        }
+        return (if (isArabic) "بعد " else "in ") + body
+    }
+
+    /** Minutes from [nowMinutes] until [nextMinutes], wrapping past midnight. */
+    fun minutesUntil(nextMinutes: Int, nowMinutes: Int): Int {
+        val delta = nextMinutes - nowMinutes
+        return if (delta < 0) delta + 1440 else delta
+    }
+
     fun allEvents(): List<TableEvent> = order
 }

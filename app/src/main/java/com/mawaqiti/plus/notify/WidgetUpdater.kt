@@ -36,6 +36,10 @@ import kotlinx.coroutines.launch
  *    guaranteed 12 dp gap (a margin, not a <Space> view).
  *  - beta 7.9: resizable 3x2 .. 5x3 (weights + autosizing); the same data set
  *    fills the layout at any allowed size.
+ *  - beta 7.9: [updateAll] fills the main widget AND the compact next-prayer
+ *    widget in the same pass, so every refresh point keeps both in sync. The
+ *    next-prayer widget only shows name + time + a short "in Xh Ym" computed
+ *    here; it never ticks and adds no alarm.
  *
  * beta6 / W5 hardening:
  *  - The layout is pre-flighted with the platform's own RemoteViews filter, so
@@ -56,7 +60,7 @@ object WidgetUpdater {
         val app = context.applicationContext
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                update(app)
+                updateAll(app)
             } catch (error: Throwable) {
                 WidgetCrashLog.record(app, ANY_WIDGET, error)
                 pushFallbackToAll(app)
@@ -70,13 +74,11 @@ object WidgetUpdater {
         AppLanguage.ENGLISH -> R.layout.widget_mawaqiti_en
     }
 
-    suspend fun update(context: Context) {
+    suspend fun updateAll(context: Context) {
         val manager = AppWidgetManager.getInstance(context) ?: return
-        val component = ComponentName(context, MawaqitiWidgetProvider::class.java)
-        val ids: IntArray = runCatching { manager.getAppWidgetIds(component) }
-            .getOrNull()
-            ?: return
-        if (ids.isEmpty()) return
+        val mainIds = widgetIds(manager, mainComponent(context))
+        val nextIds = widgetIds(manager, nextComponent(context))
+        if (mainIds.isEmpty() && nextIds.isEmpty()) return
 
         // A settings/asset failure must not leave the ids untouched: fall back
         // for every widget instead of throwing out of the broadcast.
@@ -87,10 +89,22 @@ object WidgetUpdater {
             null
         }
 
-        for (id in ids) {
+        for (id in mainIds) {
             updateOne(context, manager, id, content)
         }
+        for (id in nextIds) {
+            updateNextOne(context, manager, id, content)
+        }
     }
+
+    private fun mainComponent(context: Context): ComponentName =
+        ComponentName(context, MawaqitiWidgetProvider::class.java)
+
+    private fun nextComponent(context: Context): ComponentName =
+        ComponentName(context, NextPrayerWidgetProvider::class.java)
+
+    private fun widgetIds(manager: AppWidgetManager, component: ComponentName): IntArray =
+        runCatching { manager.getAppWidgetIds(component) }.getOrNull() ?: IntArray(0)
 
     private fun updateOne(
         context: Context,
@@ -126,9 +140,37 @@ object WidgetUpdater {
     private fun pushFallbackToAll(context: Context) {
         runCatching {
             val manager = AppWidgetManager.getInstance(context) ?: return
-            val component = ComponentName(context, MawaqitiWidgetProvider::class.java)
-            for (id in manager.getAppWidgetIds(component)) {
+            for (id in widgetIds(manager, mainComponent(context))) {
                 manager.updateAppWidget(id, fallbackViews(context, AppLanguage.ARABIC))
+            }
+            for (id in widgetIds(manager, nextComponent(context))) {
+                manager.updateAppWidget(id, nextFallbackViews(context, AppLanguage.ARABIC))
+            }
+        }
+    }
+
+    private fun updateNextOne(
+        context: Context,
+        manager: AppWidgetManager,
+        widgetId: Int,
+        content: WidgetContent?
+    ) {
+        try {
+            if (content == null) {
+                manager.updateAppWidget(widgetId, nextFallbackViews(context, AppLanguage.ARABIC))
+                return
+            }
+            preflight(context, R.layout.widget_next)
+            manager.updateAppWidget(widgetId, nextViews(context, content))
+        } catch (error: Throwable) {
+            WidgetCrashLog.record(context, widgetId, error)
+            runCatching {
+                manager.updateAppWidget(
+                    widgetId,
+                    nextFallbackViews(context, content?.language ?: AppLanguage.ARABIC)
+                )
+            }.onFailure { fallbackError ->
+                WidgetCrashLog.record(context, widgetId, fallbackError)
             }
         }
     }
@@ -141,7 +183,8 @@ object WidgetUpdater {
         val language: AppLanguage,
         val layoutId: Int,
         val texts: Map<Int, String>,
-        val nextLabel: String
+        val nextLabel: String,
+        val nextTexts: Map<Int, String>
     )
 
     private suspend fun loadContent(context: Context): WidgetContent {
@@ -179,12 +222,24 @@ object WidgetUpdater {
                 WidgetText.clock(day.minutesFor(event), settings.clockFormat, isArabic)
         }
 
+        // Compact next-prayer widget: name + time + a short "in Xh Ym" that is
+        // computed now and only refreshed by the shared update pipeline.
+        val nextTexts = linkedMapOf(
+            R.id.widget_next_label to localized.getString(R.string.widget_next_caption),
+            R.id.widget_next_name to localized.getString(WidgetText.labelRes(nextEvent)),
+            R.id.widget_next_time to
+                WidgetText.clock(nextMinutes, settings.clockFormat, isArabic),
+            R.id.widget_next_left to
+                WidgetText.remaining(WidgetText.minutesUntil(nextMinutes, nowMinutes), isArabic)
+        )
+
         return WidgetContent(
             language = language,
             layoutId = layoutFor(language),
             texts = texts,
             nextLabel = localized.getString(WidgetText.labelRes(nextEvent)) + " " +
-                WidgetText.clock(nextMinutes, settings.clockFormat, isArabic)
+                WidgetText.clock(nextMinutes, settings.clockFormat, isArabic),
+            nextTexts = nextTexts
         )
     }
 
@@ -198,6 +253,16 @@ object WidgetUpdater {
             views.setTextViewText(viewId, text)
         }
         views.setOnClickPendingIntent(R.id.widget_root, openApp(context))
+        return views
+    }
+
+    /** Compact next-prayer widget; same click target, so tap opens the app. */
+    private fun nextViews(context: Context, content: WidgetContent): RemoteViews {
+        val views = RemoteViews(context.packageName, R.layout.widget_next)
+        for ((viewId, text) in content.nextTexts) {
+            views.setTextViewText(viewId, text)
+        }
+        views.setOnClickPendingIntent(R.id.widget_next_root, openApp(context))
         return views
     }
 
@@ -217,6 +282,29 @@ object WidgetUpdater {
         views.setTextViewText(R.id.widget_fallback_city, city)
         views.setTextViewText(R.id.widget_fallback_next, nextText)
         views.setOnClickPendingIntent(R.id.widget_fallback_root, openApp(context))
+        return views
+    }
+
+    /**
+     * beta 7.9 fallback for the compact widget. Uses the same minimal, valid
+     * RemoteViews tree as the full widget fallback (LinearLayout + TextView,
+     * static drawable, system typeface) so it can never render "Problem loading
+     * widget"; the remaining-time pill is left empty rather than showing stale
+     * information.
+     */
+    private fun nextFallbackViews(context: Context, language: AppLanguage): RemoteViews {
+        val views = RemoteViews(context.packageName, R.layout.widget_next)
+        val localized = runCatching {
+            NotificationText.localizedContext(context, language)
+        }.getOrNull()
+        views.setTextViewText(
+            R.id.widget_next_label,
+            localized?.getString(R.string.widget_next_caption) ?: ""
+        )
+        views.setTextViewText(R.id.widget_next_name, "")
+        views.setTextViewText(R.id.widget_next_time, fallbackNext(context, language))
+        views.setTextViewText(R.id.widget_next_left, "")
+        views.setOnClickPendingIntent(R.id.widget_next_root, openApp(context))
         return views
     }
 

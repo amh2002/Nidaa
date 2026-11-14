@@ -33,7 +33,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 if (intent.action != NotificationScheduler.ACTION_TEST) {
                     runCatching { NotificationScheduler.scheduleAll(app) }
                 }
-                WidgetUpdater.update(app)
+                WidgetUpdater.updateAll(app)
             } finally {
                 pending.finish()
             }

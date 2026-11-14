@@ -129,4 +129,7 @@
     <string name="notify_channel_vibrate_desc">Vibration only</string>
     <string name="widget_description">Prayer times, city and Hijri date</string>
     <string name="widget_next">Next</string>
+    <string name="widget_next_label">Nidaa — Next Prayer</string>
+    <string name="widget_next_caption">Next prayer</string>
+    <string name="widget_next_description">The next prayer with its time and remaining time</string>
 </resources>

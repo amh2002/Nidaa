@@ -216,7 +216,8 @@ class WidgetLayoutTest {
             for (name in listOf(
                 "widget_mawaqiti_ar",
                 "widget_mawaqiti_en",
-                "widget_mawaqiti_fallback"
+                "widget_mawaqiti_fallback",
+                "widget_next"
             )) {
                 val file = File("src/main/res/$dir/$name.xml")
                 if (!file.exists()) continue

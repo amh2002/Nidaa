@@ -91,7 +91,7 @@ object NotificationScheduler {
             .apply()
 
         scheduleMidnight(context, manager, now)
-        WidgetUpdater.update(context)
+        WidgetUpdater.updateAll(context)
     }
 
     fun scheduleTest(context: Context, event: NotifyEvent, mode: NotifyMode) {
