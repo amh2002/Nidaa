@@ -1,6 +1,6 @@
 # BETA_NOTES.md
 
-**نداء | Nidaa** — latest release `1.0.0-beta7.9` (versionCode 9), 14 Nov 2026
+**نداء | Nidaa** — latest release `1.0.0-beta7.95` (versionCode 10), 14 Nov 2026
 
 > Historical note: the beta3/beta4 sections below keep the product name that
 > those builds actually shipped with («مواقيتي بلس / Mawaqiti Plus»). Every
@@ -10,13 +10,117 @@
 | Item | Value |
 |---|---|
 | Package | `com.nidaa.prayer` |
-| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta7.9.apk` |
-| Size | 21,762,128 bytes |
-| SHA-256 | `15E9E09978E666AC4CF3C3E804279DB2904C0A8AB5200BAE14D7AB99F657B4CA` |
+| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta7.95.apk` |
+| Size | 22,275,456 bytes |
+| SHA-256 | `4402CFFE2B735D03B541B89EFEB93AB818BFF7A40A437CD55C9E81B236CE2E07` |
 | Build | debug (`assembleDebug`), not Play-store signed |
 | Minimum Android | 7.0 (API 24), target API 36 |
 | Launcher label | `نداء - Nidaa` (identical in every locale) |
 | Suggested store title | «نداء | Nidaa - أوقات الصلاة» |
+
+---
+
+## beta7.95 — in-app update checker, widget resize restore, adaptive next-prayer widget
+
+**Install over beta7.9.** Same `applicationId` (`com.nidaa.prayer`),
+`versionCode 10`, `versionName 1.0.0-beta7.95`; no data migration, no channel
+changes.
+
+### 1. In-app update checker (the only network feature)
+
+New isolated package `com.nidaa.prayer.update`. **All** network code lives there;
+the engine, the widgets, the alarm pipeline and the prayer tables are untouched.
+
+- **Opt-out, default ON.** Settings → «التحديثات» has one toggle
+  (`updates_enabled`, its own DataStore file `nidaa_updates`). Turning it off
+  cancels the unique WorkManager request, so the app makes zero automatic
+  requests. «تحقق الآن» still works manually while the toggle is off.
+- **Cadence.** `UpdateWorker` is enqueued as unique periodic work
+  (`nidaa_update_check`, 24 h, `NetworkType.CONNECTED`). An extra `UpdatePolicy`
+  check keeps it to at most one automatic check per 24 h even if the OS runs the
+  worker early; a backwards clock change never locks the updater out.
+- **Source.** `https://api.github.com/repos/amh2002/Nidaa/releases/latest` only.
+  The tag is parsed as a semantic version (`v` prefix optional, `1.0` == `1.0.0`,
+  numeric pre-release identifiers, so `beta7.95` > `beta7.9`) and compared with
+  `BuildConfig.VERSION_NAME`.
+- **Host allowlist, enforced in code.** `api.github.com`, `github.com`,
+  `objects.githubusercontent.com`, `release-assets.githubusercontent.com`;
+  HTTPS only, default port only, no user info, and every redirect hop is
+  re-validated manually (5-hop cap). Any other host is refused before a socket is
+  opened.
+- **Silent failures.** A failed automatic check never shows UI, sound or a
+  notification. A failed manual check shows one line and offers «فتح صفحة
+  الإصدارات» as a browser fallback (opened by the user, never fetched by the app).
+- **Download + verify.** The APK asset is streamed with `HttpURLConnection` into
+  `cacheDir/updates` with visible progress, hashed with SHA-256 while it
+  downloads, and compared with the `SHA-256: <hex>` line of the release body. A
+  mismatch — or a missing checksum — deletes the file and refuses the install.
+- **Install.** API 26+: `PackageInstaller` session; API 24/25: `FileProvider` +
+  `ACTION_VIEW` (`application/vnd.android.package-archive`). The APK is only ever
+  read from the app's private cache, so no storage permission is requested.
+  `REQUEST_INSTALL_PACKAGES` is requested once, and the owner is sent to the
+  system "install unknown apps" screen when it is not granted.
+- **One notification per release**, «تحديث جديد متاح لنداء», channel
+  `updates_v1`, plus an in-app banner on the main screen and the settings card.
+- **Permissions added:** `INTERNET`, `ACCESS_NETWORK_STATE`,
+  `REQUEST_INSTALL_PACKAGES`, and `android:usesCleartextTraffic="false"` in the
+  manifest. No telemetry, analytics, ads or crash SDK; the only new dependency is
+  `androidx.work:work-runtime-ktx:2.10.5`.
+- **About** now discloses: «الوصول للشبكة للتحديثات فقط — يمكن إيقافه».
+
+### 2. Widget resize restore (defect A)
+
+Root cause: the provider declared a 4×2 default (`minHeight 110dp`) but
+`minResizeHeight="180dp"`, so a resized instance could never return to the
+110dp height that a fresh add gets. `onAppWidgetOptionsChanged` also ignored the
+final `newOptions` and re-rendered from stale manager options.
+
+Fixed by:
+
+- `minResizeHeight` is now `110dp` (the declared default height);
+- `onAppWidgetOptionsChanged` calls
+  `WidgetUpdater.renderOne(context, id, WidgetSize.fromOptions(newOptions), kind)`
+  — the FINAL size only, no intermediate render;
+- `WidgetUpdater.renderForSize(id, size)` is now the single function that builds
+  and pushes widget views, reached from add, periodic update, boot, prayer
+  boundary, settings changes, fallback and resize end;
+- `mainLayoutFor(language, size)` is a pure one-size → one-layout rule, so the
+  same size always produces the same layout. RemoteViews are rebuilt from XML on
+  every render; nothing is cached between sizes;
+- a compact layout (`widget_mawaqiti_compact_ar/en`, plus `layout-v26` twins) is
+  used while the instance is small (width < 220dp or height < 130dp) and is
+  swapped back to the full grid the moment the instance grows;
+- API 26+ prayer cells now have bounded heights (name 1 : time 1.5) with
+  autosize, so the grid shrinks inside its rows instead of clipping, and the
+  header got larger autosize maxima so big instances use their space.
+
+`WidgetRestoreTest` proves it: a widget resized to the smallest size and back to
+the default renders a view tree identical to a fresh add at the default size
+(same ids, same classes, same text).
+
+### 3. Adaptive next-prayer widget (defect B)
+
+`widget_next` was four equal-weight lines, which left large empty gaps at 220dp
+and clipped at the minimum. It is now: caption pinned to the top, a centred
+name + time block that absorbs all middle space with a much larger autosize
+maximum (name 12–34sp, time 16–56sp), and the «بعد Xh Ym» pill pinned to the
+bottom. `maxResize` is capped at 250×140dp, so an enlarged instance uses the
+space instead of stretching into empty area, and every text shrinks inside its
+own bounds at 110×110.
+
+### Verification
+
+- `WidgetResponsive*`: no vertical clipping in either language, at system font
+  scale 1.0 and 1.3, for the full grid (250×140, 250×180, 320×320) and the
+  compact variant (180×110, 250×110, 180×180) — rendered with Robolectric native
+  graphics, so real autosizing is exercised.
+- `NextPrayerWidgetTest`, `WidgetLayoutTest`, `WidgetRestoreTest`,
+  `WidgetRemoteViewsTest` (W5 filter), `WidgetLanguageTest`, `WidgetTextTest`:
+  all green; both widgets are still refreshed by the shared pipeline at every
+  prayer boundary.
+- `debug` and `release` unit-test suites green (145 tests, 0 failures).
+- Renders: `C:\rea_ws\report\widget_resize_beta795\before_*.png` vs
+  `after_*.png`.
 
 ---
 

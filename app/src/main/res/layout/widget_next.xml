@@ -1,24 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  beta 7.9 next-prayer widget (2x2, 110 x 110 dp target).
+  beta 7.95 adaptive next-prayer widget, API 24/25 fallback.
 
-  Shows ONLY the next prayer: a small caption, the prayer name, its time and a
-  short "in Xh Ym" computed at update time. The text is filled by WidgetUpdater
-  from the shared widget settings; nothing here ticks or schedules alarms.
-
-  This is the API 24-25 fallback (fixed text sizes, no autosizing). The
-  autosizing twin lives in res/layout-v26. Every row height is a weight, so the
-  content always divides the available height instead of overflowing it.
-
-  Reading direction is forced to LTR; all content is centred, so the two widget
-  languages need no mirrored copy.
+  Same structure and ids as res/layout-v26/widget_next.xml (caption top,
+  centred name + time, remaining-time pill bottom) with fixed text sizes
+  because autosizing starts at API 26. All heights are weights, so the block
+  divides the available height instead of overflowing it.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_next_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:gravity="center"
     android:layoutDirection="ltr"
     android:orientation="vertical"
     android:padding="8dp">
@@ -26,53 +19,58 @@
     <TextView
         android:id="@+id/widget_next_label"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:textColor="@color/widget_text_muted"
+        android:textSize="10sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:ellipsize="end"
         android:gravity="center"
-        android:maxLines="1"
-        android:textColor="@color/widget_text_muted"
-        android:textSize="9sp" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/widget_next_name"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1.6"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:textColor="@color/widget_text"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        <TextView
+            android:id="@+id/widget_next_name"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="2"
+            android:textColor="@color/widget_text"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/widget_next_time"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2.2"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:textColor="@color/widget_text"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        <TextView
+            android:id="@+id/widget_next_time"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1.5"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textColor="@color/widget_text"
+            android:textSize="27sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/widget_next_left"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_weight="1.2"
         android:background="@drawable/widget_gold_pill"
         android:ellipsize="end"
-        android:gravity="center"
         android:maxLines="1"
-        android:paddingStart="7dp"
-        android:paddingTop="2dp"
-        android:paddingEnd="7dp"
-        android:paddingBottom="2dp"
+        android:paddingStart="10dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="3dp"
         android:textColor="@color/widget_gold"
-        android:textSize="9sp"
+        android:textSize="10sp"
         android:textStyle="bold" />
 </LinearLayout>

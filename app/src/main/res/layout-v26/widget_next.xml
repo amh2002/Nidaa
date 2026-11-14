@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  beta 7.9 next-prayer widget (2x2), API 26+ autosizing twin of
-  res/layout/widget_next.xml. Same ids, same weight division; every text
-  shrinks instead of clipping from 2x2 up to the declared maximum.
+  beta 7.95 adaptive next-prayer widget (API 26+ autosizing twin).
+
+  Layout contract, top to bottom:
+    1. a single caption pinned to the TOP (wraps instead of clipping),
+    2. the prayer name + time as one centred block that takes ALL the middle
+       space and scales up with a generous autosize maximum,
+    3. the «بعد Xh Ym» pill pinned to the BOTTOM.
+
+  Every text is height-bounded (0dp + weight) so autosize has a real constraint
+  and shrinks at 110x110 instead of being cropped, and grows at 250x140 instead
+  of leaving the old empty gaps.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_next_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:gravity="center"
     android:layoutDirection="ltr"
     android:orientation="vertical"
     android:padding="8dp">
@@ -17,69 +24,75 @@
     <TextView
         android:id="@+id/widget_next_label"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="7sp"
+        android:autoSizeMaxTextSize="13sp"
+        android:autoSizeStepGranularity="1sp"
+        android:textColor="@color/widget_text_muted"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="6sp"
-        android:autoSizeMaxTextSize="10sp"
-        android:autoSizeStepGranularity="1sp"
-        android:ellipsize="end"
         android:gravity="center"
-        android:maxLines="1"
-        android:textColor="@color/widget_text_muted"
-        android:textSize="10sp" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/widget_next_name"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1.6"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="9sp"
-        android:autoSizeMaxTextSize="18sp"
-        android:autoSizeStepGranularity="1sp"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:textColor="@color/widget_text"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        <TextView
+            android:id="@+id/widget_next_name"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="2"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="12sp"
+            android:autoSizeMaxTextSize="34sp"
+            android:autoSizeStepGranularity="1sp"
+            android:textColor="@color/widget_text"
+            android:textSize="34sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/widget_next_time"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2.2"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="10sp"
-        android:autoSizeMaxTextSize="24sp"
-        android:autoSizeStepGranularity="1sp"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:textColor="@color/widget_text"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        <TextView
+            android:id="@+id/widget_next_time"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1.5"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="16sp"
+            android:autoSizeMaxTextSize="56sp"
+            android:autoSizeStepGranularity="1sp"
+            android:includeFontPadding="false"
+            android:textColor="@color/widget_text"
+            android:textSize="56sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/widget_next_left"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_weight="1.2"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="6sp"
-        android:autoSizeMaxTextSize="10sp"
-        android:autoSizeStepGranularity="1sp"
         android:background="@drawable/widget_gold_pill"
         android:ellipsize="end"
-        android:gravity="center"
         android:maxLines="1"
-        android:paddingStart="7dp"
-        android:paddingTop="2dp"
-        android:paddingEnd="7dp"
-        android:paddingBottom="2dp"
+        android:paddingStart="10dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="3dp"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="8sp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeStepGranularity="1sp"
         android:textColor="@color/widget_gold"
-        android:textSize="10sp"
+        android:textSize="16sp"
         android:textStyle="bold" />
 </LinearLayout>

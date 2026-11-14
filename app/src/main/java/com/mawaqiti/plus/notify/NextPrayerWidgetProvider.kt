@@ -8,4 +8,7 @@ package com.mawaqiti.plus.notify
  * refreshed by the same [WidgetUpdater.updateAll] pass as the main widget, so
  * every existing refresh point keeps both widgets in sync.
  */
-class NextPrayerWidgetProvider : SafeWidgetProvider()
+class NextPrayerWidgetProvider : SafeWidgetProvider() {
+    override val kind: WidgetUpdater.WidgetKind
+        get() = WidgetUpdater.WidgetKind.NEXT
+}

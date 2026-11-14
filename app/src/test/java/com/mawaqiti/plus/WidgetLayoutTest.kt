@@ -185,12 +185,36 @@ class WidgetLayoutTest {
         assertEquals("250dp", attr("minWidth"))
         assertEquals("110dp", attr("minHeight"))
 
-        // Horizontal 3…5 columns; vertical minimum is the smallest height the
-        // two prayer rows render complete at system fontScale 1.3 (180 dp).
+        // Horizontal 3…5 columns; the vertical minimum equals the declared
+        // default height (110dp) since beta 7.95, so an instance can always be
+        // resized back to exactly the size a fresh add gets. Below the compact
+        // width the updater renders the compact layout instead of clipping.
         assertEquals("180dp", attr("minResizeWidth"))
-        assertEquals("180dp", attr("minResizeHeight"))
+        assertEquals("110dp", attr("minResizeHeight"))
         assertEquals("320dp", attr("maxResizeWidth"))
         assertEquals("320dp", attr("maxResizeHeight"))
+    }
+
+    @Test
+    fun `compact layouts are mirrored twins with the shared compact ids`() {
+        val ids = listOf(
+            R.id.widget_compact_root, R.id.widget_compact_city,
+            R.id.widget_compact_wordmark, R.id.widget_compact_name,
+            R.id.widget_compact_time, R.id.widget_compact_left
+        )
+        val ar = inflate(R.layout.widget_mawaqiti_compact_ar)
+        val en = inflate(R.layout.widget_mawaqiti_compact_en)
+        for (id in ids) {
+            assertNotNull("missing in AR compact layout: $id", ar.findViewById<View>(id))
+            assertNotNull("missing in EN compact layout: $id", en.findViewById<View>(id))
+        }
+        // Same anchors as the full twins: AR city-left, EN mirrored.
+        val arRow = ar.getChildAt(0) as ViewGroup
+        assertEquals(R.id.widget_compact_city, arRow.getChildAt(0).id)
+        assertEquals(R.id.widget_compact_wordmark, arRow.getChildAt(1).id)
+        val enRow = en.getChildAt(0) as ViewGroup
+        assertEquals(R.id.widget_compact_wordmark, enRow.getChildAt(0).id)
+        assertEquals(R.id.widget_compact_city, enRow.getChildAt(1).id)
     }
 
     @Test
@@ -216,6 +240,8 @@ class WidgetLayoutTest {
             for (name in listOf(
                 "widget_mawaqiti_ar",
                 "widget_mawaqiti_en",
+                "widget_mawaqiti_compact_ar",
+                "widget_mawaqiti_compact_en",
                 "widget_mawaqiti_fallback",
                 "widget_next"
             )) {

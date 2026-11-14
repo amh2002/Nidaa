@@ -118,8 +118,8 @@ class NextPrayerWidgetTest {
         assertEquals("110dp", attr("minHeight"))
         assertEquals("110dp", attr("minResizeWidth"))
         assertEquals("110dp", attr("minResizeHeight"))
-        assertEquals("220dp", attr("maxResizeWidth"))
-        assertEquals("220dp", attr("maxResizeHeight"))
+        assertEquals("250dp", attr("maxResizeWidth"))
+        assertEquals("140dp", attr("maxResizeHeight"))
         // Refreshed only by the shared pipeline, never by the system period.
         assertEquals("0", attr("updatePeriodMillis"))
     }

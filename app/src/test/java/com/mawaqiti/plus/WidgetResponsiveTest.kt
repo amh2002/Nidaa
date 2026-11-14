@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * beta 7.9 task 3: the widget must render complete at every allowed size, in
@@ -77,6 +78,33 @@ abstract class WidgetResponsiveBase {
         return root
     }
 
+    private fun renderCompact(widthDp: Int, heightDp: Int, fontScale: Float): ViewGroup {
+        val ctx = context(fontScale)
+        val layout = if (isArabic) {
+            R.layout.widget_mawaqiti_compact_ar
+        } else {
+            R.layout.widget_mawaqiti_compact_en
+        }
+        val root = LayoutInflater.from(ctx).inflate(layout, null) as ViewGroup
+        (root.findViewById<View>(R.id.widget_compact_city) as TextView).text =
+            if (isArabic) "طولكرم - فلسطين" else "Tulkarm - Palestine"
+        (root.findViewById<View>(R.id.widget_compact_wordmark) as TextView).text =
+            if (isArabic) "نداء" else "Nidaa"
+        (root.findViewById<View>(R.id.widget_compact_name) as TextView).text =
+            if (isArabic) "العشاء" else "Isha"
+        (root.findViewById<View>(R.id.widget_compact_time) as TextView).text = "20:00"
+        (root.findViewById<View>(R.id.widget_compact_left) as TextView).text =
+            if (isArabic) "بعد 2س 5د" else "in 2h 5m"
+
+        val dm = ctx.resources.displayMetrics
+        root.measure(
+            View.MeasureSpec.makeMeasureSpec((widthDp * dm.density).toInt(), View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec((heightDp * dm.density).toInt(), View.MeasureSpec.EXACTLY)
+        )
+        root.layout(0, 0, root.measuredWidth, root.measuredHeight)
+        return root
+    }
+
     private fun assertNoVerticalClip(root: ViewGroup, where: String) {
         walk(root) { view ->
             val tv = view as? TextView ?: return@walk
@@ -123,9 +151,26 @@ abstract class WidgetResponsiveBase {
     @Test
     fun `renders complete from 3x2 to the 320dp maximum at both font scales`() {
         for (fontScale in listOf(1.0f, 1.3f)) {
-            for ((w, h) in listOf(180 to 180, 250 to 180, 320 to 320)) {
-                val root = render(R.layout.widget_mawaqiti_ar, w, h, fontScale)
+            // Sizes at which the updater selects the FULL grid (width >= 220dp
+            // and height >= 130dp).
+            for ((w, h) in listOf(250 to 140, 250 to 180, 320 to 320)) {
+                val layout = if (isArabic) {
+                    R.layout.widget_mawaqiti_ar
+                } else {
+                    R.layout.widget_mawaqiti_en
+                }
+                val root = render(layout, w, h, fontScale)
                 assertNoVerticalClip(root, "AR ${w}x$h @${fontScale}")
+            }
+        }
+    }
+
+    @Test
+    fun `compact variant renders complete at every small size`() {
+        for (fontScale in listOf(1.0f, 1.3f)) {
+            for ((w, h) in listOf(180 to 110, 250 to 110, 180 to 180)) {
+                val root = renderCompact(w, h, fontScale)
+                assertNoVerticalClip(root, "compact ${w}x$h @${fontScale}")
             }
         }
     }
@@ -133,12 +178,14 @@ abstract class WidgetResponsiveBase {
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "ar-rSA-ldrtl-w411dp-h891dp-xhdpi")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class WidgetResponsiveArTest : WidgetResponsiveBase() {
     override val isArabic = true
 }
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "en-rUS-w411dp-h891dp-xhdpi")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class WidgetResponsiveEnTest : WidgetResponsiveBase() {
     override val isArabic = false
 }

@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.RemoteViews
 import com.mawaqiti.plus.MainActivity
@@ -56,6 +57,46 @@ object WidgetUpdater {
     private const val ANY_WIDGET = -1
     private const val REQUEST_OPEN = 6200
 
+    /** Below this width (or height) the main widget uses its compact layout. */
+    private const val COMPACT_WIDTH_DP = 220
+    private const val COMPACT_HEIGHT_DP = 130
+
+    enum class WidgetKind { MAIN, NEXT }
+
+    /**
+     * Final widget bounds as reported by the launcher. [widthDp]/[heightDp]
+     * describe the current (minimum) window; the max values are only a
+     * fallback when a launcher omits the minimum.
+     */
+    data class WidgetSize(
+        val minWidthDp: Int = 0,
+        val minHeightDp: Int = 0,
+        val maxWidthDp: Int = 0,
+        val maxHeightDp: Int = 0
+    ) {
+        val widthDp: Int get() = if (minWidthDp > 0) minWidthDp else maxWidthDp
+        val heightDp: Int get() = if (minHeightDp > 0) minHeightDp else maxHeightDp
+        val isCompact: Boolean
+            get() = (widthDp > 0 && widthDp < COMPACT_WIDTH_DP) ||
+                (heightDp > 0 && heightDp < COMPACT_HEIGHT_DP)
+
+        companion object {
+            val DEFAULT = WidgetSize(250, 140, 250, 140)
+
+            fun fromOptions(options: Bundle?): WidgetSize {
+                if (options == null || options.isEmpty) return DEFAULT
+                fun read(key: String): Int = options.getInt(key, 0)
+                val size = WidgetSize(
+                    minWidthDp = read(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    minHeightDp = read(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT),
+                    maxWidthDp = read(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH),
+                    maxHeightDp = read(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
+                )
+                return if (size.widthDp <= 0 || size.heightDp <= 0) DEFAULT else size
+            }
+        }
+    }
+
     fun updateAsync(context: Context) {
         val app = context.applicationContext
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
@@ -74,6 +115,24 @@ object WidgetUpdater {
         AppLanguage.ENGLISH -> R.layout.widget_mawaqiti_en
     }
 
+    /** Compact (narrow) layout for a widget language. */
+    fun compactLayoutFor(language: AppLanguage): Int = when (language) {
+        AppLanguage.ARABIC -> R.layout.widget_mawaqiti_compact_ar
+        AppLanguage.ENGLISH -> R.layout.widget_mawaqiti_compact_en
+    }
+
+    /**
+     * THE single layout-selection rule for the main widget.
+     *
+     * A fresh add, a scheduled update, a boot refresh and the end of a resize
+     * all call this with the FINAL size, so one size always maps to one layout.
+     * That is the restore guarantee: after shrinking to the minimum and growing
+     * back to the default size, the instance renders exactly what a fresh add at
+     * the default size renders.
+     */
+    fun mainLayoutFor(language: AppLanguage, size: WidgetSize): Int =
+        if (size.isCompact) compactLayoutFor(language) else layoutFor(language)
+
     suspend fun updateAll(context: Context) {
         val manager = AppWidgetManager.getInstance(context) ?: return
         val mainIds = widgetIds(manager, mainComponent(context))
@@ -90,11 +149,32 @@ object WidgetUpdater {
         }
 
         for (id in mainIds) {
-            updateOne(context, manager, id, content)
+            renderForSize(context, manager, id, sizeOf(manager, id), content, WidgetKind.MAIN)
         }
         for (id in nextIds) {
-            updateNextOne(context, manager, id, content)
+            renderForSize(context, manager, id, sizeOf(manager, id), content, WidgetKind.NEXT)
         }
+    }
+
+    /**
+     * Resize-end entry point. The provider passes the FINAL options bundle, so
+     * the widget is rendered for exactly that size — no intermediate or stale
+     * compact render can be left behind.
+     */
+    suspend fun renderOne(
+        context: Context,
+        widgetId: Int,
+        size: WidgetSize,
+        kind: WidgetKind
+    ) {
+        val manager = AppWidgetManager.getInstance(context) ?: return
+        val content = try {
+            loadContent(context)
+        } catch (error: Throwable) {
+            WidgetCrashLog.record(context, widgetId, error)
+            null
+        }
+        renderForSize(context, manager, widgetId, size, content, kind)
     }
 
     private fun mainComponent(context: Context): ComponentName =
@@ -106,29 +186,45 @@ object WidgetUpdater {
     private fun widgetIds(manager: AppWidgetManager, component: ComponentName): IntArray =
         runCatching { manager.getAppWidgetIds(component) }.getOrNull() ?: IntArray(0)
 
-    private fun updateOne(
+    private fun sizeOf(manager: AppWidgetManager, widgetId: Int): WidgetSize =
+        runCatching { WidgetSize.fromOptions(manager.getAppWidgetOptions(widgetId)) }
+            .getOrDefault(WidgetSize.DEFAULT)
+
+    /**
+     * THE only function that builds and pushes widget views. Every entry point
+     * (add, update period, boot, prayer boundary, settings change, resize end,
+     * fallback) ends here. RemoteViews are rebuilt from XML for every call, so
+     * no size-dependent view tree is ever cached between renders.
+     */
+    private fun renderForSize(
         context: Context,
         manager: AppWidgetManager,
         widgetId: Int,
-        content: WidgetContent?
+        size: WidgetSize,
+        content: WidgetContent?,
+        kind: WidgetKind
     ) {
         try {
             if (content == null) {
-                manager.updateAppWidget(widgetId, fallbackViews(context, AppLanguage.ARABIC))
+                manager.updateAppWidget(widgetId, fallbackFor(context, kind, AppLanguage.ARABIC))
                 return
             }
+            val views = when (kind) {
+                WidgetKind.MAIN -> mainViews(context, content, size)
+                WidgetKind.NEXT -> nextViews(context, content)
+            }
             // Reject a layout exactly the way the launcher would, here.
-            preflight(context, content.layoutId)
-            manager.updateAppWidget(widgetId, fullViews(context, content))
+            preflight(context, views.layoutId)
+            manager.updateAppWidget(widgetId, views)
         } catch (error: Throwable) {
             WidgetCrashLog.record(context, widgetId, error)
             runCatching {
                 manager.updateAppWidget(
                     widgetId,
-                    fallbackViews(
+                    fallbackFor(
                         context,
-                        content?.language ?: AppLanguage.ARABIC,
-                        next = content?.nextLabel
+                        kind,
+                        content?.language ?: AppLanguage.ARABIC
                     )
                 )
             }.onFailure { fallbackError ->
@@ -137,40 +233,27 @@ object WidgetUpdater {
         }
     }
 
+    private fun fallbackFor(
+        context: Context,
+        kind: WidgetKind,
+        language: AppLanguage
+    ): RemoteViews = when (kind) {
+        WidgetKind.MAIN -> fallbackViews(context, language)
+        WidgetKind.NEXT -> nextFallbackViews(context, language)
+    }
+
     private fun pushFallbackToAll(context: Context) {
         runCatching {
             val manager = AppWidgetManager.getInstance(context) ?: return
             for (id in widgetIds(manager, mainComponent(context))) {
-                manager.updateAppWidget(id, fallbackViews(context, AppLanguage.ARABIC))
+                renderForSize(
+                    context, manager, id, sizeOf(manager, id), null, WidgetKind.MAIN
+                )
             }
             for (id in widgetIds(manager, nextComponent(context))) {
-                manager.updateAppWidget(id, nextFallbackViews(context, AppLanguage.ARABIC))
-            }
-        }
-    }
-
-    private fun updateNextOne(
-        context: Context,
-        manager: AppWidgetManager,
-        widgetId: Int,
-        content: WidgetContent?
-    ) {
-        try {
-            if (content == null) {
-                manager.updateAppWidget(widgetId, nextFallbackViews(context, AppLanguage.ARABIC))
-                return
-            }
-            preflight(context, R.layout.widget_next)
-            manager.updateAppWidget(widgetId, nextViews(context, content))
-        } catch (error: Throwable) {
-            WidgetCrashLog.record(context, widgetId, error)
-            runCatching {
-                manager.updateAppWidget(
-                    widgetId,
-                    nextFallbackViews(context, content?.language ?: AppLanguage.ARABIC)
+                renderForSize(
+                    context, manager, id, sizeOf(manager, id), null, WidgetKind.NEXT
                 )
-            }.onFailure { fallbackError ->
-                WidgetCrashLog.record(context, widgetId, fallbackError)
             }
         }
     }
@@ -181,9 +264,8 @@ object WidgetUpdater {
 
     private data class WidgetContent(
         val language: AppLanguage,
-        val layoutId: Int,
         val texts: Map<Int, String>,
-        val nextLabel: String,
+        val compactTexts: Map<Int, String>,
         val nextTexts: Map<Int, String>
     )
 
@@ -222,6 +304,20 @@ object WidgetUpdater {
                 WidgetText.clock(day.minutesFor(event), settings.clockFormat, isArabic)
         }
 
+        // Compact main widget (small instances): city + wordmark, next prayer
+        // name/time large, and the remaining-time pill. Same next-prayer data
+        // as the full widget, so growing back to the default size immediately
+        // returns to the full grid.
+        val compactTexts = linkedMapOf(
+            R.id.widget_compact_city to city.displayName(isArabic),
+            R.id.widget_compact_wordmark to localized.getString(R.string.brand_name),
+            R.id.widget_compact_name to localized.getString(WidgetText.labelRes(nextEvent)),
+            R.id.widget_compact_time to
+                WidgetText.clock(nextMinutes, settings.clockFormat, isArabic),
+            R.id.widget_compact_left to
+                WidgetText.remaining(WidgetText.minutesUntil(nextMinutes, nowMinutes), isArabic)
+        )
+
         // Compact next-prayer widget: name + time + a short "in Xh Ym" that is
         // computed now and only refreshed by the shared update pipeline.
         val nextTexts = linkedMapOf(
@@ -235,10 +331,8 @@ object WidgetUpdater {
 
         return WidgetContent(
             language = language,
-            layoutId = layoutFor(language),
             texts = texts,
-            nextLabel = localized.getString(WidgetText.labelRes(nextEvent)) + " " +
-                WidgetText.clock(nextMinutes, settings.clockFormat, isArabic),
+            compactTexts = compactTexts,
             nextTexts = nextTexts
         )
     }
@@ -247,12 +341,25 @@ object WidgetUpdater {
     // RemoteViews
     // ----------------------------------------------------------------------- //
 
-    private fun fullViews(context: Context, content: WidgetContent): RemoteViews {
-        val views = RemoteViews(context.packageName, content.layoutId)
-        for ((viewId, text) in content.texts) {
+    /**
+     * Main widget views for the FINAL size. Rebuilt from XML on every call; the
+     * compact layout is chosen only for narrow instances and is replaced by the
+     * full layout as soon as the instance is wide again.
+     */
+    private fun mainViews(
+        context: Context,
+        content: WidgetContent,
+        size: WidgetSize
+    ): RemoteViews {
+        val compact = size.isCompact
+        val layoutId = mainLayoutFor(content.language, size)
+        val texts = if (compact) content.compactTexts else content.texts
+        val rootId = if (compact) R.id.widget_compact_root else R.id.widget_root
+        val views = RemoteViews(context.packageName, layoutId)
+        for ((viewId, text) in texts) {
             views.setTextViewText(viewId, text)
         }
-        views.setOnClickPendingIntent(R.id.widget_root, openApp(context))
+        views.setOnClickPendingIntent(rootId, openApp(context))
         return views
     }
 

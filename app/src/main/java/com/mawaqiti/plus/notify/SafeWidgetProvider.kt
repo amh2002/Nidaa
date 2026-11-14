@@ -27,6 +27,10 @@ import kotlinx.coroutines.launch
  */
 abstract class SafeWidgetProvider : AppWidgetProvider() {
 
+    /** Which layout family this provider owns; used by the shared renderer. */
+    open val kind: WidgetUpdater.WidgetKind
+        get() = WidgetUpdater.WidgetKind.MAIN
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: android.appwidget.AppWidgetManager,
@@ -41,7 +45,9 @@ abstract class SafeWidgetProvider : AppWidgetProvider() {
         appWidgetId: Int,
         newOptions: android.os.Bundle
     ) {
-        refresh(context)
+        // Resize end: re-render THIS instance with the FINAL options the
+        // launcher just reported. Intermediate sizes are never kept.
+        refreshOne(context, appWidgetId, WidgetUpdater.WidgetSize.fromOptions(newOptions))
     }
 
     override fun onEnabled(context: Context) {
@@ -69,6 +75,25 @@ abstract class SafeWidgetProvider : AppWidgetProvider() {
                 WidgetUpdater.updateAll(app)
             } catch (error: Throwable) {
                 WidgetCrashLog.record(app, ANY_WIDGET, error)
+            } finally {
+                pending?.finish()
+            }
+        }
+    }
+
+    private fun refreshOne(
+        context: Context,
+        widgetId: Int,
+        size: WidgetUpdater.WidgetSize
+    ) {
+        val app = context.applicationContext
+        val pending = goAsync()
+        val providerKind = kind
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                WidgetUpdater.renderOne(app, widgetId, size, providerKind)
+            } catch (error: Throwable) {
+                WidgetCrashLog.record(app, widgetId, error)
             } finally {
                 pending?.finish()
             }

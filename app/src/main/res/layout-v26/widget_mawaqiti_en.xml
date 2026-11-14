@@ -12,7 +12,7 @@
     android:background="@drawable/widget_background"
     android:layoutDirection="ltr"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="8dp">
 
     <!-- Row 1: wordmark LEFT, city RIGHT, 12dp start margin on the city is the
          guaranteed gap. beta6: no Space view — see widget_mawaqiti_ar.xml. -->
@@ -29,11 +29,11 @@
             android:gravity="start|center_vertical"
             android:maxLines="1"
             android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="9sp"
-                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeMinTextSize="8sp"
+                android:autoSizeMaxTextSize="14sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_gold"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
@@ -46,11 +46,11 @@
             android:gravity="end|center_vertical"
             android:maxLines="1"
             android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="10sp"
-                android:autoSizeMaxTextSize="15sp"
+                android:autoSizeMinTextSize="9sp"
+                android:autoSizeMaxTextSize="18sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_text"
-            android:textSize="15sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -75,10 +75,10 @@
             android:paddingBottom="3dp"
             android:autoSizeTextType="uniform"
                 android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="11sp"
+                android:autoSizeMaxTextSize="13sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_gold"
-            android:textSize="11sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <TextView
@@ -92,10 +92,10 @@
             android:maxLines="2"
             android:autoSizeTextType="uniform"
                 android:autoSizeMinTextSize="6sp"
-                android:autoSizeMaxTextSize="11sp"
+                android:autoSizeMaxTextSize="12sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_text_muted"
-            android:textSize="11sp" />
+            android:textSize="12sp" />
     </LinearLayout>
 
     <!-- Row A: Fajr, Sunrise, Dhuhr left to right. -->
@@ -103,12 +103,12 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="3dp"
         android:background="@drawable/widget_glass_row"
         android:baselineAligned="false"
         android:orientation="horizontal"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp">
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -120,28 +120,31 @@
             <TextView
                 android:id="@+id/widget_fajr_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="10sp"
+                android:autoSizeMinTextSize="4sp"
+                android:autoSizeMaxTextSize="12sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_text_muted"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/widget_fajr_time"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1.5"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="10sp"
-                android:autoSizeMaxTextSize="15sp"
+                android:autoSizeMinTextSize="6sp"
+                android:autoSizeMaxTextSize="36sp"
                 android:autoSizeStepGranularity="1sp"
+                android:includeFontPadding="false"
                 android:textColor="@color/widget_text"
-                android:textSize="15sp"
+                android:textSize="36sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -155,28 +158,31 @@
             <TextView
                 android:id="@+id/widget_sunrise_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="10sp"
+                android:autoSizeMinTextSize="4sp"
+                android:autoSizeMaxTextSize="12sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_text_muted"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/widget_sunrise_time"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1.5"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="10sp"
-                android:autoSizeMaxTextSize="15sp"
+                android:autoSizeMinTextSize="6sp"
+                android:autoSizeMaxTextSize="36sp"
                 android:autoSizeStepGranularity="1sp"
+                android:includeFontPadding="false"
                 android:textColor="@color/widget_text"
-                android:textSize="15sp"
+                android:textSize="36sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -190,28 +196,31 @@
             <TextView
                 android:id="@+id/widget_dhuhr_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="10sp"
+                android:autoSizeMinTextSize="4sp"
+                android:autoSizeMaxTextSize="12sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_text_muted"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/widget_dhuhr_time"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1.5"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="10sp"
-                android:autoSizeMaxTextSize="15sp"
+                android:autoSizeMinTextSize="6sp"
+                android:autoSizeMaxTextSize="36sp"
                 android:autoSizeStepGranularity="1sp"
+                android:includeFontPadding="false"
                 android:textColor="@color/widget_text"
-                android:textSize="15sp"
+                android:textSize="36sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
@@ -221,12 +230,12 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:background="@drawable/widget_glass_row"
         android:baselineAligned="false"
         android:orientation="horizontal"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp">
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -238,28 +247,31 @@
             <TextView
                 android:id="@+id/widget_asr_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="10sp"
+                android:autoSizeMinTextSize="4sp"
+                android:autoSizeMaxTextSize="12sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_text_muted"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/widget_asr_time"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1.5"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="10sp"
-                android:autoSizeMaxTextSize="15sp"
+                android:autoSizeMinTextSize="6sp"
+                android:autoSizeMaxTextSize="36sp"
                 android:autoSizeStepGranularity="1sp"
+                android:includeFontPadding="false"
                 android:textColor="@color/widget_text"
-                android:textSize="15sp"
+                android:textSize="36sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -273,28 +285,31 @@
             <TextView
                 android:id="@+id/widget_maghrib_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="10sp"
+                android:autoSizeMinTextSize="4sp"
+                android:autoSizeMaxTextSize="12sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_text_muted"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/widget_maghrib_time"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1.5"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="10sp"
-                android:autoSizeMaxTextSize="15sp"
+                android:autoSizeMinTextSize="6sp"
+                android:autoSizeMaxTextSize="36sp"
                 android:autoSizeStepGranularity="1sp"
+                android:includeFontPadding="false"
                 android:textColor="@color/widget_text"
-                android:textSize="15sp"
+                android:textSize="36sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -308,28 +323,31 @@
             <TextView
                 android:id="@+id/widget_isha_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="10sp"
+                android:autoSizeMinTextSize="4sp"
+                android:autoSizeMaxTextSize="12sp"
                 android:autoSizeStepGranularity="1sp"
                 android:textColor="@color/widget_text_muted"
-                android:textSize="10sp" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/widget_isha_time"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1.5"
                 android:gravity="center"
                 android:maxLines="1"
                 android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="10sp"
-                android:autoSizeMaxTextSize="15sp"
+                android:autoSizeMinTextSize="6sp"
+                android:autoSizeMaxTextSize="36sp"
                 android:autoSizeStepGranularity="1sp"
+                android:includeFontPadding="false"
                 android:textColor="@color/widget_text"
-                android:textSize="15sp"
+                android:textSize="36sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
