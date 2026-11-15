@@ -1,168 +1,83 @@
-# نداء | Nidaa — أوقات الصلاة | Prayer times
+# نداء — Nidaa
 
-**الإصدار 1.0.0 — Android 7.0+ (API 24)** · offline-first, بلا إعلانات، بلا تتبّع
+**مواقيت صلاة دقيقة، أوفلاين أولاً.** تطبيق أندرويد عربي مبني على جدول المواقيت الفلسطيني الرسمي المضمّن داخل التطبيق، يعمل كاملاً دون إنترنت.
 
-تطبيق أوقات صلاة عربي (Kotlin + Jetpack Compose) مبني على جداول التوقيت
-الفلسطيني الرسمية المضمّنة داخل التطبيق، مع تاريخ هجري حسابي (أم القرى).
-يعمل كامل التطبيق دون إنترنت: الحساب والجداول والأذان والأذكار كلها في الجهاز.
-
-An offline prayer-time app for Android (Kotlin + Jetpack Compose), built on the
-bundled official Palestinian timetable tables, with a computational Umm al-Qura
-Hijri date. Everything runs on the device.
+[![أحدث إصدار](https://img.shields.io/github/v/release/amh2002/Nidaa?label=%D8%A3%D8%AD%D8%AF%D8%AB%20%D8%A5%D8%B5%D8%AF%D8%A7%D8%B1&color=0b5d1e)](https://github.com/amh2002/Nidaa/releases/latest)
+[![Android](https://img.shields.io/badge/Android-7.0%2B%20(API%2024)-3ddc84?logo=android&logoColor=white)](https://github.com/amh2002/Nidaa/releases/latest)
 
 ---
 
-## Download — التحميل
+## لقطات الشاشة
 
-**https://github.com/amh2002/Nidaa/releases/latest**
+<p align="center">
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/01-home-day.png" width="250" alt="الشاشة الرئيسية نهاراً — الظهر ١١:٢٣ ص وعدّاد تنازلي"><br>
+      <b>الشاشة الرئيسية — الصلاة القادمة الظهر ١١:٢٣ ص مع عدّاد تنازلي</b>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/02-home-night.png" width="250" alt="الشاشة الرئيسية ليلاً — الفجر ٤:٤٤ ص وسماء ليلية وهلال"><br>
+      <b>الشاشة نفسها ليلاً — الفجر ٤:٤٤ ص، سماء ليلية بنجوم وهلال</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/03-city-search.png" width="250" alt="اختيار المدينة — تبويبات فلسطين والأردن والسعودية مع بحث"><br>
+      <b>اختيار المدينة — تبويبات فلسطين / الأردن / السعودية وبحث فوري (٨٨ مدينة)</b>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/04-settings-general.png" width="250" alt="الإعدادات — المدينة واللغة ونظام الساعة وحجم الخط"><br>
+      <b>الإعدادات — المدينة، اللغة، نظام ١٢/٢٤ ساعة، حجم الخط، لغة الويدجت</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/05-settings-notifications.png" width="250" alt="الإعدادات — التحديثات والتوقيت الصيفي وتنبيهات الصلوات"><br>
+      <b>الإعدادات — التحديثات، التوقيت الصيفي (+١)، التنبيهات واختيار أذان/صامت/اهتزاز</b>
+    </td>
+    <td align="center" width="50%"></td>
+  </tr>
+</table>
+</p>
 
-`Nidaa-1.0.0.apk` — versionCode 11, Android 7.0+ (API 24), signed release build
-with R8 shrinking.
+## المزايا
 
-```text
-SHA-256: 7A49E73169FC27D3CB1E9C7D751586A659DAADA3934A3E696F18D70FF9D6F528
-```
+- **جدول المواقيت الرسمي أولاً.** كل وقت معروض هو بحث في الجدول الفلسطيني الرسمي بالحساب الأصلي نفسه (صف اليوم المتوافق مع السنة الكبيسة، فرق الدقائق لكل مدينة، الساعة `%24` والتنسيق `%02d:%02d`) — ٩٠ مدينة: ٨٨ فلسطينية + مكة المكرمة والمدينة المنورة.
+- **الشاشة الرئيسية.** الصلاة القادمة بخط كبير مع عدّاد تنازلي وشريط تقدّم، ثم الفجر والشرق والظهر والعصر والمغرب والعشاء، وبطاقة «الثلث الأخير» بخط منقّط، وتاريخ ميلادي وهجري (أم القرى).
+- **سماء حيّة.** ألوان الواجهة تتبدّل بين الفجر والنهار والذهب والليل بحسب وقت الجدول، مع هلال ونجوم في الليل.
+- **القبلة.** اتجاه القبلة محسوب من إحداثيات المدينة المختارة — التطبيق لا يطلب صلاحية الموقع.
+- **تنبيهات لكل صلاة.** أذان بصوت مضمّن، أو صامت، أو اهتزاز، لكل صلاة على حدة، مع منبّه دقيق (exact alarm) وتذكير الثلث الأخير وإظهار على شاشة القفل، وزر تجربة للتنبيه.
+- **ويدجت الرئيسية (٦ صلوات) وويدجت الصلاة القادمة** على الشاشة الرئيسية، كلاهما قابل للتحجيم، ولكل واحد لغة عرض مستقلة عن لغة التطبيق.
+- **الإعدادات.** المدينة، العربية/الإنجليزية، نظام ١٢/٢٤ ساعة، حجم خط داخلي ٨٠٪–١٢٠٪، التوقيت الصيفي اليدوي (+١ ساعة)، لغة الويدجت، أوضاع التنبيه.
+- **تحديث داخلي اختياري.** حزمة معزولة `com.nidaa.prayer.update` تتحقّق من إصدارات GitHub مرة كل ٢٤ ساعة (يمكن إيقافها)، وتنزّل التحديث بعد التحقّق من بصمة SHA-256 قبل فتح المثبّت.
+- **بلا إنترنت للعمل.** الحساب والجداول والأذان والأذكار كلها في الجهاز؛ بلا إعلانات، بلا تتبّع، بلا تحليلات، بلا جمع بيانات.
 
-`sha256sum Nidaa-1.0.0.apk` (or `Get-FileHash -Algorithm SHA256`) must match
-before you install. The same digest is printed in the release notes, and the
-in-app updater refuses any APK whose digest does not match the release body.
+## التثبيت
 
-## Install — التثبيت
+1. نزّل `Nidaa-1.0.0.apk` من صفحة الإصدارات: <https://github.com/amh2002/Nidaa/releases/latest>
+2. افتح الملف على الهاتف، واسمح بالتثبيت من التطبيق الذي فتحته به («السماح من هذا المصدر»).
+3. إن ظهرت رسالة Play Protect بعنوان «تطبيق غير آمن»: اضغط **«التفاصيل» ← «تثبيت على أي حال»**. هذا فحص سمعة للتطبيقات المثبّتة خارج Google Play وليس فحص فيروسات.
+4. **هواوي / هونر (EMUI):** من الإعدادات ← الأمان ← مصادر خارجية، اسمح بالمصدر وأكّد التحذير، وتأكّد أن **الوضع النقي (Pure Mode)** غير مفعّل له. بعد التثبيت فعّل «التشغيل التلقائي» و«التشغيل في الخلفية» من إدارة تشغيل التطبيقات، واسمح بالبطارية غير المقيّدة عند ظهور بطاقة التنبيه داخل التطبيق — المواقيت الدقيقة تعتمد على ذلك.
+5. **ملاحظة التحديث:** بعد تحديث التطبيق احذف الويدجت وأعد إضافتها مرة واحدة، لأن أندرويد يحتفظ بمقاسات الويدجت القديمة.
 
-1. Send the APK to the phone and open it (or `adb install -r Nidaa-1.0.0.apk`).
-2. Android asks to allow installs from this source: enable
-   **«السماح من هذا المصدر» / "Allow from this source"** for the file manager or
-   browser you opened it from, then go back.
-3. If Play Protect shows **"Unsafe app blocked"**: tap **"More details" →
-   "Install anyway"**. This is expected for any sideloaded app that is not
-   distributed through Play.
-4. Launch **نداء - Nidaa**; it opens in Arabic on **طولكرم - فلسطين**.
+## التقنية
 
-**Huawei / Honor (EMUI):** if the system warns about the app or refuses to
-finish the install, open **Settings → Security → More settings → Install apps
-from external sources**, confirm the prompt, and (on newer EMUI) make sure
-**Pure Mode** is off for this source. After installing, allow Nidaa to run in
-the background: **Settings → Battery → App launch → Nidaa → Manage manually**
-(enable Auto-launch, Secondary launch, Run in background) and, if a hint card
-appears in Nidaa's Settings, tap it and choose **Unrestricted / غير مقيّد**.
-Exact alarm delivery depends on this on EMUI.
+Kotlin + Jetpack Compose · ‏`minSdk 24` (أندرويد ٧.٠) و`targetSdk 36` · أوفلاين أولاً · بلا إعلانات، بلا متتبّعات، بلا تحليلات · `allowBackup=false` فلا تُنسخ الإعدادات خارج الجهاز.
 
-**Upgrade note:** after updating, **remove and re-add the home-screen widgets
-once** so the launcher picks up the new resize sizes and layout.
+---
 
-## Privacy — الخصوصية
+## English
 
-Offline-first: **no ads, no analytics, no tracking, no data collection.**
+**Nidaa** (نداء) is an offline-first prayer-time app for Android, built on the official Palestinian timetable tables bundled inside the APK.
 
-The **only** network access is the optional app-update check and download from
-GitHub Releases, and it can be turned off in **Settings → «التحديثات» → «التحقق
-التلقائي»**. With it off the app makes no network request at all (WorkManager
-work is cancelled; «تحقق الآن» stays available if you ask for it explicitly).
-No telemetry, crash-reporting or advertising SDK is linked; nothing about your
-prayers, city or device leaves the phone.
+- Every displayed time is a lookup in those tables, not a re-computation: 90 cities (88 Palestinian, plus Makkah and Madinah), 392 reference vectors with 0 mismatches.
+- Main screen: next prayer with a live countdown, the six prayer times, the last third of the night, Hijri + Gregorian dates, and a sky palette that follows the time of day.
+- Qibla bearing from the selected city's coordinates — no location permission is requested.
+- Per-prayer notifications: adhan, silent or vibrate, exact alarms, lock-screen visibility; two resizable home-screen widgets, each with its own language.
+- Settings: city, Arabic/English, 12/24-hour, in-app font scale 80–120 %, manual summer time, notification modes.
+- Optional in-app update check from GitHub Releases (isolated package `com.nidaa.prayer.update`, can be turned off, SHA-256 verified before install). No ads, no trackers, no analytics, no data collection.
 
-Permissions requested and why:
+**Install:** download `Nidaa-1.0.0.apk` from [Releases](https://github.com/amh2002/Nidaa/releases/latest), allow installs from your file manager, and if Play Protect warns, choose **More details → Install anyway** (it is a reputation check for sideloaded apps). Huawei users: allow the source, make sure Pure Mode is off for it, and enable auto-launch / background run. Requires Android 7.0+ (API 24).
 
-| Permission | Why |
-|---|---|
-| `POST_NOTIFICATIONS` | show the prayer notification (Android 13+) |
-| `SCHEDULE_EXACT_ALARM` | fire the adhan at the exact minute |
-| `RECEIVE_BOOT_COMPLETED` | rebuild the 48-hour alarm window after reboot |
-| `WAKE_LOCK` | keep the adhan playing while the screen is off |
-| `VIBRATE` | vibrate mode |
-| `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | play the adhan as a media foreground service |
-| `INTERNET`, `ACCESS_NETWORK_STATE` | app-update check only |
-| `REQUEST_INSTALL_PACKAGES` | install a SHA-256-verified update you approve |
-
-No storage, location, contacts, camera or microphone permission. `allowBackup`
-is off — settings stay on the device. The app never reads your location; the
-qibla bearing uses the coordinates of the city you selected.
-
-## Features — المزايا
-
-- **Table engine first.** Every displayed time is a lookup in the original
-  official tables with the original arithmetic (leap-aligned day row, per-city
-  `minDiff`, carry/borrow, `hour % 24`, `%02d:%02d`). 90 cities: 88 Palestinian,
-  مكة المكرمة and المدينة المنورة.
-- **Living Sky theme.** Dawn / Day / Golden / Night palettes follow the table
-  with a cross-fade; glass cards and gold accents.
-- **Main screen.** Next prayer with countdown, the other prayers in a glass
-  grid, dashed last-third-of-the-night card, city picker with live search.
-- **Per-prayer notifications.** Adhan (bundled voice), silent, or vibrate;
-  exact alarms; last-third reminder; lock-screen visibility.
-- **Two home-screen widgets**, both resizable: the six-prayer main widget
-  (compact layout on small instances, full grid when enlarged) and the
-  next-prayer widget (name, time, «بعد Xh Ym»).
-- **Settings.** City, Arabic/English, 12 h/24 h, in-app font scale (0.8×–1.2×),
-  widget language, manual summer time (+1 h), notification modes, updates.
-- **In-app update check.** Optional, 24-hour WorkManager check against GitHub
-  Releases; download with progress, SHA-256 verified before the installer opens.
-
-## Build and test — البناء والاختبار
-
-Prerequisites: JDK 17, Android SDK with API 36, Gradle wrapper (included).
-
-```powershell
-$env:JAVA_HOME='C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot'
-$env:ANDROID_HOME='C:\android-sdk'
-.\gradlew.bat test assembleDebug          # debug
-.\gradlew.bat testReleaseUnitTest assembleRelease   # R8 + signed release
-```
-
-Release signing reads `..\keys\keystore.properties` (outside this repository,
-never committed). Without it `assembleRelease` produces an unsigned APK. The
-keystore must be backed up off-device: losing it means no future version can
-install over an existing install.
-
-Reports are written to `docs/` by default; override with
-`-Pmawaqiti.reportDir=<path>`.
-
-## Verification
-
-| Check | Result |
-|---|---|
-| Reference vectors (`test_vectors.csv`) | **392 rows, 0 mismatches** |
-| 90 cities × 4 dates × summer OFF/ON | **360/360 day rows, 2880/2880 times** |
-| City parity with the live reference | **90/90 cities** |
-| Unit tests, debug | **145 / 145 passed** |
-| Unit tests, release (R8) | **137 / 137 passed** |
-| Release signature | APK Signature Scheme v2, RSA 4096, CN=Nidaa |
-| Release APK size | 2,925,152 bytes (R8 + resource shrinking) |
-
-Details: [`docs/TABLE_FIDELITY.md`](docs/TABLE_FIDELITY.md),
-[`docs/CALIBRATION.md`](docs/CALIBRATION.md),
-[`docs/ENGINE_CROSSCHECK.md`](docs/ENGINE_CROSSCHECK.md).
-
-## Project layout
-
-```
-app/src/main/java/com/mawaqiti/plus/
-  engine/table/            primary table engine + 36 × 366 tables
-  engine/                  internal solar engine (tests/calibration only)
-  format/                  24 h / 12 h formatter, Umm al-Qura Hijri date
-  data/                    90-city model, assets loader, DataStore settings
-  ui/                      Living Sky theme, screens, settings components
-  notify/                  scheduler, channels, adhan service, widget updater
-app/src/main/java/com/nidaa/prayer/update/   the ONLY network package
-app/src/main/assets/cities.json              90 verified cities
-app/src/main/res/layout*/                    widget layouts (AR/EN, compact, API 26 twins)
-app/src/test/                                vectors, parity, widgets, updater, audit
-```
-
-## Known limitations
-
-- Tables repeat every year (indexed by day-of-year); no year input.
-- The Hijri line is computational (Umm al-Qura) and may differ by ±1 day from
-  local moon sighting.
-- The Jordan segment shows an honest empty state: no verified Jordanian city
-  table is bundled, and none is invented.
-- No real backdrop blur below API 31 (glass = fill + border + sheen).
-- Widget rendering and layout are guarded by Robolectric renders; the launcher's
-  own resize handles are OS behaviour.
-
-## License and credit
-
-Timetable data and the original application logic are the work of
-**مؤسسة مفتاح - Abdulrahman Hussein**; this is an independent clean-room
-implementation, not affiliated with any other app or publisher. Fonts: Tajawal
-and Amiri (SIL OFL), licences in `app/src/main/assets/licenses/`.
+After updating, remove and re-add the home-screen widgets once so the launcher picks up the new sizes.
