@@ -22,16 +22,19 @@ val skyPalette: SkyPalette
 private const val PHASE_ANIMATION_MS = 500
 
 /**
- * Applies the Living Sky palette for [phase]. Gradient stops, text and accent
- * animate over 500 ms so the change at Fajr / sunrise / Asr / Maghrib feels like
- * the sky turning rather than a hard cut.
+ * Applies the Living Sky palette for [phase], or [paletteOverride] when the
+ * caller already resolved a full palette (beta 9 hands in one of the five
+ * Golden Night palettes). Gradient stops, text, accent and the glass fills
+ * animate over 500 ms, so a phase change reads as the sky turning rather than
+ * a hard cut - including the cards, whose translucency is part of the look.
  */
 @Composable
 fun MawaqitiTheme(
     phase: SkyPhase = SkyPhase.NIGHT,
+    paletteOverride: SkyPalette? = null,
     content: @Composable () -> Unit
 ) {
-    val target = SkyPalette.of(phase)
+    val target = paletteOverride ?: SkyPalette.of(phase)
     val spec = tween<Color>(PHASE_ANIMATION_MS, easing = FastOutSlowInEasing)
 
     val start by animateColorAsState(target.gradient[0], spec, label = "skyStart")
@@ -40,12 +43,24 @@ fun MawaqitiTheme(
     val text by animateColorAsState(target.text, spec, label = "skyText")
     val accent by animateColorAsState(target.accent, spec, label = "skyAccent")
     val muted by animateColorAsState(target.textMuted, spec, label = "skyMuted")
+    val cardFill by animateColorAsState(target.cardFill, spec, label = "skyCard")
+    val cardBorder by animateColorAsState(target.cardBorder, spec, label = "skyCardBorder")
+    val heroFill by animateColorAsState(target.heroFill, spec, label = "skyHero")
+    val heroBorder by animateColorAsState(target.heroBorder, spec, label = "skyHeroBorder")
+    val chipFill by animateColorAsState(target.chipFill, spec, label = "skyChip")
+    val chipBorder by animateColorAsState(target.chipBorder, spec, label = "skyChipBorder")
 
     val palette = target.copy(
         gradient = listOf(start, middle, end),
         text = text,
         textMuted = muted,
-        accent = accent
+        accent = accent,
+        cardFill = cardFill,
+        cardBorder = cardBorder,
+        heroFill = heroFill,
+        heroBorder = heroBorder,
+        chipFill = chipFill,
+        chipBorder = chipBorder
     )
 
     val scheme = if (palette.dark) {
