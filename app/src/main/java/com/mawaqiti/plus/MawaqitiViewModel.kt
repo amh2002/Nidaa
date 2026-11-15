@@ -18,6 +18,9 @@ import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.notify.NotifyEvent
 import com.mawaqiti.plus.notify.NotifyMode
 import com.mawaqiti.plus.notify.WidgetUpdater
+import com.mawaqiti.plus.ui.theme.GoldenPhase
+import com.mawaqiti.plus.ui.theme.PhaseBounds
+import com.mawaqiti.plus.ui.theme.resolvePhase
 import com.mawaqiti.plus.ui.theme.SkyPhase
 import java.time.LocalDate
 import java.time.LocalTime
@@ -106,6 +109,28 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
             initialDay.maghrib
         )
     )
+
+    /**
+     * Beta 9 "Golden Night": the five-phase look used by the main screen.
+     *
+     * [phaseOverride] is only fed by the debug intent extra / dev control; it is
+     * null in release because both call sites are behind BuildConfig.DEBUG.
+     */
+    private val _goldenPhaseOverride = MutableStateFlow<GoldenPhase?>(null)
+    val goldenPhaseOverride: StateFlow<GoldenPhase?> = _goldenPhaseOverride.asStateFlow()
+
+    val goldenPhase: StateFlow<GoldenPhase> =
+        combine(day, _nowMinutes, _goldenPhaseOverride) { value, minute, override ->
+            override ?: resolvePhase(minute, PhaseBounds.fromDay(value))
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            resolvePhase(minutesNow(), PhaseBounds.fromDay(initialDay))
+        )
+
+    fun setPhaseOverride(phase: GoldenPhase?) {
+        _goldenPhaseOverride.value = phase
+    }
 
     init {
         viewModelScope.launch {

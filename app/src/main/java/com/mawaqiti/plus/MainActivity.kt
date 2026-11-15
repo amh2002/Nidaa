@@ -3,10 +3,12 @@ package com.mawaqiti.plus
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,9 +40,11 @@ import com.mawaqiti.plus.ui.screens.CityPickerSheet
 import com.mawaqiti.plus.ui.screens.PrayerScreen
 import com.mawaqiti.plus.ui.screens.QiblaScreen
 import com.mawaqiti.plus.ui.screens.SettingsScreen
-import com.mawaqiti.plus.ui.theme.LivingSkyBackground
+import com.mawaqiti.plus.ui.theme.GoldenPalettes
+import com.mawaqiti.plus.ui.theme.GoldenPhase
+import com.mawaqiti.plus.ui.theme.GoldenSkyBackground
+import com.mawaqiti.plus.ui.theme.LocalGoldenPhase
 import com.mawaqiti.plus.ui.theme.MawaqitiTheme
-import com.mawaqiti.plus.ui.theme.SkyPalette
 import com.nidaa.prayer.update.ReleaseInfo
 import com.nidaa.prayer.update.UpdateManager
 import com.nidaa.prayer.update.UpdateState
@@ -50,13 +54,41 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val viewModel: MawaqitiViewModel by viewModels()
+        applyDebugPhase(intent, viewModel)
         setContent {
-            val viewModel: MawaqitiViewModel = viewModel()
-            val phase by viewModel.skyPhase.collectAsState()
-            MawaqitiTheme(phase = phase) {
-                MawaqitiApp(viewModel = viewModel)
+            val vm: MawaqitiViewModel = viewModel()
+            val golden by vm.goldenPhase.collectAsState()
+            MawaqitiTheme(paletteOverride = GoldenPalettes.of(golden)) {
+                CompositionLocalProvider(LocalGoldenPhase provides golden) {
+                    MawaqitiApp(viewModel = vm)
+                }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val viewModel: MawaqitiViewModel by viewModels()
+        applyDebugPhase(intent, viewModel)
+    }
+
+    /**
+     * Debug-only phase pin: `adb shell am start -n com.nidaa.prayer/.MainActivity
+     * --es nidaa_phase night|dawn|morning|afternoon|sunset` (or `auto` to clear).
+     * The whole function is a no-op in release builds, and the manifest keeps
+     * the activity `singleTop`, so re-launching re-delivers the extra through
+     * [onNewIntent].
+     */
+    private fun applyDebugPhase(intent: Intent?, viewModel: MawaqitiViewModel) {
+        if (!BuildConfig.DEBUG) return
+        val raw = intent?.getStringExtra(EXTRA_PHASE) ?: return
+        viewModel.setPhaseOverride(GoldenPhase.fromKey(raw))
+    }
+
+    companion object {
+        const val EXTRA_PHASE = "nidaa_phase"
     }
 }
 
@@ -67,7 +99,8 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
     val city by viewModel.city.collectAsState()
     val day by viewModel.day.collectAsState()
     val today by viewModel.today.collectAsState()
-    val phase by viewModel.skyPhase.collectAsState()
+    val goldenPhase by viewModel.goldenPhase.collectAsState()
+    val phaseOverride by viewModel.goldenPhaseOverride.collectAsState()
     val isArabic = isArabicLocale()
 
     // beta 7.95: isolated updater state. The toggle is read from the updater's
@@ -101,7 +134,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
         }
     }
 
-    SetSystemBarAppearance(dark = SkyPalette.of(phase).dark)
+    SetSystemBarAppearance(dark = GoldenPalettes.of(goldenPhase).dark)
 
     // beta 7.9: the user's in-app multiplier composes with the system font
     // scale; settings is observed here, so a change re-renders immediately.
@@ -113,7 +146,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
         )
     ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        LivingSkyBackground()
+        GoldenSkyBackground()
 
         Scaffold(containerColor = Color.Transparent) { padding ->
             Box(
@@ -132,7 +165,9 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onOpenQibla = { selectedTab = 1 },
                         onOpenSettings = { selectedTab = 2 },
                         updateRelease = updateRelease,
-                        onOpenUpdate = { selectedTab = 2 }
+                        onOpenUpdate = { selectedTab = 2 },
+                        debugPhase = if (BuildConfig.DEBUG) phaseOverride else null,
+                        onDebugPhase = if (BuildConfig.DEBUG) viewModel::setPhaseOverride else ({})
                     )
 
                     1 -> QiblaScreen(
