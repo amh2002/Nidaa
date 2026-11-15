@@ -2,8 +2,9 @@
 
 **مواقيت صلاة دقيقة، أوفلاين أولاً.** تطبيق أندرويد عربي مبني على جدول المواقيت الفلسطيني الرسمي المضمّن داخل التطبيق، يعمل كاملاً دون إنترنت.
 
-[![أحدث إصدار](https://img.shields.io/github/v/release/amh2002/Nidaa?label=%D8%A3%D8%AD%D8%AF%D8%AB%20%D8%A5%D8%B5%D8%AF%D8%A7%D8%B1&color=0b5d1e)](https://github.com/amh2002/Nidaa/releases/latest)
-[![Android](https://img.shields.io/badge/Android-7.0%2B%20(API%2024)-3ddc84?logo=android&logoColor=white)](https://github.com/amh2002/Nidaa/releases/latest)
+[![Nidaa — نداء](https://img.shields.io/badge/Nidaa-%EF%BB%A7%EF%BA%AA%EF%BA%8E%EF%BA%80-FFD98A?style=flat-square&labelColor=0B1026&logo=android&logoColor=FFD98A)](https://github.com/amh2002/Nidaa)
+[![release](https://img.shields.io/github/v/release/amh2002/Nidaa?style=flat-square&label=release&labelColor=0B1026&color=FFD98A&logo=github&logoColor=FFD98A)](https://github.com/amh2002/Nidaa/releases/latest)
+[![Android 7.0+ (API 24)](https://img.shields.io/badge/Android-7.0%2B%20%28API%2024%29-146C3C?style=flat-square&label=Android&labelColor=0B5D1E&logo=android&logoColor=3DDC84)](https://github.com/amh2002/Nidaa/releases/latest)
 
 ---
 
