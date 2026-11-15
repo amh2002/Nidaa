@@ -1,6 +1,6 @@
 # BETA_NOTES.md
 
-**نداء | Nidaa** — latest release `1.0.0-beta7.95` (versionCode 10), 14 Nov 2026
+**نداء | Nidaa** — latest release `1.0.0` (versionCode 11), 15 Nov 2026
 
 > Historical note: the beta3/beta4 sections below keep the product name that
 > those builds actually shipped with («مواقيتي بلس / Mawaqiti Plus»). Every
@@ -10,15 +10,102 @@
 | Item | Value |
 |---|---|
 | Package | `com.nidaa.prayer` |
-| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0-beta7.95.apk` |
-| Size | 22,275,456 bytes |
-| SHA-256 | `4402CFFE2B735D03B541B89EFEB93AB818BFF7A40A437CD55C9E81B236CE2E07` |
-| Build | debug (`assembleDebug`), not Play-store signed |
+| APK | `C:\rea_ws\mawaqiti_app\dist\Nidaa-1.0.0.apk` |
+| Size | 2,925,152 bytes |
+| SHA-256 | `7A49E73169FC27D3CB1E9C7D751586A659DAADA3934A3E696F18D70FF9D6F528` |
+| Build | signed **release** (`assembleRelease`), R8 minify + resource shrinking, APK Signature Scheme v2, RSA 4096, `CN=Nidaa` |
 | Minimum Android | 7.0 (API 24), target API 36 |
 | Launcher label | `نداء - Nidaa` (identical in every locale) |
 | Suggested store title | «نداء | Nidaa - أوقات الصلاة» |
 
 ---
+
+
+## 1.0.0 (RC1) — release hardening, R8 signed build, compatibility pass
+
+**Install over beta7.95.** Same `applicationId`, `versionCode 11`,
+`versionName 1.0.0`. Data is preserved; remove and re-add the widgets once so the
+launcher picks up the new resize sizes.
+
+This gate is hardening only: **no feature work, no engine change.** The table
+engine, `cities.json` and `test_vectors.csv` are byte-identical to beta7.95 and
+the vectors stayed at 392 rows / 0 mismatches before the build.
+
+### 1. Signing
+
+- Release keystore created **outside** the repository at
+  `C:\rea_ws\keys\nidaa-release.jks` (alias `nidaa`, RSA 4096, validity
+  10000 days). `keystore.properties` sits next to it; neither is committed and
+  the password is never printed or written to the repo.
+- `app/build.gradle.kts` reads `../keys/keystore.properties`; without the file
+  the release build stays unsigned instead of failing.
+- Defensive `.gitignore` entries added anyway: `keys/`, `*.jks`,
+  `*.keystore`, `keystore.properties`.
+- **The whole `keys/` folder must be backed up off-device.** Losing it means no
+  future build can install over an existing install.
+
+### 2. R8 / shrinking
+
+`isMinifyEnabled = true`, `isShrinkResources = true`, `isDebuggable = false`.
+Only two keep rules were required, both because the platform instantiates the
+class by name:
+
+- `com.nidaa.prayer.update.UpdateWorker` and its
+  `(Context, WorkerParameters)` constructor — WorkManager resolves it from the
+  persisted work name;
+- `com.nidaa.prayer.update.InstallResultReceiver` — the `PackageInstaller`
+  result `PendingIntent` target.
+
+`-assumenosideeffects` strips `Log.v`/`Log.d` from the shipped bytecode (error
+logging stays). Nothing else was needed: `org.json` handles the updater payload,
+Preferences DataStore handles settings, and both are non-reflective with
+consumer rules.
+
+### 3. Manifest hardening
+
+- `allowBackup` changed `true` → **`false`**; `usesCleartextTraffic=false`;
+  release is not debuggable.
+- Fixed a real bug found by the manifest audit: the install-result receiver was
+  declared as `.update.InstallResultReceiver`, which resolved to
+  `com.mawaqiti.plus.update.…` while the class lives in
+  `com.nidaa.prayer.update`. Now fully qualified — the API 26+ update-install
+  result actually reaches the app.
+- Exported set: launcher activity, the two widget receivers (for the launcher's
+  `APPWIDGET_UPDATE` broadcast), the boot receiver, plus three library
+  components that are permission-protected (`BIND_JOB_SERVICE`, `DUMP`). The
+  adhan foreground service is `foregroundServiceType="mediaPlayback"`.
+- Permissions unchanged from the allowlist: 9 declared, no storage, no location,
+  no camera, no microphone, no contacts.
+
+### 4. Verification
+
+| Check | Result |
+|---|---|
+| Debug unit suite | 30 suites, **145/145 passed** |
+| Release unit suite (R8 build) | 28 suites, **137/137 passed** |
+| `test_vectors.csv` gate | 392 rows, **0 mismatches** |
+| City parity | **90/90** |
+| `apksigner verify` | v2 signature, exit 0; cert SHA-256 `EF:6F:E8:…:E1:E9` |
+| API 24 emulator | fresh install + launch, AR RTL + EN LTR, font 120 % persists after force-stop, exact `RTC_WAKEUP` alarms, notification posted in forced deep idle with the screen off, both widget previews in the picker, updater job scheduled and run cleanly |
+| API 34 / 35 | substituted by Robolectric `@Config(sdk=34)` suites + signed-APK manifest inspection (no system image available here) |
+
+Two debug-only suites (`SettingsFrameworkTest`, `MasterNotificationsGateTest`)
+need the Compose `ui-test-manifest` host and therefore run in the debug variant
+only; that is why the release count is 137 rather than 145. Both are green in
+debug.
+
+Compatibility evidence: `C:\rea_ws\report\beta8_rc1\COMPAT.md`; audit:
+`C:\rea_ws\report\beta8_rc1\AUDIT.md` (PASS).
+
+### 5. Known limitations carried forward
+
+- No API 34/35 emulator image in this environment; covered by Robolectric +
+  artifact inspection instead.
+- Launcher-driven widget drag-resize is not scriptable on the API 24 launcher;
+  the resize contract is guarded by the Robolectric widget suites.
+- Updater traffic cannot be measured byte-for-byte on the API 24 image (no
+  per-uid counters); the allowlist, 24 h policy and SHA-256 check are unit-tested
+  and the release worker was proven to execute.
 
 ## beta7.95 — in-app update checker, widget resize restore, adaptive next-prayer widget
 

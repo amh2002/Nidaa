@@ -10,6 +10,13 @@ app/build/
 # Android local configuration (machine-specific SDK path)
 local.properties
 
+# Release signing material lives outside the repo (C:\rea_ws\keys); this entry
+# is defensive in case a keys/ folder is ever created inside the tree.
+keys/
+*.jks
+*.keystore
+keystore.properties
+
 # IDE
 .idea/
 *.iml

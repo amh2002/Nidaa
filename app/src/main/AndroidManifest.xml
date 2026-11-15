@@ -21,7 +21,7 @@
 
     <application
         android:name=".MawaqitiApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:localeConfig="@xml/locales_config"
@@ -60,9 +60,11 @@
                 android:resource="@xml/update_file_paths" />
         </provider>
 
-        <!-- beta 7.95: PackageInstaller result (API 26+). -->
+        <!-- beta 7.95: PackageInstaller result (API 26+). The updater package
+             lives in com.nidaa.prayer.update, NOT in the Kotlin namespace
+             (com.mawaqiti.plus), so the class name must be fully qualified. -->
         <receiver
-            android:name=".update.InstallResultReceiver"
+            android:name="com.nidaa.prayer.update.InstallResultReceiver"
             android:exported="false" />
 
         <receiver

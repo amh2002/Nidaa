@@ -1,3 +1,6 @@
+import java.io.File
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -15,8 +18,8 @@ android {
         applicationId = "com.nidaa.prayer"
         minSdk = 24
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.0.0-beta7.95"
+        versionCode = 11
+        versionName = "1.0.0"
 
         // Visual verification only: -Pmawaqiti.skyPhase=dawn|day|golden|night.
         // Empty in every shipped build, so the theme always follows the clock.
@@ -27,12 +30,47 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+    // beta8 RC1: the release keystore lives OUTSIDE the repository, in the
+    // sibling `keys/` folder (C:\rea_ws\keys). keystore.properties is never
+    // committed and never printed. Without it the release build stays unsigned
+    // instead of silently failing.
+    val keystorePropertiesFile: File =
+        rootProject.projectDir.parentFile.resolve("keys/keystore.properties")
+    val keystoreProperties = Properties().apply {
+        if (keystorePropertiesFile.isFile) {
+            keystorePropertiesFile.inputStream().use { load(it) }
+        }
+    }
+    val hasReleaseKeys = keystorePropertiesFile.isFile
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseKeys) {
+                storeFile = keystorePropertiesFile.parentFile.resolve(
+                    keystoreProperties.getProperty("storeFile", "nidaa-release.jks")
+                )
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias", "nidaa")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                enableV1Signing = true
+                enableV2Signing = true
+            }
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
         }
         release {
-            isMinifyEnabled = false
+            // R8 + resource shrinking for the RC: smaller APK and no verbose
+            // logging in the shipped bytecode (see proguard-rules.pro).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
+            if (hasReleaseKeys) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

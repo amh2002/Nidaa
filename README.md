@@ -1,183 +1,168 @@
-# Nidaa — نداء · أوقات الصلاة (Beta)
+# نداء | Nidaa — أوقات الصلاة | Prayer times
 
-تطبيق مواقيت صلاة يعمل دون اتصال بالإنترنت، مبني بـ Kotlin وJetpack Compose،
-ويعتمد جدول المواقيت الرسمي المعتمد لفلسطين والأردن المضمَّن داخل التطبيق
-لجميع المدن المدعومة، مع تقويم هجري حسابي (أم القرى).
+**الإصدار 1.0.0 — Android 7.0+ (API 24)** · offline-first, بلا إعلانات، بلا تتبّع
 
-An offline prayer-time app for Android (Kotlin + Jetpack Compose) built on the
+تطبيق أوقات صلاة عربي (Kotlin + Jetpack Compose) مبني على جداول التوقيت
+الفلسطيني الرسمية المضمّنة داخل التطبيق، مع تاريخ هجري حسابي (أم القرى).
+يعمل كامل التطبيق دون إنترنت: الحساب والجداول والأذان والأذكار كلها في الجهاز.
+
+An offline prayer-time app for Android (Kotlin + Jetpack Compose), built on the
 bundled official Palestinian timetable tables, with a computational Umm al-Qura
-Hijri date.
+Hijri date. Everything runs on the device.
 
 ---
 
-## Download · التحميل
+## Download — التحميل
 
-**https://github.com/amh2002/Nidaa/releases/tag/v1.0.0-beta7**
+**https://github.com/amh2002/Nidaa/releases/latest**
 
-`Nidaa-1.0.0-beta7.apk` · versionCode 7 · Android 7.0+ (API 24)
+`Nidaa-1.0.0.apk` — versionCode 11, Android 7.0+ (API 24), signed release build
+with R8 shrinking.
 
-The APK is a debug-signed beta, not a Play Store release.
-
-> **beta5 changes the application id to `com.nidaa.prayer`.** Uninstall beta4
-> before installing beta5; Android treats them as two different apps.
-
-### Install · التثبيت
-
-1. Copy the APK to the phone and open it.
-2. Allow installation from the file manager / browser when Android asks.
-3. Launch the app. It opens in Arabic on **القدس – فلسطين**.
-
-Or over USB:
-
-```powershell
-adb install -r Nidaa-1.0.0-beta5.apk
+```text
+SHA-256: 7A49E73169FC27D3CB1E9C7D751586A659DAADA3934A3E696F18D70FF9D6F528
 ```
 
----
+`sha256sum Nidaa-1.0.0.apk` (or `Get-FileHash -Algorithm SHA256`) must match
+before you install. The same digest is printed in the release notes, and the
+in-app updater refuses any APK whose digest does not match the release body.
 
-## What this beta does
+## Install — التثبيت
+
+1. Send the APK to the phone and open it (or `adb install -r Nidaa-1.0.0.apk`).
+2. Android asks to allow installs from this source: enable
+   **«السماح من هذا المصدر» / "Allow from this source"** for the file manager or
+   browser you opened it from, then go back.
+3. If Play Protect shows **"Unsafe app blocked"**: tap **"More details" →
+   "Install anyway"**. This is expected for any sideloaded app that is not
+   distributed through Play.
+4. Launch **نداء - Nidaa**; it opens in Arabic on **طولكرم - فلسطين**.
+
+**Huawei / Honor (EMUI):** if the system warns about the app or refuses to
+finish the install, open **Settings → Security → More settings → Install apps
+from external sources**, confirm the prompt, and (on newer EMUI) make sure
+**Pure Mode** is off for this source. After installing, allow Nidaa to run in
+the background: **Settings → Battery → App launch → Nidaa → Manage manually**
+(enable Auto-launch, Secondary launch, Run in background) and, if a hint card
+appears in Nidaa's Settings, tap it and choose **Unrestricted / غير مقيّد**.
+Exact alarm delivery depends on this on EMUI.
+
+**Upgrade note:** after updating, **remove and re-add the home-screen widgets
+once** so the launcher picks up the new resize sizes and layout.
+
+## Privacy — الخصوصية
+
+Offline-first: **no ads, no analytics, no tracking, no data collection.**
+
+The **only** network access is the optional app-update check and download from
+GitHub Releases, and it can be turned off in **Settings → «التحديثات» → «التحقق
+التلقائي»**. With it off the app makes no network request at all (WorkManager
+work is cancelled; «تحقق الآن» stays available if you ask for it explicitly).
+No telemetry, crash-reporting or advertising SDK is linked; nothing about your
+prayers, city or device leaves the phone.
+
+Permissions requested and why:
+
+| Permission | Why |
+|---|---|
+| `POST_NOTIFICATIONS` | show the prayer notification (Android 13+) |
+| `SCHEDULE_EXACT_ALARM` | fire the adhan at the exact minute |
+| `RECEIVE_BOOT_COMPLETED` | rebuild the 48-hour alarm window after reboot |
+| `WAKE_LOCK` | keep the adhan playing while the screen is off |
+| `VIBRATE` | vibrate mode |
+| `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | play the adhan as a media foreground service |
+| `INTERNET`, `ACCESS_NETWORK_STATE` | app-update check only |
+| `REQUEST_INSTALL_PACKAGES` | install a SHA-256-verified update you approve |
+
+No storage, location, contacts, camera or microphone permission. `allowBackup`
+is off — settings stay on the device. The app never reads your location; the
+qibla bearing uses the coordinates of the city you selected.
+
+## Features — المزايا
 
 - **Table engine first.** Every displayed time is a lookup in the original
-  app's tables (`w7.c`), with the original arithmetic (`p061i1.j.o()` /
-  `p061i1.j.w()`): leap-aligned day row, per-city `minDiff`, carry/borrow,
-  `hour % 24`, and `%02d:%02d`.
-- **Living Sky auto theme.** Dawn / Day / Golden / Night palettes follow the
-  table with a 500 ms cross-fade; glass cards, gold accents and a
-  clearance-safe night crescent band are part of the design system.
-- **Hero + grid main screen.** Next prayer with countdown and progress, the
-  other five prayers in a two-column glass grid, dashed last-third card, and
-  القبلة / الإعدادات footer buttons.
-- **Searchable city picker.** Country segmented control (فلسطين / الأردن /
-  السعودية), live case- and diacritic-insensitive search over Arabic and
-  English names, افتراضي tag on القدس, one-tap selection.
-- **12 h / 24 h clock setting.** Display-only, default 24 h, Arabic `ص/م` and
-  English `a.m./p.m.`; stored values and the engine stay 24 h.
-- **Qibla compass** from `TYPE_ROTATION_VECTOR`, using the selected city's
-  coordinates (the app does not request location permission).
-- **Arabic / English in-app switch** via `AppCompatDelegate.setApplicationLocales`
-  with `locales_config.xml` and `autoStoreLocales`. RTL follows the locale.
-  Times stay in Latin digits in both languages.
-- **Manual summer time** (+1 h), default OFF, visible only for Palestine and
-  applied only to the default table profile.
-- **Notifications per prayer** with Adhan / silent / vibrate modes, an optional
-  custom adhan sound, exact alarms, and a "last third of the night" reminder.
-- **Home-screen widget**, fixed 4×2, with its own language (`widget.lang`,
-  independent of the app language), Arabic right-to-left prayer order and an
-  English mirror.
-- **«نداء / Nidaa» identity.** Launcher label `نداء - Nidaa`, short Arabic
-  in-app wordmark «نداء», and a new adaptive icon: a gold crescent with three
-  echo arcs — the call travelling under the Living Sky.
-- **New adaptive launcher icon** (night gradient #060A20→#1D2C62, gold #FFD98A
-  crescent and three concentric call arcs, three stars, themed monochrome
-  layer, round and square legacy mipmaps for API 24–25).
-- **Fully offline.** No internet permission, no ads, no analytics, no Firebase
-  or Play-services.
+  official tables with the original arithmetic (leap-aligned day row, per-city
+  `minDiff`, carry/borrow, `hour % 24`, `%02d:%02d`). 90 cities: 88 Palestinian,
+  مكة المكرمة and المدينة المنورة.
+- **Living Sky theme.** Dawn / Day / Golden / Night palettes follow the table
+  with a cross-fade; glass cards and gold accents.
+- **Main screen.** Next prayer with countdown, the other prayers in a glass
+  grid, dashed last-third-of-the-night card, city picker with live search.
+- **Per-prayer notifications.** Adhan (bundled voice), silent, or vibrate;
+  exact alarms; last-third reminder; lock-screen visibility.
+- **Two home-screen widgets**, both resizable: the six-prayer main widget
+  (compact layout on small instances, full grid when enlarged) and the
+  next-prayer widget (name, time, «بعد Xh Ym»).
+- **Settings.** City, Arabic/English, 12 h/24 h, in-app font scale (0.8×–1.2×),
+  widget language, manual summer time (+1 h), notification modes, updates.
+- **In-app update check.** Optional, 24-hour WorkManager check against GitHub
+  Releases; download with progress, SHA-256 verified before the installer opens.
 
-## City coverage
-
-| Group | Entries |
-|---|---:|
-| فلسطين | 88 |
-| السعودية (مكة المكرمة، المدينة المنورة) | 2 |
-| Jordanian cities | 0 |
-
-The verified embedded city list contains **no Jordanian city**. The beta does
-not invent `minDiff` values, so the country segment **الأردن** is present but
-shows an honest empty state. Full tables, including the ten synthetic
-`قبل/بعد القدس` entries and the list of uncovered localities, are in
-[`docs/CITY_COVERAGE.md`](docs/CITY_COVERAGE.md).
-
-## Verification
-
-| Check | Result |
-|---|---|
-| Reference vectors (124 rows × 6 prayers) | **124 / 124 exact, 0 mismatches** |
-| 90 cities × 8 dates × summer OFF/ON | **1440 / 1440 exact, 0 mismatches** |
-| Table comparisons incl. last third / Fajr tomorrow | **12,512, 0 mismatches** |
-| Unit tests (engine + UI, Hijri, formatter, palette, search, brand, widget) | **94 / 94 passed** |
-| Palette contrast (WCAG AA) | text **≥ 4.5:1**, accent **≥ 3.0:1** |
-| Solar engine vs Adhan 1.2.1 (test-only cross-check) | **2879 / 2879 within ±1 min**, worst 0.99 min |
-| Solar MWL vs official tables (informative) | mean abs **3.24 min**, max 21 min |
-
-Details:
-
-- [`docs/TABLE_FIDELITY.md`](docs/TABLE_FIDELITY.md)
-- [`docs/CALIBRATION.md`](docs/CALIBRATION.md)
-- [`docs/ENGINE_CROSSCHECK.md`](docs/ENGINE_CROSSCHECK.md)
-
-The solar engine remains in the codebase for tests and calibration only. It is
-not reachable from the UI.
-
-## Build and test
+## Build and test — البناء والاختبار
 
 Prerequisites: JDK 17, Android SDK with API 36, Gradle wrapper (included).
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot'
 $env:ANDROID_HOME='C:\android-sdk'
-.\gradlew.bat test assembleDebug
+.\gradlew.bat test assembleDebug          # debug
+.\gradlew.bat testReleaseUnitTest assembleRelease   # R8 + signed release
 ```
 
-The APK lands at `app/build/outputs/apk/debug/app-debug.apk`.
+Release signing reads `..\keys\keystore.properties` (outside this repository,
+never committed). Without it `assembleRelease` produces an unsigned APK. The
+keystore must be backed up off-device: losing it means no future version can
+install over an existing install.
 
-To regenerate the reports into `docs/` (default) or another folder:
+Reports are written to `docs/` by default; override with
+`-Pmawaqiti.reportDir=<path>`.
 
-```powershell
-.\gradlew.bat test -Pmawaqiti.reportDir=C:\rea_ws\report
-```
+## Verification
+
+| Check | Result |
+|---|---|
+| Reference vectors (`test_vectors.csv`) | **392 rows, 0 mismatches** |
+| 90 cities × 4 dates × summer OFF/ON | **360/360 day rows, 2880/2880 times** |
+| City parity with the live reference | **90/90 cities** |
+| Unit tests, debug | **145 / 145 passed** |
+| Unit tests, release (R8) | **137 / 137 passed** |
+| Release signature | APK Signature Scheme v2, RSA 4096, CN=Nidaa |
+| Release APK size | 2,925,152 bytes (R8 + resource shrinking) |
+
+Details: [`docs/TABLE_FIDELITY.md`](docs/TABLE_FIDELITY.md),
+[`docs/CALIBRATION.md`](docs/CALIBRATION.md),
+[`docs/ENGINE_CROSSCHECK.md`](docs/ENGINE_CROSSCHECK.md).
 
 ## Project layout
 
 ```
 app/src/main/java/com/mawaqiti/plus/
-  engine/table/TableEngine.kt       primary, table-driven engine
-  engine/table/PrayerTables.kt      generated 36 arrays × 366 rows
-  engine/PrayerEngine.kt            internal solar engine (test-only)
-  engine/Qibla.kt                   great-circle bearing/distance
-  format/TimeFormatter.kt           24 h / 12 h display formatter
-  format/HijriDateFormatter.kt      Umm al-Qura Hijri date, AR/EN
-  data/City.kt, CityRepository.kt   90-city model + asset loader
-  data/SettingsRepository.kt        DataStore: city, language, clock, summer time
-  ui/theme/Sky.kt                   phases, palettes, WCAG colour math
-  ui/theme/SkyBackground.kt         gradients, haze, night decor band
-  ui/theme/Type.kt, Theme.kt        Tajawal + Amiri, animated Living Sky theme
-  ui/components/Glass.kt            glass card + dashed outline
-  ui/CitySearch.kt                  diacritic-insensitive city search
-  ui/screens/                       Prayer, Qibla, Settings, CityPickerSheet
-  notify/                           scheduler, channels, text, widget updater
-  ui/theme/                         Living Sky, glass, adaptive icon palette
-app/src/main/assets/cities.json     90 verified entries
-app/src/main/assets/licenses/       Tajawal + Amiri OFL licences
-app/src/main/res/layout/            widget_mawaqiti_ar.xml, widget_mawaqiti_en.xml
-app/src/main/res/drawable/          ic_launcher_background/foreground/monochrome
-app/src/test/                       vector test, 1440-case sweep, calibration,
-                                     formatter, phase, palette, city-search,
-                                     brand-identity and widget-layout tests
+  engine/table/            primary table engine + 36 × 366 tables
+  engine/                  internal solar engine (tests/calibration only)
+  format/                  24 h / 12 h formatter, Umm al-Qura Hijri date
+  data/                    90-city model, assets loader, DataStore settings
+  ui/                      Living Sky theme, screens, settings components
+  notify/                  scheduler, channels, adhan service, widget updater
+app/src/main/java/com/nidaa/prayer/update/   the ONLY network package
+app/src/main/assets/cities.json              90 verified cities
+app/src/main/res/layout*/                    widget layouts (AR/EN, compact, API 26 twins)
+app/src/test/                                vectors, parity, widgets, updater, audit
 ```
 
 ## Known limitations
 
-- Tables repeat every year (no year input); the table is indexed by day-of-year.
+- Tables repeat every year (indexed by day-of-year); no year input.
 - The Hijri line is computational (Umm al-Qura) and may differ by ±1 day from
-  local Palestinian moon sighting.
-- No GPS; the qibla bearing uses the selected city's coordinates.
-- No verified Jordanian cities yet (the segment shows an empty state), while the
-  About claim names both Palestine and Jordan as the official-table scope.
+  local moon sighting.
+- The Jordan segment shows an honest empty state: no verified Jordanian city
+  table is bundled, and none is invented.
 - No real backdrop blur below API 31 (glass = fill + border + sheen).
-- No on-device visual pass was possible in this environment (no device and no
-  emulator installed); see `report/screens_beta5/` and
-  `report/icons/beta5/` for generated previews, plus the Robolectric layout,
-  brand and widget tests that guard the same rules.
-- Debug-signed APK.
+- Widget rendering and layout are guarded by Robolectric renders; the launcher's
+  own resize handles are OS behaviour.
 
-## Privacy
+## License and credit
 
-No network permission and no network code, no ads, no analytics. Everything is
-bundled in the APK. Notifications use POST_NOTIFICATIONS, SCHEDULE_EXACT_ALARM,
-RECEIVE_BOOT_COMPLETED, VIBRATE, WAKE_LOCK and a media-playback foreground
-service for the adhan; nothing is collected or transmitted.
-
-## Disclaimer
-
-This is an independent clean-room implementation made for personal use. It is
-not affiliated with any other app or publisher.
+Timetable data and the original application logic are the work of
+**مؤسسة مفتاح - Abdulrahman Hussein**; this is an independent clean-room
+implementation, not affiliated with any other app or publisher. Fonts: Tajawal
+and Amiri (SIL OFL), licences in `app/src/main/assets/licenses/`.
