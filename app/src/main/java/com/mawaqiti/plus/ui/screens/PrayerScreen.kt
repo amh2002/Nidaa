@@ -131,7 +131,7 @@ fun PrayerScreen(
             UpdateBanner(release = updateRelease, onOpen = onOpenUpdate)
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(12.dp))
 
         HeroCard(
             hero = hero,
@@ -141,7 +141,7 @@ fun PrayerScreen(
             palette = palette
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
 
         PrayerGrid(
             day = day,
@@ -151,7 +151,16 @@ fun PrayerScreen(
             palette = palette
         )
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(10.dp))
+
+        LastThirdRow(
+            minutes = day.lastThird,
+            isArabic = isArabic,
+            clockFormat = clockFormat,
+            palette = palette
+        )
+
+        Spacer(Modifier.height(12.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -169,7 +178,7 @@ fun PrayerScreen(
             )
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(6.dp))
 
         Text(
             text = stringResource(R.string.official_note),
@@ -180,11 +189,11 @@ fun PrayerScreen(
         )
 
         if (BuildConfig.DEBUG) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(6.dp))
             DebugPhaseBar(current = debugPhase, onSelect = onDebugPhase)
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(10.dp))
     }
 }
 
@@ -374,7 +383,7 @@ private fun HeroCard(
     GlassCard(
         emphasized = true,
         corner = 24.dp,
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Crescent, stars, clouds and skyline, drawn behind the content but
         // only in the top-right and bottom strips.
@@ -400,18 +409,18 @@ private fun HeroCard(
             Text(
                 text = TimeFormatter.format(hero.minutes, clockFormat, isArabic),
                 fontFamily = Tajawal,
-                fontSize = 54.sp,
-                lineHeight = 62.sp,
+                fontSize = 44.sp,
+                lineHeight = 52.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.accent
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(6.dp))
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
                     .background(Color.Black.copy(alpha = 0.20f))
                     .border(1.dp, palette.accent.copy(alpha = 0.35f), RoundedCornerShape(50))
-                    .padding(horizontal = 16.dp, vertical = 7.dp),
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -423,18 +432,18 @@ private fun HeroCard(
                     color = palette.accent
                 )
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
+                    .height(5.dp)
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.14f))
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progress)
-                        .height(6.dp)
+                        .height(5.dp)
                         .clip(CircleShape)
                         .background(
                             Brush.horizontalGradient(
@@ -454,8 +463,7 @@ private data class GridItem(
     val labelRes: Int,
     val minutes: Int,
     val icon: ImageVector,
-    val highlighted: Boolean = false,
-    val dashed: Boolean = false
+    val highlighted: Boolean = false
 )
 
 @Composable
@@ -475,58 +483,80 @@ private fun PrayerGrid(
         Triple(TableEvent.ISHA, R.string.prayer_isha, Icons.Filled.NightsStay)
     )
 
-    val items = ArrayList<GridItem>(7)
-    for ((event, label, icon) in prayers) {
-        items += GridItem(
+    val items = prayers.map { (event, label, icon) ->
+        GridItem(
             labelRes = label,
             minutes = day.minutesFor(event),
             icon = icon,
             highlighted = event == next
         )
     }
-    items += GridItem(
-        labelRes = R.string.last_third,
-        minutes = day.lastThird,
-        icon = Icons.Filled.Stars,
-        dashed = true
-    )
 
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         // Adaptive 3 / 2 columns. `maxWidth` is in dp, so the choice does not
         // change with the user's font scale, only with the actual width.
         val columns = if (maxWidth >= 300.dp) 3 else 2
 
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             items.chunked(columns).forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    if (row.size == 1) {
+                    row.forEach { item ->
                         GridCard(
-                            item = row.first(),
+                            item = item,
                             isArabic = isArabic,
                             clockFormat = clockFormat,
                             palette = palette,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.weight(1f)
                         )
-                    } else {
-                        row.forEach { item ->
-                            GridCard(
-                                item = item,
-                                isArabic = isArabic,
-                                clockFormat = clockFormat,
-                                palette = palette,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        repeat(columns - row.size) {
-                            Spacer(Modifier.weight(1f))
-                        }
+                    }
+                    repeat(columns - row.size) {
+                        Spacer(Modifier.weight(1f))
                     }
                 }
             }
         }
+    }
+}
+
+/** Slim dashed row for the last third, so the grid stays a clean 3 x 2. */
+@Composable
+private fun LastThirdRow(
+    minutes: Int,
+    isArabic: Boolean,
+    clockFormat: ClockFormat,
+    palette: SkyPalette
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(palette.cardFill)
+            .dashedOutline(color = palette.accent.copy(alpha = 0.50f), corner = 14.dp)
+            .padding(horizontal = 14.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Stars,
+            contentDescription = null,
+            tint = palette.accent,
+            modifier = Modifier.size(17.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = stringResource(R.string.last_third),
+            style = MaterialTheme.typography.bodySmall,
+            color = palette.textMuted,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = TimeFormatter.format(minutes, clockFormat, isArabic),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = palette.text
+        )
     }
 }
 
@@ -542,22 +572,13 @@ private fun GridCard(
     val base = modifier
         .clip(shape)
         .background(if (item.highlighted) palette.heroFill else palette.cardFill)
-        .then(
-            if (item.dashed) {
-                Modifier.dashedOutline(
-                    color = palette.accent.copy(alpha = 0.55f),
-                    corner = 16.dp
-                )
-            } else {
-                Modifier.border(
-                    width = if (item.highlighted) 1.5.dp else 1.dp,
-                    color = if (item.highlighted) palette.accent.copy(alpha = 0.80f)
-                    else palette.cardBorder,
-                    shape = shape
-                )
-            }
+        .border(
+            width = if (item.highlighted) 1.5.dp else 1.dp,
+            color = if (item.highlighted) palette.accent.copy(alpha = 0.80f)
+            else palette.cardBorder,
+            shape = shape
         )
-        .padding(horizontal = 8.dp, vertical = 12.dp)
+        .padding(horizontal = 8.dp, vertical = 8.dp)
 
     Column(
         modifier = base,
@@ -567,9 +588,9 @@ private fun GridCard(
             imageVector = item.icon,
             contentDescription = null,
             tint = if (item.highlighted) palette.accent else palette.text.copy(alpha = 0.72f),
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(18.dp)
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(5.dp))
         Text(
             text = stringResource(item.labelRes),
             style = MaterialTheme.typography.bodySmall,
@@ -585,7 +606,7 @@ private fun GridCard(
             ),
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(Modifier.height(2.dp))
+        Spacer(Modifier.height(1.dp))
         Text(
             text = TimeFormatter.format(item.minutes, clockFormat, isArabic),
             style = MaterialTheme.typography.titleSmall,
@@ -606,7 +627,7 @@ private fun FooterButton(
     val shape = RoundedCornerShape(16.dp)
     Box(
         modifier = modifier
-            .height(52.dp)
+            .height(44.dp)
             .clip(shape)
             .background(palette.cardFill)
             .border(1.dp, palette.accent.copy(alpha = 0.45f), shape)
@@ -632,46 +653,47 @@ private fun DebugPhaseBar(
     onSelect: (GoldenPhase?) -> Unit
 ) {
     val palette = skyPalette
-    val rows = listOf(
-        listOf<GoldenPhase?>(null, GoldenPhase.NIGHT, GoldenPhase.DAWN),
-        listOf<GoldenPhase?>(GoldenPhase.MORNING, GoldenPhase.AFTERNOON, GoldenPhase.SUNSET)
+    val phases = listOf<GoldenPhase?>(
+        null,
+        GoldenPhase.NIGHT,
+        GoldenPhase.DAWN,
+        GoldenPhase.MORNING,
+        GoldenPhase.AFTERNOON,
+        GoldenPhase.SUNSET
     )
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        rows.forEach { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        phases.forEach { phase ->
+            val selected = phase == current
+            val shape = RoundedCornerShape(50)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(shape)
+                    .background(
+                        if (selected) palette.accent.copy(alpha = 0.22f)
+                        else Color.White.copy(alpha = 0.06f)
+                    )
+                    .border(
+                        1.dp,
+                        if (selected) palette.accent.copy(alpha = 0.8f)
+                        else Color.White.copy(alpha = 0.16f),
+                        shape
+                    )
+                    .clickable { onSelect(phase) }
+                    .padding(vertical = 3.dp),
+                contentAlignment = Alignment.Center
             ) {
-                row.forEach { phase ->
-                    val selected = phase == current
-                    val shape = RoundedCornerShape(50)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(shape)
-                            .background(
-                                if (selected) palette.accent.copy(alpha = 0.22f)
-                                else Color.White.copy(alpha = 0.06f)
-                            )
-                            .border(
-                                1.dp,
-                                if (selected) palette.accent.copy(alpha = 0.8f)
-                                else Color.White.copy(alpha = 0.16f),
-                                shape
-                            )
-                            .clickable { onSelect(phase) }
-                            .padding(vertical = 5.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = phase?.key ?: "auto",
-                            fontFamily = Tajawal,
-                            fontSize = 9.sp,
-                            color = if (selected) palette.accent else palette.textMuted,
-                            maxLines = 1
-                        )
-                    }
-                }
+                Text(
+                    text = phase?.key ?: "auto",
+                    fontFamily = Tajawal,
+                    fontSize = 8.sp,
+                    color = if (selected) palette.accent else palette.textMuted,
+                    maxLines = 1,
+                    softWrap = false
+                )
             }
         }
     }

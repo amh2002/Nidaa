@@ -58,7 +58,7 @@ fun GoldenSkyBackground(modifier: Modifier = Modifier) {
         palette.horizonTint?.let { tint ->
             drawRect(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, tint),
+                    colors = listOf(tint.copy(alpha = 0f), tint),
                     startY = size.height * 0.58f,
                     endY = size.height
                 )
@@ -70,7 +70,7 @@ fun GoldenSkyBackground(modifier: Modifier = Modifier) {
             val radius = size.height * 0.50f
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(glow, Color.Transparent),
+                    colors = listOf(glow, glow.copy(alpha = 0f)),
                     center = center,
                     radius = radius
                 ),
@@ -147,7 +147,7 @@ fun GoldenHeroDecor(modifier: Modifier = Modifier) {
             val center = Offset(size.width * 0.845f, size.height * 0.20f)
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(palette.accent.copy(alpha = 0.22f * moon), Color.Transparent),
+                    colors = listOf(palette.accent.copy(alpha = 0.22f * moon), palette.accent.copy(alpha = 0f)),
                     center = center,
                     radius = radius * 2.4f
                 ),
@@ -243,7 +243,7 @@ private fun DrawScope.drawStarField(
             brush = Brush.radialGradient(
                 colors = listOf(
                     color.copy(alpha = star.alpha * alpha),
-                    Color.Transparent
+                    color.copy(alpha = 0f)
                 ),
                 center = center,
                 radius = r * 2.6f
@@ -270,7 +270,7 @@ private fun DrawScope.drawClouds(color: Color, alpha: Float) {
             brush = Brush.radialGradient(
                 colors = listOf(
                     color.copy(alpha = 0.07f * alpha),
-                    Color.Transparent
+                    color.copy(alpha = 0f)
                 ),
                 center = center,
                 radius = w * 0.5f
