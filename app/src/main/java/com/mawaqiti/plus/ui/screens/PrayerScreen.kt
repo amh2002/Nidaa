@@ -93,8 +93,6 @@ fun PrayerScreen(
     isArabic: Boolean,
     clockFormat: ClockFormat,
     onChooseCity: () -> Unit,
-    onOpenQibla: () -> Unit,
-    onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit = {},
     updateRelease: ReleaseInfo? = null,
     onOpenUpdate: () -> Unit = {}
@@ -167,24 +165,10 @@ fun PrayerScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            FooterButton(
-                text = stringResource(R.string.footer_qibla),
-                onClick = onOpenQibla,
-                modifier = Modifier.weight(1f)
-            )
-            FooterButton(
-                text = stringResource(R.string.footer_settings),
-                onClick = onOpenSettings,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(Modifier.height(6.dp))
-
+        // beta11: the two footer buttons moved into the themed bottom bar in
+        // MawaqitiApp; only the official-timetable note stays at the end of the
+        // scrolling content, and the Scaffold's bar padding keeps it clear of
+        // the navigation bar.
         Text(
             text = stringResource(R.string.official_note),
             style = MaterialTheme.typography.bodySmall,
@@ -395,6 +379,55 @@ object HeroMetrics {
     val NAME_TO_TIME = 4.dp
 }
 
+/**
+ * Typography of the beta11 "now" line, pulled out (like [HeroMetrics]) so the
+ * request - readable at arm's length, still smaller than the prayer time - is
+ * locked by a unit test instead of living only in the layout.
+ */
+object NowChipMetrics {
+    val FONT_SIZE = 16.sp
+    val LINE_HEIGHT = 20.sp
+    val ICON_SIZE = 16.dp
+}
+
+/**
+ * beta11: the current time, sized so the owner can read it at arm's length.
+ *
+ * Design decisions:
+ *  - [NowChipMetrics.FONT_SIZE] SemiBold in [SkyPalette.text] (warm cream) at
+ *    full opacity - up from 11 sp Medium at 75 % gold in beta10;
+ *  - the clock icon scales with the text and keeps the gold accent, so the line
+ *    is "white-gold" without losing the brand colour;
+ *  - tabular figures (`tnum`) keep the digits from jittering on each minute;
+ *  - one line, never wraps, and the caller's Row (not a fixed overlay) is what
+ *    keeps it clear of the "next prayer" label and the countdown pill.
+ */
+@Composable
+private fun NowChip(text: String, palette: SkyPalette) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Icons.Filled.Schedule,
+            contentDescription = null,
+            tint = palette.accent,
+            modifier = Modifier.size(NowChipMetrics.ICON_SIZE)
+        )
+        Spacer(Modifier.width(5.dp))
+        Text(
+            text = stringResource(R.string.now_label) + " " + text,
+            style = MaterialTheme.typography.titleSmall.copy(
+                fontFamily = Tajawal,
+                fontSize = NowChipMetrics.FONT_SIZE,
+                lineHeight = NowChipMetrics.LINE_HEIGHT,
+                fontWeight = FontWeight.SemiBold,
+                fontFeatureSettings = "tnum"
+            ),
+            color = palette.text,
+            maxLines = 1,
+            softWrap = false
+        )
+    }
+}
+
 @Composable
 private fun HeroCard(
     hero: HeroState,
@@ -417,50 +450,34 @@ private fun HeroCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // beta10: the "next prayer" label keeps the exact centred position it
-            // had, and the current time shares that line from the card's top
-            // corner (the right-hand one in RTL). Sharing the line means the card
-            // does not grow at all; 64 dp of side padding keeps them apart at
-            // every in-app font scale.
-            Box(modifier = Modifier.fillMaxWidth()) {
+            // beta11: the current time is promoted into a real header line. It
+            // shares the "next prayer" line instead of taking one of its own:
+            // the chip is measured first and the label receives the remainder,
+            // so the two can never overlap - not at 1.0, not at the 1.3 in-app
+            // scale - and the card keeps its beta10 height (the line height was
+            // already label-sized). In RTL the chip sits at the right edge, so
+            // the row reads "now" first, then the label.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                NowChip(text = nowText, palette = palette)
+                Spacer(Modifier.width(10.dp))
                 Text(
                     text = stringResource(R.string.next_prayer),
                     style = MaterialTheme.typography.bodyMedium,
                     color = palette.textMuted,
                     maxLines = 1,
+                    softWrap = false,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxWidth()
-                        .padding(horizontal = 64.dp)
+                    // Shrinks instead of wrapping if a very large scale ever
+                    // squeezes the remaining width.
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 10.sp,
+                        maxFontSize = MaterialTheme.typography.bodyMedium.fontSize
+                    ),
+                    modifier = Modifier.weight(1f)
                 )
-                Row(
-                    modifier = Modifier.align(Alignment.CenterStart),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Schedule,
-                        contentDescription = null,
-                        tint = palette.accent.copy(alpha = 0.75f),
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(Modifier.width(3.dp))
-                    Text(
-                        text = stringResource(R.string.now_label) + " " + nowText,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            // Tabular figures: the digits keep their width, so the
-                            // line does not jitter when the minute rolls over.
-                            fontFeatureSettings = "tnum"
-                        ),
-                        fontFamily = Tajawal,
-                        fontSize = 11.sp,
-                        lineHeight = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = palette.accent.copy(alpha = 0.75f),
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
             }
             Spacer(Modifier.height(HeroMetrics.LABEL_TO_NAME))
             Text(
@@ -680,32 +697,6 @@ private fun GridCard(
             fontWeight = FontWeight.Bold,
             color = palette.text,
             maxLines = 1
-        )
-    }
-}
-
-@Composable
-private fun FooterButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val palette = skyPalette
-    val shape = RoundedCornerShape(16.dp)
-    Box(
-        modifier = modifier
-            .height(44.dp)
-            .clip(shape)
-            .background(palette.cardFill)
-            .border(1.dp, palette.accent.copy(alpha = 0.45f), shape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium,
-            color = palette.accent
         )
     }
 }

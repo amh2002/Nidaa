@@ -35,7 +35,10 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
+import com.mawaqiti.plus.ui.components.NidaaBottomBar
+import com.mawaqiti.plus.ui.components.NidaaNavItems
 import com.mawaqiti.plus.ui.components.isArabicLocale
+import com.mawaqiti.plus.ui.components.navTabIndex
 import com.mawaqiti.plus.ui.screens.AboutScreen
 import com.mawaqiti.plus.ui.screens.CityPickerSheet
 import com.mawaqiti.plus.ui.screens.PrayerScreen
@@ -93,6 +96,20 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+/**
+ * Tab indices for [MawaqitiApp].
+ *
+ * [TAB_HOME] hosts the prayer screen and is intentionally *not* a bar item;
+ * [TAB_ABOUT] is a Home sub-screen parked far above the bar range so entries
+ * can be appended to [NidaaNavItems] without renumbering anything. Every bar
+ * destination occupies `index + 1`, which is what [tabForRoute] returns.
+ */
+private const val TAB_HOME = 0
+private const val TAB_ABOUT = 99
+
+private fun tabForRoute(route: String): Int =
+    navTabIndex(NidaaNavItems, route, fallback = TAB_HOME)
+
 @Composable
 fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
     val storedSettings by viewModel.settingsState.collectAsState()
@@ -119,10 +136,15 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
         UpdateManager.loadPending(appContext)
     }
 
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(TAB_HOME) }
     var showCityPicker by rememberSaveable { mutableStateOf(false) }
 
-    BackHandler(enabled = selectedTab != 0) { selectedTab = 0 }
+    // beta11: the bottom bar is list-driven. Item `index` owns tab `index + 1`,
+    // so the two existing destinations keep their old indices (Qibla = 1,
+    // Settings = 2) and a future item simply takes the next free one.
+    val selectedRoute = NidaaNavItems.getOrNull(selectedTab - 1)?.route
+
+    BackHandler(enabled = selectedTab != TAB_HOME) { selectedTab = TAB_HOME }
 
     // First launch: pin the app to Arabic explicitly, then persist through
     // AppCompat's autoStoreLocales + our DataStore flag. Using the exact
@@ -148,64 +170,80 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
     Box(modifier = Modifier.fillMaxSize()) {
         GoldenSkyBackground()
 
-        Scaffold(containerColor = Color.Transparent) { padding ->
+        Scaffold(
+            containerColor = Color.Transparent,
+            // beta11: the bar is part of the Scaffold, so every screen receives
+            // its height as content padding. The timetable note therefore always
+            // ends above the bar, and the silhouette is only ever seen through
+            // the bar's translucent surface - never hidden behind content.
+            bottomBar = {
+                // Home is a bar host but not a destination; About is a sub-screen
+                // of Home and keeps the full height (no bar).
+                if (selectedTab != TAB_ABOUT) {
+                    NidaaBottomBar(
+                        selectedRoute = selectedRoute,
+                        onSelect = { item -> selectedTab = tabForRoute(item.route) }
+                    )
+                }
+            }
+        ) { padding ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
             ) {
                 when (selectedTab) {
-                    0 -> PrayerScreen(
+                    TAB_HOME -> PrayerScreen(
                         city = city,
                         day = day,
                         date = today,
                         isArabic = isArabic,
                         clockFormat = settings.clockFormat,
                         onChooseCity = { showCityPicker = true },
-                        onOpenQibla = { selectedTab = 1 },
-                        onOpenSettings = { selectedTab = 2 },
-                        onOpenAbout = { selectedTab = 3 },
+                        onOpenAbout = { selectedTab = TAB_ABOUT },
                         updateRelease = updateRelease,
-                        onOpenUpdate = { selectedTab = 2 }
+                        onOpenUpdate = { selectedTab = tabForRoute("settings") }
                     )
 
-                    1 -> QiblaScreen(
-                        city = city,
-                        isArabic = isArabic,
-                        onBack = { selectedTab = 0 }
-                    )
+                    TAB_ABOUT -> AboutScreen(onBack = { selectedTab = TAB_HOME })
 
-                    2 -> SettingsScreen(
-                        settings = settings,
-                        city = city,
-                        day = day,
-                        isArabic = isArabic,
-                        onBack = { selectedTab = 0 },
-                        onOpenCityPicker = { showCityPicker = true },
-                        onSelectLanguage = viewModel::setLanguage,
-                        onSelectClockFormat = viewModel::setClockFormat,
-                        onSelectFontScale = viewModel::setFontScale,
-                        onSelectWidgetLanguage = viewModel::setWidgetLanguage,
-                        onSummerTimeChange = viewModel::setSummerTime,
-                        onNotificationsEnabled = viewModel::setNotificationsEnabled,
-                        onEventEnabled = viewModel::setEventEnabled,
-                        onEventMode = viewModel::setEventMode,
-                        onApplyModeToEnabled = viewModel::applyModeToEnabledEvents,
-                        onTestEvent = viewModel::testEvent,
-                        onTestMode = viewModel::testMode,
-                        updatesEnabled = updatesEnabled,
-                        updateState = updateState,
-                        onUpdatesEnabled = { enabled ->
-                            UpdateManager.setEnabled(appContext, enabled)
-                        },
-                        onCheckForUpdates = { UpdateManager.checkNow(appContext, manual = true) },
-                        onDownloadUpdate = { UpdateManager.download(appContext) },
-                        onInstallUpdate = { UpdateManager.install(appContext) },
-                        onOpenReleasesPage = { UpdateManager.openReleasesPage(appContext) },
-                        onSelectTheme = viewModel::setTheme
-                    )
+                    else -> when (selectedRoute) {
+                        "qibla" -> QiblaScreen(
+                            city = city,
+                            isArabic = isArabic,
+                            onBack = { selectedTab = TAB_HOME }
+                        )
 
-                    3 -> AboutScreen(onBack = { selectedTab = 0 })
+                        "settings" -> SettingsScreen(
+                            settings = settings,
+                            city = city,
+                            day = day,
+                            isArabic = isArabic,
+                            onBack = { selectedTab = TAB_HOME },
+                            onOpenCityPicker = { showCityPicker = true },
+                            onSelectLanguage = viewModel::setLanguage,
+                            onSelectClockFormat = viewModel::setClockFormat,
+                            onSelectFontScale = viewModel::setFontScale,
+                            onSelectWidgetLanguage = viewModel::setWidgetLanguage,
+                            onSummerTimeChange = viewModel::setSummerTime,
+                            onNotificationsEnabled = viewModel::setNotificationsEnabled,
+                            onEventEnabled = viewModel::setEventEnabled,
+                            onEventMode = viewModel::setEventMode,
+                            onApplyModeToEnabled = viewModel::applyModeToEnabledEvents,
+                            onTestEvent = viewModel::testEvent,
+                            onTestMode = viewModel::testMode,
+                            updatesEnabled = updatesEnabled,
+                            updateState = updateState,
+                            onUpdatesEnabled = { enabled ->
+                                UpdateManager.setEnabled(appContext, enabled)
+                            },
+                            onCheckForUpdates = { UpdateManager.checkNow(appContext, manual = true) },
+                            onDownloadUpdate = { UpdateManager.download(appContext) },
+                            onInstallUpdate = { UpdateManager.install(appContext) },
+                            onOpenReleasesPage = { UpdateManager.openReleasesPage(appContext) },
+                            onSelectTheme = viewModel::setTheme
+                        )
+                    }
                 }
             }
         }
