@@ -36,6 +36,8 @@
 
     <string name="footer_qibla">Qibla</string>
     <string name="footer_settings">Settings</string>
+    <!-- beta12 dock: home label, kept next to the other two dock labels. -->
+    <string name="dock_home">Home</string>
 
     <string name="back">Back</string>
     <string name="close">Close</string>

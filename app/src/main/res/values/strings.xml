@@ -36,6 +36,8 @@
 
     <string name="footer_qibla">القبلة</string>
     <string name="footer_settings">الإعدادات</string>
+    <!-- beta12 dock: home label, kept next to the other two dock labels. -->
+    <string name="dock_home">الرئيسية</string>
 
     <string name="back">رجوع</string>
     <string name="close">إغلاق</string>

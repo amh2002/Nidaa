@@ -380,48 +380,45 @@ object HeroMetrics {
 }
 
 /**
- * Typography of the beta11 "now" line, pulled out (like [HeroMetrics]) so the
- * request - readable at arm's length, still smaller than the prayer time - is
- * locked by a unit test instead of living only in the layout.
+ * Beta12 typography of the current time, kept as named values (like
+ * [HeroMetrics]) so the "readable at arm's length" size survives future layout
+ * changes and is asserted by [NowTimeMetricsTest].
  */
-object NowChipMetrics {
-    val FONT_SIZE = 16.sp
-    val LINE_HEIGHT = 20.sp
-    val ICON_SIZE = 16.dp
+object NowTimeMetrics {
+    val FONT_SIZE = 20.sp
+    val LINE_HEIGHT = 26.sp
+    val ICON_SIZE = 20.dp
 }
 
 /**
- * beta11: the current time, sized so the owner can read it at arm's length.
+ * beta12: the current time row at the bottom of the next-prayer card.
  *
- * Design decisions:
- *  - [NowChipMetrics.FONT_SIZE] SemiBold in [SkyPalette.text] (warm cream) at
- *    full opacity - up from 11 sp Medium at 75 % gold in beta10;
- *  - the clock icon scales with the text and keeps the gold accent, so the line
- *    is "white-gold" without losing the brand colour;
- *  - tabular figures (`tnum`) keep the digits from jittering on each minute;
- *  - one line, never wraps, and the caller's Row (not a fixed overlay) is what
- *    keeps it clear of the "next prayer" label and the countdown pill.
+ * Clock icon + "الآن HH:MM" in the golden accent at full opacity, 20 sp
+ * SemiBold (never below the beta11 size), tabular digits so the line does not
+ * jitter, and one line that may wrap nowhere. It is centred under the golden
+ * hairline, so it is symmetric in RTL and LTR and can never overlap the prayer
+ * name, the countdown pill or the progress bar above it.
  */
 @Composable
-private fun NowChip(text: String, palette: SkyPalette) {
+private fun NowTimeRow(text: String, palette: SkyPalette) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = Icons.Filled.Schedule,
             contentDescription = null,
             tint = palette.accent,
-            modifier = Modifier.size(NowChipMetrics.ICON_SIZE)
+            modifier = Modifier.size(NowTimeMetrics.ICON_SIZE)
         )
-        Spacer(Modifier.width(5.dp))
+        Spacer(Modifier.width(6.dp))
         Text(
             text = stringResource(R.string.now_label) + " " + text,
             style = MaterialTheme.typography.titleSmall.copy(
                 fontFamily = Tajawal,
-                fontSize = NowChipMetrics.FONT_SIZE,
-                lineHeight = NowChipMetrics.LINE_HEIGHT,
+                fontSize = NowTimeMetrics.FONT_SIZE,
+                lineHeight = NowTimeMetrics.LINE_HEIGHT,
                 fontWeight = FontWeight.SemiBold,
                 fontFeatureSettings = "tnum"
             ),
-            color = palette.text,
+            color = palette.accent,
             maxLines = 1,
             softWrap = false
         )
@@ -450,35 +447,19 @@ private fun HeroCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // beta11: the current time is promoted into a real header line. It
-            // shares the "next prayer" line instead of taking one of its own:
-            // the chip is measured first and the label receives the remainder,
-            // so the two can never overlap - not at 1.0, not at the 1.3 in-app
-            // scale - and the card keeps its beta10 height (the line height was
-            // already label-sized). In RTL the chip sits at the right edge, so
-            // the row reads "now" first, then the label.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                NowChip(text = nowText, palette = palette)
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = stringResource(R.string.next_prayer),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = palette.textMuted,
-                    maxLines = 1,
-                    softWrap = false,
-                    textAlign = TextAlign.Center,
-                    // Shrinks instead of wrapping if a very large scale ever
-                    // squeezes the remaining width.
-                    autoSize = TextAutoSize.StepBased(
-                        minFontSize = 10.sp,
-                        maxFontSize = MaterialTheme.typography.bodyMedium.fontSize
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // beta12: back to the beta10 header - the label sits alone at the
+            // top of the card, same size/style/colour as before. It deliberately
+            // never shares a flex row with the clock: the current time moved to
+            // its own row at the bottom, so no width or font scale can make the
+            // two collide, and no auto-shrink is needed.
+            Text(
+                text = stringResource(R.string.next_prayer),
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textMuted,
+                maxLines = 1,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
             Spacer(Modifier.height(HeroMetrics.LABEL_TO_NAME))
             Text(
                 text = prayerLabel(hero.event),
@@ -536,6 +517,29 @@ private fun HeroCard(
                         )
                 )
             }
+
+            // beta12: the current time now owns a dedicated row at the bottom of
+            // the card, separated by a thin golden hairline (faded at both ends
+            // so it reads as a divider, not a border). Moving it here keeps the
+            // beta11 visibility - it is the same 20 sp at full opacity - while
+            // the header returns to its beta10 shape.
+            Spacer(Modifier.height(9.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                palette.accent.copy(alpha = 0f),
+                                palette.accent.copy(alpha = 0.28f),
+                                palette.accent.copy(alpha = 0f)
+                            )
+                        )
+                    )
+            )
+            Spacer(Modifier.height(7.dp))
+            NowTimeRow(text = nowText, palette = palette)
         }
     }
 }
