@@ -28,12 +28,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Nightlight
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.WbTwilight
@@ -63,7 +62,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
-import com.mawaqiti.plus.BuildConfig
 import com.mawaqiti.plus.R
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.engine.table.TableDay
@@ -72,10 +70,10 @@ import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.format.HijriDateFormatter
 import com.mawaqiti.plus.format.TimeFormatter
 import com.mawaqiti.plus.ui.components.GlassCard
+import com.mawaqiti.plus.ui.components.PrayerIcons
 import com.mawaqiti.plus.ui.components.dashedOutline
 import com.mawaqiti.plus.ui.theme.AmiriBold
 import com.mawaqiti.plus.ui.theme.GoldenHeroDecor
-import com.mawaqiti.plus.ui.theme.GoldenPhase
 import com.mawaqiti.plus.ui.theme.SkyPalette
 import com.mawaqiti.plus.ui.theme.Tajawal
 import com.mawaqiti.plus.ui.theme.skyPalette
@@ -97,14 +95,19 @@ fun PrayerScreen(
     onChooseCity: () -> Unit,
     onOpenQibla: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAbout: () -> Unit = {},
     updateRelease: ReleaseInfo? = null,
-    onOpenUpdate: () -> Unit = {},
-    debugPhase: GoldenPhase? = null,
-    onDebugPhase: (GoldenPhase?) -> Unit = {}
+    onOpenUpdate: () -> Unit = {}
 ) {
     val palette = skyPalette
     val now = rememberForegroundClock()
     val hero = remember(day, now) { heroState(day, now) }
+    // beta10: "now" line in the hero card. It is derived from the same ticker,
+    // but keyed on the minute, so the text is rebuilt once per minute at most.
+    val nowMinute = now.hour * 60 + now.minute
+    val nowText = remember(nowMinute, clockFormat, isArabic) {
+        TimeFormatter.format(nowMinute, clockFormat, isArabic)
+    }
     val progress by animateFloatAsState(
         targetValue = hero.progress,
         animationSpec = tween(900, easing = LinearEasing),
@@ -123,7 +126,8 @@ fun PrayerScreen(
             date = date,
             isArabic = isArabic,
             palette = palette,
-            onChooseCity = onChooseCity
+            onChooseCity = onChooseCity,
+            onOpenAbout = onOpenAbout
         )
 
         if (updateRelease != null) {
@@ -138,7 +142,8 @@ fun PrayerScreen(
             progress = progress,
             isArabic = isArabic,
             clockFormat = clockFormat,
-            palette = palette
+            palette = palette,
+            nowText = nowText
         )
 
         Spacer(Modifier.height(12.dp))
@@ -188,11 +193,6 @@ fun PrayerScreen(
             textAlign = TextAlign.Center
         )
 
-        if (BuildConfig.DEBUG) {
-            Spacer(Modifier.height(6.dp))
-            DebugPhaseBar(current = debugPhase, onSelect = onDebugPhase)
-        }
-
         Spacer(Modifier.height(10.dp))
     }
 }
@@ -203,7 +203,8 @@ private fun Header(
     date: LocalDate,
     isArabic: Boolean,
     palette: SkyPalette,
-    onChooseCity: () -> Unit
+    onChooseCity: () -> Unit,
+    onOpenAbout: () -> Unit
 ) {
     Spacer(Modifier.height(10.dp))
     Row(
@@ -211,39 +212,61 @@ private fun Header(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        // beta10: the wordmark is the About entry point.
         Text(
             text = stringResource(R.string.brand_name),
             fontFamily = AmiriBold,
             fontWeight = FontWeight.Bold,
             fontSize = 32.sp,
             lineHeight = 42.sp,
-            color = palette.text
+            color = palette.text,
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .clickable(onClick = onOpenAbout)
+                .padding(horizontal = 4.dp, vertical = 2.dp)
         )
         CityChip(city = city, isArabic = isArabic, palette = palette, onClick = onChooseCity)
     }
 
     Spacer(Modifier.height(6.dp))
 
-    Text(
-        text = date.format(dateFormatter(isArabic)),
-        style = MaterialTheme.typography.bodyMedium,
-        color = palette.textMuted,
+    // beta10: one row, two halves. In RTL the Hijri date (first child) sits at
+    // the right and the Gregorian date at the left; each is centred inside its
+    // half. `autoSize` shrinks the text on narrow screens instead of wrapping
+    // or ellipsizing, and `maxLines = 1` guarantees a single line.
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.End
-    )
-
-    Spacer(Modifier.height(2.dp))
-
-    // Computational Umm al-Qura date directly under the Gregorian line. It is
-    // deliberately a little smaller and dimmer than the date above; `date` is
-    // the ViewModel's local "today", so the line rolls over at local midnight.
-    Text(
-        text = HijriDateFormatter.format(date, isArabic),
-        style = MaterialTheme.typography.bodySmall,
-        color = palette.textMuted,
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.End
-    )
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // `date` is the ViewModel's local "today", so both lines roll over
+        // together at local midnight. Hijri is computational (Umm al-Qura).
+        Text(
+            text = HijriDateFormatter.format(date, isArabic),
+            style = MaterialTheme.typography.bodySmall,
+            color = palette.textMuted,
+            maxLines = 1,
+            softWrap = false,
+            textAlign = TextAlign.Center,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 8.sp,
+                maxFontSize = MaterialTheme.typography.bodySmall.fontSize
+            ),
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = date.format(dateFormatter(isArabic)),
+            style = MaterialTheme.typography.bodyMedium,
+            color = palette.textMuted,
+            maxLines = 1,
+            softWrap = false,
+            textAlign = TextAlign.Center,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 8.sp,
+                maxFontSize = MaterialTheme.typography.bodyMedium.fontSize
+            ),
+            modifier = Modifier.weight(1f)
+        )
+    }
 
     Spacer(Modifier.height(10.dp))
 
@@ -378,7 +401,8 @@ private fun HeroCard(
     progress: Float,
     isArabic: Boolean,
     clockFormat: ClockFormat,
-    palette: SkyPalette
+    palette: SkyPalette,
+    nowText: String
 ) {
     GlassCard(
         emphasized = true,
@@ -393,11 +417,51 @@ private fun HeroCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = stringResource(R.string.next_prayer),
-                style = MaterialTheme.typography.bodyMedium,
-                color = palette.textMuted
-            )
+            // beta10: the "next prayer" label keeps the exact centred position it
+            // had, and the current time shares that line from the card's top
+            // corner (the right-hand one in RTL). Sharing the line means the card
+            // does not grow at all; 64 dp of side padding keeps them apart at
+            // every in-app font scale.
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.next_prayer),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = palette.textMuted,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
+                        .padding(horizontal = 64.dp)
+                )
+                Row(
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Schedule,
+                        contentDescription = null,
+                        tint = palette.accent.copy(alpha = 0.75f),
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(Modifier.width(3.dp))
+                    Text(
+                        text = stringResource(R.string.now_label) + " " + nowText,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            // Tabular figures: the digits keep their width, so the
+                            // line does not jitter when the minute rolls over.
+                            fontFeatureSettings = "tnum"
+                        ),
+                        fontFamily = Tajawal,
+                        fontSize = 11.sp,
+                        lineHeight = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = palette.accent.copy(alpha = 0.75f),
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+            }
             Spacer(Modifier.height(HeroMetrics.LABEL_TO_NAME))
             Text(
                 text = prayerLabel(hero.event),
@@ -475,11 +539,14 @@ private fun PrayerGrid(
     palette: SkyPalette
 ) {
     val prayers = listOf(
-        Triple(TableEvent.FAJR, R.string.prayer_fajr, Icons.Filled.Nightlight),
+        // beta10: Fajr is a rising sun (rays above the horizon) and Maghrib a
+        // setting sun (touching the horizon, no rays). Both are hand-made
+        // vectors in the icon library's absence; the other four keep beta9.
+        Triple(TableEvent.FAJR, R.string.prayer_fajr, PrayerIcons.Sunrise),
         Triple(TableEvent.SUNRISE, R.string.prayer_sunrise, Icons.Filled.WbTwilight),
         Triple(TableEvent.DHUHR, R.string.prayer_dhuhr, Icons.Filled.WbSunny),
         Triple(TableEvent.ASR, R.string.prayer_asr, Icons.Filled.LightMode),
-        Triple(TableEvent.MAGHRIB, R.string.prayer_maghrib, Icons.Filled.Bedtime),
+        Triple(TableEvent.MAGHRIB, R.string.prayer_maghrib, PrayerIcons.Sunset),
         Triple(TableEvent.ISHA, R.string.prayer_isha, Icons.Filled.NightsStay)
     )
 
@@ -640,62 +707,6 @@ private fun FooterButton(
             fontWeight = FontWeight.Medium,
             color = palette.accent
         )
-    }
-}
-
-/**
- * DEBUG-only phase switch. Stripped from release builds because the caller
- * checks BuildConfig.DEBUG (a compile-time constant) before composing it.
- */
-@Composable
-private fun DebugPhaseBar(
-    current: GoldenPhase?,
-    onSelect: (GoldenPhase?) -> Unit
-) {
-    val palette = skyPalette
-    val phases = listOf<GoldenPhase?>(
-        null,
-        GoldenPhase.NIGHT,
-        GoldenPhase.DAWN,
-        GoldenPhase.MORNING,
-        GoldenPhase.AFTERNOON,
-        GoldenPhase.SUNSET
-    )
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        phases.forEach { phase ->
-            val selected = phase == current
-            val shape = RoundedCornerShape(50)
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(shape)
-                    .background(
-                        if (selected) palette.accent.copy(alpha = 0.22f)
-                        else Color.White.copy(alpha = 0.06f)
-                    )
-                    .border(
-                        1.dp,
-                        if (selected) palette.accent.copy(alpha = 0.8f)
-                        else Color.White.copy(alpha = 0.16f),
-                        shape
-                    )
-                    .clickable { onSelect(phase) }
-                    .padding(vertical = 3.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = phase?.key ?: "auto",
-                    fontFamily = Tajawal,
-                    fontSize = 8.sp,
-                    color = if (selected) palette.accent else palette.textMuted,
-                    maxLines = 1,
-                    softWrap = false
-                )
-            }
-        }
     }
 }
 

@@ -57,6 +57,7 @@ import com.mawaqiti.plus.BuildConfig
 import com.mawaqiti.plus.R
 import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
+import com.mawaqiti.plus.data.AppTheme
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.data.Country
 import com.mawaqiti.plus.data.FontScale
@@ -111,7 +112,9 @@ fun SettingsScreen(
     onCheckForUpdates: () -> Unit = {},
     onDownloadUpdate: () -> Unit = {},
     onInstallUpdate: () -> Unit = {},
-    onOpenReleasesPage: () -> Unit = {}
+    onOpenReleasesPage: () -> Unit = {},
+    /** beta10: persisted appearance choice; AUTO is the default. */
+    onSelectTheme: (AppTheme) -> Unit = {}
 ) {
     val context = LocalContext.current
     var statusTick by remember { mutableIntStateOf(0) }
@@ -182,7 +185,8 @@ fun SettingsScreen(
         onCheckForUpdates = onCheckForUpdates,
         onDownloadUpdate = onDownloadUpdate,
         onInstallUpdate = onInstallUpdate,
-        onOpenReleasesPage = onOpenReleasesPage
+        onOpenReleasesPage = onOpenReleasesPage,
+        onSelectTheme = onSelectTheme
     )
 
     if (showRationale) {
@@ -240,7 +244,9 @@ fun SettingsList(
     onCheckForUpdates: () -> Unit = {},
     onDownloadUpdate: () -> Unit = {},
     onInstallUpdate: () -> Unit = {},
-    onOpenReleasesPage: () -> Unit = {}
+    onOpenReleasesPage: () -> Unit = {},
+    /** beta10: appearance choice (see [SettingsScreen]). */
+    onSelectTheme: (AppTheme) -> Unit = {}
 ) {
     val palette = skyPalette
     val previewMinutes = nextPreviewMinutes(day)
@@ -349,6 +355,38 @@ fun SettingsList(
                     onSelect = { index ->
                         onSelectClockFormat(if (index == 0) ClockFormat.H24 else ClockFormat.H12)
                     }
+                )
+            }
+        }
+
+        ItemGap()
+
+        // 3a. Appearance (beta10). "Auto" follows the five golden phases of the
+        //     day; "Night (gold)" pins the deep-night look. Persisted in DataStore
+        //     and applied immediately, without restarting the app.
+        SettingsCard {
+            SettingRowBlock(
+                title = stringResource(R.string.settings_theme_title),
+                description = stringResource(R.string.settings_theme_desc)
+            ) {
+                SegmentedPillRow(
+                    options = listOf(
+                        PillOption(
+                            stringResource(R.string.theme_auto),
+                            settings.theme == AppTheme.AUTO
+                        ),
+                        PillOption(
+                            stringResource(R.string.theme_night),
+                            settings.theme == AppTheme.NIGHT
+                        )
+                    ),
+                    onSelect = { index ->
+                        onSelectTheme(if (index == 0) AppTheme.AUTO else AppTheme.NIGHT)
+                    },
+                    // Golden selection, styled like the beta 9 cards: gold pill
+                    // with the sheet's dark ink on top (contrast > 10:1).
+                    selectedColor = palette.accent,
+                    selectedTextColor = palette.sheet
                 )
             }
         }

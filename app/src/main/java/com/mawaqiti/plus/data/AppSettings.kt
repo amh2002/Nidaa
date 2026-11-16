@@ -18,6 +18,23 @@ enum class AppLanguage(val tag: String) {
 }
 
 /**
+ * beta10 appearance choice, persisted like every other beta setting.
+ *
+ * AUTO follows the five Golden Night phases of the day (night, dawn, morning,
+ * afternoon, sunset); NIGHT pins the deep-night golden look at any hour. It is
+ * presentation-only: no engine value depends on it.
+ */
+enum class AppTheme(val storageKey: String) {
+    AUTO("auto"),
+    NIGHT("night");
+
+    companion object {
+        fun fromKey(key: String?): AppTheme =
+            entries.firstOrNull { it.storageKey.equals(key, ignoreCase = true) } ?: AUTO
+    }
+}
+
+/**
  * Everything the beta persists. Times and the qibla bearing are derived from
  * [cityOrder] alone, so there is no latitude/longitude state to keep in sync.
  */
@@ -30,6 +47,8 @@ data class AppSettings(
     val languageInitialized: Boolean = false,
     /** Display-only clock preference; default is the original app's 24h. */
     val clockFormat: ClockFormat = ClockFormat.H24,
+    /** beta10: AUTO follows the golden phases, NIGHT pins the golden night look. */
+    val theme: AppTheme = AppTheme.AUTO,
     /**
      * beta 7.9: in-app text multiplier over the system font scale
      * (0.8 … 1.2, one of [FontScale.STEPS]).

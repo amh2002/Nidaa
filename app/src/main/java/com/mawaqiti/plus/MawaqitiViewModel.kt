@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
+import com.mawaqiti.plus.data.AppTheme
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.data.CityRepository
 import com.mawaqiti.plus.data.Country
@@ -113,15 +114,22 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     /**
      * Beta 9 "Golden Night": the five-phase look used by the main screen.
      *
-     * [phaseOverride] is only fed by the debug intent extra / dev control; it is
-     * null in release because both call sites are behind BuildConfig.DEBUG.
+     * [phaseOverride] is only fed by the debug intent extra; it is null in
+     * release because the call site is behind BuildConfig.DEBUG.
+     *
+     * beta 10: the persisted [AppTheme] joins the chain — NIGHT pins the
+     * deep-night golden palette at every hour, AUTO follows the day.
      */
     private val _goldenPhaseOverride = MutableStateFlow<GoldenPhase?>(null)
     val goldenPhaseOverride: StateFlow<GoldenPhase?> = _goldenPhaseOverride.asStateFlow()
 
     val goldenPhase: StateFlow<GoldenPhase> =
-        combine(day, _nowMinutes, _goldenPhaseOverride) { value, minute, override ->
-            override ?: resolvePhase(minute, PhaseBounds.fromDay(value))
+        combine(day, _nowMinutes, _goldenPhaseOverride, settings) { value, minute, override, stored ->
+            override ?: if (stored.theme == AppTheme.NIGHT) {
+                GoldenPhase.NIGHT
+            } else {
+                resolvePhase(minute, PhaseBounds.fromDay(value))
+            }
         }.stateIn(
             viewModelScope,
             SharingStarted.Eagerly,
@@ -161,6 +169,12 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
         settingsRepository.setClockFormat(format)
         WidgetUpdater.updateAsync(getApplication())
     }
+
+    /** beta10: appearance choice, applied through [goldenPhase]. */
+    fun setTheme(theme: AppTheme) = viewModelScope.launch {
+        settingsRepository.setTheme(theme)
+    }
+
     /** beta 7.9: in-app text size; observed by the root provider, no restart. */
     fun setFontScale(scale: Float) = viewModelScope.launch {
         settingsRepository.setFontScale(scale)

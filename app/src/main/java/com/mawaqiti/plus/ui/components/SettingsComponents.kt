@@ -146,7 +146,13 @@ fun SegmentedPillRow(
     modifier: Modifier = Modifier,
     fillWidth: Boolean = false,
     /** beta7: disabled pills are inert and carry disabled accessibility semantics. */
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    /**
+     * beta10: optional selected-pill colours (the Appearance row uses the golden
+     * accent). Null keeps the original brand-green selection everywhere else.
+     */
+    selectedColor: Color? = null,
+    selectedTextColor: Color? = null
 ) {
     Row(
         modifier = modifier.semantics { if (!enabled) disabled() },
@@ -158,6 +164,8 @@ fun SegmentedPillRow(
                 selected = option.selected,
                 enabled = enabled,
                 testTag = option.testTag,
+                selectedColor = selectedColor,
+                selectedTextColor = selectedTextColor,
                 modifier = if (fillWidth) Modifier.weight(1f) else Modifier,
                 onClick = { onSelect(index) }
             )
@@ -172,6 +180,8 @@ fun ChoicePill(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     testTag: String? = null,
+    selectedColor: Color? = null,
+    selectedTextColor: Color? = null,
     onClick: () -> Unit
 ) {
     val palette = skyPalette
@@ -180,7 +190,10 @@ fun ChoicePill(
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
             .semantics { if (!enabled) disabled() }
             .clip(RoundedCornerShape(50))
-            .background(if (selected) SkyPalette.BrandGreen else palette.text.copy(alpha = 0.08f))
+            .background(
+                if (selected) selectedColor ?: SkyPalette.BrandGreen
+                else palette.text.copy(alpha = 0.08f)
+            )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
@@ -189,7 +202,7 @@ fun ChoicePill(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) Color.White else palette.text,
+            color = if (selected) selectedTextColor ?: Color.White else palette.text,
             textAlign = TextAlign.Center
         )
     }

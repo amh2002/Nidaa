@@ -68,6 +68,18 @@
     <string name="clock_12">12 ساعة</string>
     <string name="clock_preview">معاينة</string>
 
+    <!-- beta10: appearance choice (auto follows the day, night pins golden night) -->
+    <string name="settings_theme_title">المظهر</string>
+    <string name="settings_theme_desc">تلقائي يتبع مراحل النهار، و«ليلي» يثبّت مظهر نداء الذهبي.</string>
+    <string name="theme_auto">تلقائي</string>
+    <string name="theme_night">ليلي (ذهبي)</string>
+
+    <!-- beta10: current time line inside the next-prayer card -->
+    <string name="now_label">الآن</string>
+
+    <!-- beta10: golden-night city search -->
+    <string name="searching">جارٍ البحث…</string>
+
     <!-- beta 7.9: in-app font size (multiplier over the system font scale) -->
     <string name="settings_font_title">حجم الخط</string>
     <string name="settings_font_desc">يُضاعف حجم خط النظام. قلّل الحجم إذا كانت أسماء الصلوات لا تظهر كاملة.</string>

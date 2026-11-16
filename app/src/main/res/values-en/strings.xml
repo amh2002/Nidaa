@@ -68,6 +68,18 @@
     <string name="clock_12">12-hour</string>
     <string name="clock_preview">Preview</string>
 
+    <!-- beta10: appearance choice (auto follows the day, night pins golden night) -->
+    <string name="settings_theme_title">Appearance</string>
+    <string name="settings_theme_desc">Auto follows the phases of the day; Night pins Nidaa\'s golden night look.</string>
+    <string name="theme_auto">Auto</string>
+    <string name="theme_night">Night (gold)</string>
+
+    <!-- beta10: current time line inside the next-prayer card -->
+    <string name="now_label">Now</string>
+
+    <!-- beta10: golden-night city search -->
+    <string name="searching">Searching…</string>
+
     <!-- beta 7.9: in-app font size (multiplier over the system font scale) -->
     <string name="settings_font_title">Font size</string>
     <string name="settings_font_desc">Scales the system font size. Lower it when prayer names do not fit on screen.</string>

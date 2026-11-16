@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
 import com.mawaqiti.plus.ui.components.isArabicLocale
+import com.mawaqiti.plus.ui.screens.AboutScreen
 import com.mawaqiti.plus.ui.screens.CityPickerSheet
 import com.mawaqiti.plus.ui.screens.PrayerScreen
 import com.mawaqiti.plus.ui.screens.QiblaScreen
@@ -100,7 +101,6 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
     val day by viewModel.day.collectAsState()
     val today by viewModel.today.collectAsState()
     val goldenPhase by viewModel.goldenPhase.collectAsState()
-    val phaseOverride by viewModel.goldenPhaseOverride.collectAsState()
     val isArabic = isArabicLocale()
 
     // beta 7.95: isolated updater state. The toggle is read from the updater's
@@ -164,10 +164,9 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onChooseCity = { showCityPicker = true },
                         onOpenQibla = { selectedTab = 1 },
                         onOpenSettings = { selectedTab = 2 },
+                        onOpenAbout = { selectedTab = 3 },
                         updateRelease = updateRelease,
-                        onOpenUpdate = { selectedTab = 2 },
-                        debugPhase = if (BuildConfig.DEBUG) phaseOverride else null,
-                        onDebugPhase = if (BuildConfig.DEBUG) viewModel::setPhaseOverride else ({})
+                        onOpenUpdate = { selectedTab = 2 }
                     )
 
                     1 -> QiblaScreen(
@@ -202,8 +201,11 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onCheckForUpdates = { UpdateManager.checkNow(appContext, manual = true) },
                         onDownloadUpdate = { UpdateManager.download(appContext) },
                         onInstallUpdate = { UpdateManager.install(appContext) },
-                        onOpenReleasesPage = { UpdateManager.openReleasesPage(appContext) }
+                        onOpenReleasesPage = { UpdateManager.openReleasesPage(appContext) },
+                        onSelectTheme = viewModel::setTheme
                     )
+
+                    3 -> AboutScreen(onBack = { selectedTab = 0 })
                 }
             }
         }
