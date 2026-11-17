@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,6 +77,7 @@ import com.mawaqiti.plus.ui.components.PrayerIcons
 import com.mawaqiti.plus.ui.components.dashedOutline
 import com.mawaqiti.plus.ui.theme.AmiriBold
 import com.mawaqiti.plus.ui.theme.GoldenHeroDecor
+import com.mawaqiti.plus.ui.theme.NidaaDimens
 import com.mawaqiti.plus.ui.theme.SkyPalette
 import com.mawaqiti.plus.ui.theme.Tajawal
 import com.mawaqiti.plus.ui.theme.skyPalette
@@ -322,7 +324,7 @@ private fun CityChip(
     }
 }
 
-private data class HeroState(
+internal data class HeroState(
     val event: TableEvent,
     val minutes: Int,
     val secondsLeft: Long,
@@ -377,7 +379,12 @@ private fun fraction(now: Long, start: Long, end: Long): Float {
  * grows the card instead of colliding the lines.
  */
 object HeroMetrics {
-    val LABEL_TO_NAME = 8.dp
+    /**
+     * beta15: the label -> prayer-name separation is a theme dimen now
+     * ([com.mawaqiti.plus.ui.theme.NidaaDimens.nextPrayerLabelGap]) instead of a
+     * literal in this file, so the anti-overlap rule has one home. Still 8 dp.
+     */
+    val LABEL_TO_NAME = NidaaDimens.nextPrayerLabelGap
     val NAME_TO_TIME = 4.dp
 }
 
@@ -404,10 +411,13 @@ object NowTimeMetrics {
  * beta14: the current time row at the bottom of the next-prayer card.
  *
  * Text only - [NowTimeMetrics.PREFIX_RES] + " HH:MM" - in the golden accent at
- * full opacity, 20 sp SemiBold, tabular digits, one line. It starts on the
- * card's RTL start edge (the same content edge the "الصلاة القادمة" caption row
- * is laid out from), so it reads as a normal row instead of a floating label,
- * and it keeps the same vertical slot the beta12 row occupied.
+ * full opacity, 20 sp SemiBold, tabular digits, one line.
+ *
+ * beta15: the row is horizontally CENTRED as one unit. It is wrap-content (so
+ * its box is the rendered pair, not a full-width container) and the parent
+ * Column centres it, which keeps the pair exactly on the card's vertical axis
+ * without reintroducing the beta14 start-edge pin. `textAlign = Center` keeps
+ * the ink centred even if a future caller gives the node extra width.
  *
  * `maxLines = 1` + `softWrap = false` + ellipsis guarantee that no screen width
  * and no font scale can wrap, overlap or droop the line; the beta13 full-bleed
@@ -429,13 +439,13 @@ private fun NowTimeRow(text: String, palette: SkyPalette) {
         maxLines = 1,
         softWrap = false,
         overflow = TextOverflow.Ellipsis,
-        textAlign = TextAlign.Start,
-        modifier = Modifier.fillMaxWidth()
+        textAlign = TextAlign.Center,
+        modifier = Modifier.testTag("now_time_row")
     )
 }
 
 @Composable
-private fun HeroCard(
+internal fun HeroCard(
     hero: HeroState,
     progress: Float,
     isArabic: Boolean,
@@ -444,6 +454,7 @@ private fun HeroCard(
     nowText: String
 ) {
     GlassCard(
+        modifier = Modifier.testTag("hero_card"),
         emphasized = true,
         corner = 24.dp,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
@@ -453,27 +464,48 @@ private fun HeroCard(
         GoldenHeroDecor(Modifier.matchParentSize())
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("hero_content"),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // beta14: the caption and the current-time row now share the card's
-            // RTL start edge (task 1 placement). Everything below the caption -
-            // name, time, countdown, progress - stays centred exactly as beta12.
+            // beta12: the caption owns its own line above the name; beta14
+            // moved it to the card's RTL start edge. beta15 hardens that line
+            // as the anti-overlap guard: it is a single ellipsized line that
+            // gets the full card width (priority), and the prayer name below it
+            // is a single ellipsized line too - so the two can never share
+            // horizontal space, at any width or font scale, without relying on
+            // offsets, auto-shrink or a measured row. The clear space between
+            // them is [NidaaDimens.nextPrayerLabelGap] (>= 8 dp).
             Text(
                 text = stringResource(R.string.next_prayer),
                 style = MaterialTheme.typography.bodyMedium,
                 color = palette.textMuted,
                 maxLines = 1,
+                softWrap = false,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("next_prayer_label")
             )
             Spacer(Modifier.height(HeroMetrics.LABEL_TO_NAME))
+            // beta15: the flexible element. It may only ever shrink into an
+            // ellipsis, never wrap onto a second line and never grow past the
+            // card width, so it cannot collide with the caption above it. It is
+            // deliberately wrap-content: the parent Column centres it, and
+            // keeping its box on the ink makes the regression test measure the
+            // real rendered width instead of a full-width container.
             Text(
                 text = prayerLabel(hero.event),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
-                color = palette.text
+                color = palette.text,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("hero_prayer_name")
             )
             Spacer(Modifier.height(HeroMetrics.NAME_TO_TIME))
             Text(
@@ -564,6 +596,7 @@ private fun HeroCard(
                 ) {
                     Box(
                         modifier = Modifier
+                            .testTag("now_divider")
                             .fillMaxWidth()
                             .height(1.dp)
                             .background(
