@@ -210,6 +210,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onSelectWidgetLanguage = viewModel::setWidgetLanguage,
                         onSummerTimeChange = viewModel::setSummerTime,
                         onNotificationsEnabled = viewModel::setNotificationsEnabled,
+                        onSelectAdhanSound = viewModel::setAdhanSound,
                         onEventEnabled = viewModel::setEventEnabled,
                         onEventMode = viewModel::setEventMode,
                         onApplyModeToEnabled = viewModel::applyModeToEnabledEvents,

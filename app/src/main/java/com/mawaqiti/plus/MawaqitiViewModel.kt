@@ -15,6 +15,7 @@ import com.mawaqiti.plus.data.SettingsRepository
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.engine.table.TableEngine
 import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.notify.AdhanSound
 import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.notify.NotifyEvent
 import com.mawaqiti.plus.notify.NotifyMode
@@ -191,6 +192,15 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     fun setNotificationsEnabled(enabled: Boolean) = viewModelScope.launch {
         settingsRepository.setNotificationsEnabled(enabled)
         scheduleNotifications()
+    }
+
+    /**
+     * beta14: the adhan sound is read at fire time by [com.mawaqiti.plus.notify.AlarmReceiver],
+     * so persisting it is enough - an alarm already scheduled plays the new
+     * sound without being rescheduled. Nothing else needs to react.
+     */
+    fun setAdhanSound(sound: AdhanSound) = viewModelScope.launch {
+        settingsRepository.setAdhanSound(sound)
     }
 
     fun setEventEnabled(event: NotifyEvent, enabled: Boolean) = viewModelScope.launch {

@@ -57,9 +57,9 @@ data class EventNotification(
  * All notification state. Defaults are the beta4 specification:
  * Fajr/Dhuhr/Asr/Maghrib/Isha = ON + Adhan, Sunrise/Last third = OFF + Silent.
  *
- * beta6: there is no per-user adhan file any more. The adhan always comes from
- * `res/raw/adhan.mp3`, so the mode (adhan / vibrate / silent) is the only
- * delivery choice left.
+ * beta6: there is no per-user adhan file any more - the sound always comes from
+ * the packaged registry ([com.mawaqiti.plus.notify.AdhanSound]) - so the mode
+ * (adhan / vibrate / silent) is the only delivery choice left.
  */
 data class NotificationSettings(
     val masterEnabled: Boolean = true,

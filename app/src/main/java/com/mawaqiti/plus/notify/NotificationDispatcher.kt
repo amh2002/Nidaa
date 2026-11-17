@@ -27,7 +27,9 @@ object NotificationDispatcher {
         minutes: Int,
         clockFormat: ClockFormat,
         language: AppLanguage,
-        isTest: Boolean
+        isTest: Boolean,
+        /** beta14: the user's adhan choice, resolved once per delivery. */
+        adhanSound: AdhanSound = AdhanSound.DEFAULT
     ) {
         val isArabic = language == AppLanguage.ARABIC
         val localized = NotificationText.localizedContext(context, language)
@@ -42,7 +44,8 @@ object NotificationDispatcher {
                 notificationId = notificationId,
                 title = title,
                 body = body,
-                stopLabel = localized.getString(R.string.notify_stop)
+                stopLabel = localized.getString(R.string.notify_stop),
+                sound = adhanSound
             )
         } else {
             postQuiet(context, notificationId, mode, title, body)

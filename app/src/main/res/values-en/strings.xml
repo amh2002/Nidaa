@@ -79,6 +79,9 @@
     <!-- beta10: current time line inside the next-prayer card -->
     <string name="now_label">Now</string>
 
+    <!-- beta14: current-time row is text-only; this is its prefix -->
+    <string name="current_time_prefix">Current time</string>
+
     <!-- beta10: golden-night city search -->
     <string name="searching">Searching…</string>
 
@@ -141,6 +144,17 @@
     <string name="notify_channel_silent_desc">Notification with no sound or vibration</string>
     <string name="notify_channel_vibrate">Vibrate</string>
     <string name="notify_channel_vibrate_desc">Vibration only</string>
+
+    <!-- beta14: adhan sound picker (order matches AdhanSound.ordered) -->
+    <string name="settings_adhan_sound_title">Adhan sound</string>
+    <string name="settings_adhan_sound_desc">Pick the adhan played for notifications. It applies to the next alerts immediately.</string>
+    <string name="adhan_alaqsa_full">Al-Aqsa adhan (full)</string>
+    <string name="adhan_alaqsa_tkbera">Al-Aqsa takbir</string>
+    <string name="adhan_makkah_full">Makkah adhan (full)</string>
+    <string name="adhan_makkah_tkbera">Makkah takbir</string>
+    <string name="adhan_masr_full">Egypt adhan (full)</string>
+    <string name="adhan_masr_tkbera">Egypt takbir</string>
+    <string name="adhan_alkurd_full">Al-Kurd adhan (full)</string>
     <string name="widget_description">Prayer times, city and Hijri date</string>
     <string name="widget_next">Next</string>
     <string name="widget_next_label">Nidaa — Next Prayer</string>

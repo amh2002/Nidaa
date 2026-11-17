@@ -1,6 +1,7 @@
 package com.mawaqiti.plus.data
 
 import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.notify.AdhanSound
 import com.mawaqiti.plus.notify.NotificationSettings
 
 enum class AppLanguage(val tag: String) {
@@ -56,6 +57,12 @@ data class AppSettings(
     val fontScale: Float = FontScale.DEFAULT,
     /** Per-event notification configuration, stored independently per event. */
     val notifications: NotificationSettings = NotificationSettings(),
+    /**
+     * beta14: the adhan played for ADHAN-mode events. One persisted choice,
+     * shared by the settings picker and the playback service; the default is
+     * أذان الأقصى تكبيرة ([AdhanSound.DEFAULT]).
+     */
+    val adhanSound: AdhanSound = AdhanSound.DEFAULT,
     /**
      * Widget-only language override (`widget.lang` in DataStore). Null means
      * "never chosen": the widget then follows [language], which is exactly the

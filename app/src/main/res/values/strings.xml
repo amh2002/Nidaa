@@ -79,6 +79,9 @@
     <!-- beta10: current time line inside the next-prayer card -->
     <string name="now_label">الآن</string>
 
+    <!-- beta14: current-time row is text-only; this is its prefix -->
+    <string name="current_time_prefix">الوقت الآن</string>
+
     <!-- beta10: golden-night city search -->
     <string name="searching">جارٍ البحث…</string>
 
@@ -141,6 +144,17 @@
     <string name="notify_channel_silent_desc">إشعار بلا صوت أو اهتزاز</string>
     <string name="notify_channel_vibrate">اهتزاز</string>
     <string name="notify_channel_vibrate_desc">إشعار بالاهتزاز فقط</string>
+
+    <!-- beta14: adhan sound picker (order matches AdhanSound.ordered) -->
+    <string name="settings_adhan_sound_title">صوت الأذان</string>
+    <string name="settings_adhan_sound_desc">اختر الأذان الذي يُشغَّل عند التنبيه. يُطبَّق على التنبيهات التالية فورًا.</string>
+    <string name="adhan_alaqsa_full">أذان الأقصى كامل</string>
+    <string name="adhan_alaqsa_tkbera">أذان الأقصى تكبيرة</string>
+    <string name="adhan_makkah_full">أذان الحرم المكي كامل</string>
+    <string name="adhan_makkah_tkbera">أذان الحرم المكي تكبيرة</string>
+    <string name="adhan_masr_full">أذان مصر كامل</string>
+    <string name="adhan_masr_tkbera">أذان مصر تكبيرة</string>
+    <string name="adhan_alkurd_full">أذان الكرد كامل</string>
     <string name="widget_description">مواقيت الصلاة والمدينة والتاريخ الهجري</string>
     <string name="widget_next">القادمة</string>
     <string name="widget_next_label">نداء — الصلاة التالية</string>

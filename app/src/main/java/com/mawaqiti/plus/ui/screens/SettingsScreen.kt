@@ -67,6 +67,8 @@ import com.mawaqiti.plus.format.TimeFormatter
 import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.notify.NotifyEvent
 import com.mawaqiti.plus.notify.NotifyMode
+import com.mawaqiti.plus.notify.AdhanSound
+import com.mawaqiti.plus.ui.components.AdhanSoundDropdown
 import com.mawaqiti.plus.ui.components.InfoChip
 import com.mawaqiti.plus.ui.components.PillOption
 import com.mawaqiti.plus.ui.components.SegmentedPillRow
@@ -101,6 +103,8 @@ fun SettingsScreen(
     onSelectWidgetLanguage: (AppLanguage) -> Unit,
     onSummerTimeChange: (Boolean) -> Unit,
     onNotificationsEnabled: (Boolean) -> Unit,
+    /** beta14: the picked adhan; persisted and read by the playback service. */
+    onSelectAdhanSound: (AdhanSound) -> Unit = {},
     onEventEnabled: (NotifyEvent, Boolean) -> Unit,
     onEventMode: (NotifyEvent, NotifyMode) -> Unit,
     onApplyModeToEnabled: (NotifyMode) -> Unit,
@@ -171,6 +175,7 @@ fun SettingsScreen(
         onSelectWidgetLanguage = onSelectWidgetLanguage,
         onSummerTimeChange = onSummerTimeChange,
         onNotificationsEnabled = onNotificationsEnabled,
+        onSelectAdhanSound = onSelectAdhanSound,
         onEventEnabled = onEventEnabled,
         onEventMode = onEventMode,
         onApplyModeToEnabled = onApplyModeToEnabled,
@@ -230,6 +235,8 @@ fun SettingsList(
     onSelectWidgetLanguage: (AppLanguage) -> Unit,
     onSummerTimeChange: (Boolean) -> Unit,
     onNotificationsEnabled: (Boolean) -> Unit,
+    /** beta14: the picked adhan; persisted and read by the playback service. */
+    onSelectAdhanSound: (AdhanSound) -> Unit = {},
     onEventEnabled: (NotifyEvent, Boolean) -> Unit,
     onEventMode: (NotifyEvent, NotifyMode) -> Unit,
     onApplyModeToEnabled: (NotifyMode) -> Unit,
@@ -474,6 +481,25 @@ fun SettingsList(
                     description = stringResource(R.string.summer_time_desc),
                     checked = settings.summerTime,
                     onCheckedChange = onSummerTimeChange
+                )
+            }
+        }
+
+        ItemGap()
+
+        // 5b. Adhan sound (beta14). ONE persisted choice shared by the picker
+        //     and the playback service (AdhanSoundProvider). The registry below
+        //     owns the order and the Arabic labels; this card only renders it.
+        SettingsCard(
+            modifier = Modifier.testTag("settings_adhan_sound")
+        ) {
+            SettingRowBlock(
+                title = stringResource(R.string.settings_adhan_sound_title),
+                description = stringResource(R.string.settings_adhan_sound_desc)
+            ) {
+                AdhanSoundDropdown(
+                    selected = settings.adhanSound,
+                    onSelect = onSelectAdhanSound
                 )
             }
         }

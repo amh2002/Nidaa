@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.notify.AdhanSound
 import com.mawaqiti.plus.notify.EventNotification
 import com.mawaqiti.plus.notify.NotificationSettings
 import com.mawaqiti.plus.notify.NotifyEvent
@@ -35,6 +36,8 @@ class SettingsRepository(private val context: Context) {
         val widgetLanguage = stringPreferencesKey("widget.lang")
         /** beta 7.9: in-app text multiplier, default 1.0. */
         val fontScale = floatPreferencesKey("font_scale")
+        /** beta14: selected adhan ("alaqsa_full" ... "alkurd_full"). */
+        val adhanSound = stringPreferencesKey("adhan_sound")
         val notifyMaster = booleanPreferencesKey("notify_master")
         fun eventEnabled(event: NotifyEvent) =
             booleanPreferencesKey("notify_${event.storageKey}_enabled")
@@ -68,6 +71,7 @@ class SettingsRepository(private val context: Context) {
                         )
                     }
                 ),
+                adhanSound = AdhanSound.fromKey(prefs[Keys.adhanSound]),
                 widgetLanguage = AppLanguage.fromTagOrNull(prefs[Keys.widgetLanguage])
             )
         }
@@ -97,6 +101,15 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setNotificationsEnabled(enabled: Boolean) = edit {
         it[Keys.notifyMaster] = enabled
+    }
+
+    /**
+     * beta14: the picked adhan. Stored by [AdhanSound.storageKey]; an absent or
+     * unknown value resolves to [AdhanSound.DEFAULT] on read, so the picker and
+     * playback always agree.
+     */
+    suspend fun setAdhanSound(sound: AdhanSound) = edit {
+        it[Keys.adhanSound] = sound.storageKey
     }
 
     suspend fun setEventEnabled(event: NotifyEvent, enabled: Boolean) = edit {
@@ -130,7 +143,8 @@ class SettingsRepository(private val context: Context) {
      * Earlier betas let the user pick an adhan file through the Storage Access
      * Framework and persisted the resulting `content://` URI under
      * `notify_adhan_uri`, together with a persisted read grant. That feature is
-     * gone: the app has exactly one adhan source (`res/raw/adhan.mp3`). This
+     * gone: beta14 plays one of the packaged registry sounds (see
+     * [AdhanSound]) and nothing can persist a custom URI any more. This
      * removes the stale key and returns it so the caller can release the grant.
      */
     suspend fun purgeLegacyAdhanUri(): String? {

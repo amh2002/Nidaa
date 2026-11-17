@@ -1,4 +1,4 @@
-package com.mawaqiti.plus.ui.screens
+﻿package com.mawaqiti.plus.ui.screens
 
 import android.content.Context
 import android.content.ContextWrapper
@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,7 +32,6 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.WbTwilight
@@ -57,12 +55,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -386,72 +382,56 @@ object HeroMetrics {
 }
 
 /**
- * Beta13 typography of the current time, kept as named values (like
+ * Beta14 typography of the current time, kept as named values (like
  * [HeroMetrics]) so the "readable at arm's length" size survives future layout
  * changes and is asserted by [NowTimeMetricsTest].
  *
- * The optical shift fixes the owner's "icon sits lower than the text" report:
- * the Text reserves `LINE_HEIGHT` (26 sp) plus the font's descender space, so a
- * box-centred 18 dp icon lands on the centre of that *box*, roughly 3 dp below
- * the visible glyphs. The correction is expressed in em, so it scales with the
- * system font scale (3.0 dp at 1.0, 3.9 dp at 1.3) and stays within ±1 dp of
- * the ink centre at both scales.
+ * beta14 removes the clock icon entirely: the row is a single text line
+ * ("الوقت الآن" + the app's formatted time), so there is no icon box to
+ * misalign and no optical correction to maintain. The type keeps beta12's
+ * 20 sp on a 26 sp line - still above the 18 sp floor - in the golden accent at
+ * full opacity, with tabular digits so the minute never jitters.
  */
 object NowTimeMetrics {
     val FONT_SIZE = 20.sp
     val LINE_HEIGHT = 26.sp
-    val ICON_SIZE = 18.dp
 
-    /** Fraction of the font size the icon is lifted to meet the text ink. */
-    const val ICON_OPTICAL_SHIFT_EM = 0.15f
-
-    /**
-     * Upward offset for the clock icon at [fontScale].
-     *
-     * Expressed in dp for the layout: `FONT_SIZE * EM * fontScale`, so it grows
-     * with the text instead of staying a fixed dp nudge.
-     */
-    fun iconShift(fontScale: Float): Dp =
-        (FONT_SIZE.value * ICON_OPTICAL_SHIFT_EM * fontScale).dp
+    /** Prefix shown before the time; the Arabic text lives in `strings.xml`. */
+    val PREFIX_RES = R.string.current_time_prefix
 }
 
 /**
- * beta12/13: the current time row at the bottom of the next-prayer card.
+ * beta14: the current time row at the bottom of the next-prayer card.
  *
- * Clock icon + "الآن HH:MM" in the golden accent at full opacity, 20 sp
- * SemiBold, tabular digits, one line. The row is a real `Row` with
- * `CenterVertically`; the icon is additionally lifted by [NowTimeMetrics.iconShift]
- * so its optical centre matches the Arabic/digit ink centre rather than the
- * taller line box. The offset is computed from the live font scale, so it holds
- * at 1.0 and 1.3 alike.
+ * Text only - [NowTimeMetrics.PREFIX_RES] + " HH:MM" - in the golden accent at
+ * full opacity, 20 sp SemiBold, tabular digits, one line. It starts on the
+ * card's RTL start edge (the same content edge the "الصلاة القادمة" caption row
+ * is laid out from), so it reads as a normal row instead of a floating label,
+ * and it keeps the same vertical slot the beta12 row occupied.
+ *
+ * `maxLines = 1` + `softWrap = false` + ellipsis guarantee that no screen width
+ * and no font scale can wrap, overlap or droop the line; the beta13 full-bleed
+ * `sheet` scrim behind the divider keeps the mosque silhouette from crossing
+ * the glyphs.
  */
 @Composable
 private fun NowTimeRow(text: String, palette: SkyPalette) {
-    val fontScale = LocalDensity.current.fontScale
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = Icons.Filled.Schedule,
-            contentDescription = null,
-            tint = palette.accent,
-            modifier = Modifier
-                .offset(y = -NowTimeMetrics.iconShift(fontScale))
-                .size(NowTimeMetrics.ICON_SIZE)
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = stringResource(R.string.now_label) + " " + text,
-            style = MaterialTheme.typography.titleSmall.copy(
-                fontFamily = Tajawal,
-                fontSize = NowTimeMetrics.FONT_SIZE,
-                lineHeight = NowTimeMetrics.LINE_HEIGHT,
-                fontWeight = FontWeight.SemiBold,
-                fontFeatureSettings = "tnum"
-            ),
-            color = palette.accent,
-            maxLines = 1,
-            softWrap = false
-        )
-    }
+    Text(
+        text = stringResource(NowTimeMetrics.PREFIX_RES) + " " + text,
+        style = MaterialTheme.typography.titleSmall.copy(
+            fontFamily = Tajawal,
+            fontSize = NowTimeMetrics.FONT_SIZE,
+            lineHeight = NowTimeMetrics.LINE_HEIGHT,
+            fontWeight = FontWeight.SemiBold,
+            fontFeatureSettings = "tnum"
+        ),
+        color = palette.accent,
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Start,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable
@@ -476,17 +456,16 @@ private fun HeroCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // beta12: back to the beta10 header - the label sits alone at the
-            // top of the card, same size/style/colour as before. It deliberately
-            // never shares a flex row with the clock: the current time moved to
-            // its own row at the bottom, so no width or font scale can make the
-            // two collide, and no auto-shrink is needed.
+            // beta14: the caption and the current-time row now share the card's
+            // RTL start edge (task 1 placement). Everything below the caption -
+            // name, time, countdown, progress - stays centred exactly as beta12.
             Text(
                 text = stringResource(R.string.next_prayer),
                 style = MaterialTheme.typography.bodyMedium,
                 color = palette.textMuted,
                 maxLines = 1,
-                textAlign = TextAlign.Center,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Start,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(HeroMetrics.LABEL_TO_NAME))

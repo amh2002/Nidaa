@@ -10,6 +10,7 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -24,6 +25,12 @@ import com.mawaqiti.plus.R
  * [AudioAttributes.USAGE_ALARM] so it follows the alarm volume, exactly like a
  * system Adhan alarm. The "stop" action and the notification tap both return
  * to a clean state.
+ *
+ * beta14: the sound is the user's pick from the adhan registry. It arrives on
+ * the start intent (resolved by [AdhanSoundProvider] at fire time) and is
+ * opened through that same provider, so playback has exactly one source of
+ * truth and the choice applies to the very next alarm on every Android version
+ * without re-creating a channel.
  */
 class AdhanPlaybackService : Service() {
 
@@ -40,11 +47,12 @@ class AdhanPlaybackService : Service() {
                 val body = intent.getStringExtra(EXTRA_BODY).orEmpty()
                 val stopLabel = intent.getStringExtra(EXTRA_STOP_LABEL)
                     ?: getString(R.string.notify_stop)
+                val sound = AdhanSound.fromKey(intent.getStringExtra(EXTRA_ADHAN_KEY))
                 // Channels may have been removed (app data cleared / beta6
                 // migration): make sure they exist before the foreground post.
                 NotificationChannels.ensure(this)
                 startForegroundCompat(id, buildNotification(id, title, body, stopLabel))
-                play()
+                play(sound)
             }
         }
         return START_NOT_STICKY
@@ -94,12 +102,13 @@ class AdhanPlaybackService : Service() {
     }
 
     /**
-     * beta6: exactly one adhan source exists, `res/raw/adhan.mp3` (the owner's
-     * recording). The user-facing sound picker and every persisted SAF URI are
-     * gone, so there is no fallback branch and no content:// path here.
+     * beta14: plays the selected registry entry through [AdhanSoundProvider].
+     * The descriptor is the packaged file itself - no trimming, conversion or
+     * copy - so the shipped bytes are exactly the owner's master file.
      */
-    private fun play() {
+    private fun play(sound: AdhanSound) {
         stopPlayback()
+        Log.d(TAG, "playing ${sound.rawName} (res ${sound.rawRes})")
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -107,8 +116,8 @@ class AdhanPlaybackService : Service() {
         player = MediaPlayer().apply {
             setAudioAttributes(attributes)
             try {
-                val descriptor = resources.openRawResourceFd(R.raw.adhan)
-                    ?: throw IllegalStateException("res/raw/adhan.mp3 is missing")
+                val descriptor = AdhanSoundProvider.openDescriptor(this@AdhanPlaybackService, sound)
+                    ?: throw IllegalStateException("${sound.rawName} is missing")
                 descriptor.use {
                     setDataSource(it.fileDescriptor, it.startOffset, it.length)
                 }
@@ -137,12 +146,14 @@ class AdhanPlaybackService : Service() {
     }
 
     companion object {
+        private const val TAG = "AdhanPlaybackService"
         private const val ACTION_START = "com.nidaa.prayer.action.START_ADHAN"
         private const val ACTION_STOP = "com.nidaa.prayer.action.STOP_ADHAN"
         private const val EXTRA_NOTIFICATION_ID = "notification_id"
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_BODY = "body"
         private const val EXTRA_STOP_LABEL = "stop_label"
+        private const val EXTRA_ADHAN_KEY = "adhan_key"
         private const val DEFAULT_ID = 7000
         private const val REQUEST_OPEN = 6100
         private const val REQUEST_STOP = 6101
@@ -152,7 +163,8 @@ class AdhanPlaybackService : Service() {
             notificationId: Int,
             title: String,
             body: String,
-            stopLabel: String
+            stopLabel: String,
+            sound: AdhanSound
         ) {
             val intent = Intent(context, AdhanPlaybackService::class.java).apply {
                 action = ACTION_START
@@ -160,6 +172,7 @@ class AdhanPlaybackService : Service() {
                 putExtra(EXTRA_TITLE, title)
                 putExtra(EXTRA_BODY, body)
                 putExtra(EXTRA_STOP_LABEL, stopLabel)
+                putExtra(EXTRA_ADHAN_KEY, sound.storageKey)
             }
             ContextCompat.startForegroundService(context, intent)
         }

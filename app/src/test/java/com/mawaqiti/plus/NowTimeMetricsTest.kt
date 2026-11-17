@@ -1,19 +1,19 @@
 package com.mawaqiti.plus
 
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mawaqiti.plus.ui.screens.NowTimeMetrics
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * beta12 kept the current time readable after moving it to its own bottom row;
- * beta13 fixes the clock icon's optical alignment without shrinking it.
+ * beta14: the current-time row is text-only.
  *
- * The lift is em-based, so these tests pin both the 1.0 and 1.3 values the owner
- * asked to verify (within a small tolerance) and keep the text at its beta12
- * size.
+ * The clock icon was removed completely (no icon box, no optical shift), so the
+ * guard changed shape: it now pins the typography (still 20 sp on a 26 sp line,
+ * never below the 18 sp floor) and the prefix, which must come from
+ * `strings.xml` rather than from a Kotlin literal.
  */
 class NowTimeMetricsTest {
 
@@ -29,32 +29,20 @@ class NowTimeMetricsTest {
     }
 
     @Test
-    fun `clock icon is a fixed 18 dp vector`() {
-        assertEquals(18.dp, NowTimeMetrics.ICON_SIZE)
+    fun `prefix is the dedicated string resource`() {
+        assertEquals(R.string.current_time_prefix, NowTimeMetrics.PREFIX_RES)
+        // The beta10 "الآن" label stays for other call sites; the row uses the
+        // longer "الوقت الآن" prefix the owner asked for.
+        assertNotEquals(R.string.now_label, NowTimeMetrics.PREFIX_RES)
     }
 
     @Test
-    fun `optical shift is 3_0 dp at font scale 1_0`() {
-        val shift = NowTimeMetrics.iconShift(1f)
-        assertEquals(3.0f, shift.value, 0.01f)
-    }
-
-    @Test
-    fun `optical shift is 3_9 dp at font scale 1_3`() {
-        val shift = NowTimeMetrics.iconShift(1.3f)
-        assertEquals(3.9f, shift.value, 0.01f)
-    }
-
-    @Test
-    fun `optical shift grows with the font scale`() {
-        assertTrue(NowTimeMetrics.iconShift(1.3f) > NowTimeMetrics.iconShift(1f))
-        assertTrue(NowTimeMetrics.iconShift(1f).value > 0f)
-        assertTrue(NowTimeMetrics.iconShift(1.3f).value <= 4f)
+    fun `line height always exceeds the font size`() {
+        assertTrue(NowTimeMetrics.LINE_HEIGHT.value >= NowTimeMetrics.FONT_SIZE.value)
     }
 
     @Test
     fun `now row stays secondary to the prayer time`() {
         assertTrue(NowTimeMetrics.FONT_SIZE.value < 44f)
-        assertTrue(NowTimeMetrics.LINE_HEIGHT.value >= NowTimeMetrics.FONT_SIZE.value)
     }
 }
