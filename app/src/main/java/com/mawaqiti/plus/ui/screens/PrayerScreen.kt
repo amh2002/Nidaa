@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,14 +50,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -380,33 +386,56 @@ object HeroMetrics {
 }
 
 /**
- * Beta12 typography of the current time, kept as named values (like
+ * Beta13 typography of the current time, kept as named values (like
  * [HeroMetrics]) so the "readable at arm's length" size survives future layout
  * changes and is asserted by [NowTimeMetricsTest].
+ *
+ * The optical shift fixes the owner's "icon sits lower than the text" report:
+ * the Text reserves `LINE_HEIGHT` (26 sp) plus the font's descender space, so a
+ * box-centred 18 dp icon lands on the centre of that *box*, roughly 3 dp below
+ * the visible glyphs. The correction is expressed in em, so it scales with the
+ * system font scale (3.0 dp at 1.0, 3.9 dp at 1.3) and stays within ±1 dp of
+ * the ink centre at both scales.
  */
 object NowTimeMetrics {
     val FONT_SIZE = 20.sp
     val LINE_HEIGHT = 26.sp
-    val ICON_SIZE = 20.dp
+    val ICON_SIZE = 18.dp
+
+    /** Fraction of the font size the icon is lifted to meet the text ink. */
+    const val ICON_OPTICAL_SHIFT_EM = 0.15f
+
+    /**
+     * Upward offset for the clock icon at [fontScale].
+     *
+     * Expressed in dp for the layout: `FONT_SIZE * EM * fontScale`, so it grows
+     * with the text instead of staying a fixed dp nudge.
+     */
+    fun iconShift(fontScale: Float): Dp =
+        (FONT_SIZE.value * ICON_OPTICAL_SHIFT_EM * fontScale).dp
 }
 
 /**
- * beta12: the current time row at the bottom of the next-prayer card.
+ * beta12/13: the current time row at the bottom of the next-prayer card.
  *
  * Clock icon + "الآن HH:MM" in the golden accent at full opacity, 20 sp
- * SemiBold (never below the beta11 size), tabular digits so the line does not
- * jitter, and one line that may wrap nowhere. It is centred under the golden
- * hairline, so it is symmetric in RTL and LTR and can never overlap the prayer
- * name, the countdown pill or the progress bar above it.
+ * SemiBold, tabular digits, one line. The row is a real `Row` with
+ * `CenterVertically`; the icon is additionally lifted by [NowTimeMetrics.iconShift]
+ * so its optical centre matches the Arabic/digit ink centre rather than the
+ * taller line box. The offset is computed from the live font scale, so it holds
+ * at 1.0 and 1.3 alike.
  */
 @Composable
 private fun NowTimeRow(text: String, palette: SkyPalette) {
+    val fontScale = LocalDensity.current.fontScale
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = Icons.Filled.Schedule,
             contentDescription = null,
             tint = palette.accent,
-            modifier = Modifier.size(NowTimeMetrics.ICON_SIZE)
+            modifier = Modifier
+                .offset(y = -NowTimeMetrics.iconShift(fontScale))
+                .size(NowTimeMetrics.ICON_SIZE)
         )
         Spacer(Modifier.width(6.dp))
         Text(
@@ -518,28 +547,60 @@ private fun HeroCard(
                 )
             }
 
-            // beta12: the current time now owns a dedicated row at the bottom of
-            // the card, separated by a thin golden hairline (faded at both ends
-            // so it reads as a divider, not a border). Moving it here keeps the
-            // beta11 visibility - it is the same 20 sp at full opacity - while
-            // the header returns to its beta10 shape.
+            // beta12: the current time owns a dedicated row at the bottom of the
+            // card, separated by a thin golden hairline (faded at both ends so
+            // it reads as a divider, not a border).
             Spacer(Modifier.height(9.dp))
+            // beta13: the in-card mosque silhouette reaches this strip, so its
+            // dome and minaret edges could cross the gold time text. A soft
+            // `sheet` scrim behind the divider + row gives the text a uniform
+            // dark band to sit on - the row stays exactly where it was and the
+            // silhouette is still visible above it. Theme token only.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(1.dp)
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                palette.accent.copy(alpha = 0f),
-                                palette.accent.copy(alpha = 0.28f),
-                                palette.accent.copy(alpha = 0f)
-                            )
+                    .drawBehind {
+                        // Full-bleed scrim: the GlassCard clips to its rounded
+                        // shape, so bleeding 16 dp sideways and 12 dp down makes
+                        // the band reach the card edges instead of looking like
+                        // a rectangle inset inside the card.
+                        val bleedX = 16.dp.toPx()
+                        val bleedBottom = 12.dp.toPx()
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                0f to palette.sheet.copy(alpha = 0f),
+                                0.55f to palette.sheet.copy(alpha = 0.74f),
+                                1f to palette.sheet.copy(alpha = 0.90f),
+                                startY = 0f,
+                                endY = size.height + bleedBottom
+                            ),
+                            topLeft = Offset(-bleedX, 0f),
+                            size = Size(size.width + bleedX * 2f, size.height + bleedBottom)
                         )
+                    }
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        palette.accent.copy(alpha = 0f),
+                                        palette.accent.copy(alpha = 0.28f),
+                                        palette.accent.copy(alpha = 0f)
+                                    )
+                                )
+                            )
                     )
-            )
-            Spacer(Modifier.height(7.dp))
-            NowTimeRow(text = nowText, palette = palette)
+                    Spacer(Modifier.height(7.dp))
+                    NowTimeRow(text = nowText, palette = palette)
+                }
+            }
         }
     }
 }

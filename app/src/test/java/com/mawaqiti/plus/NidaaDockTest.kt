@@ -1,25 +1,28 @@
 package com.mawaqiti.plus
 
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import com.mawaqiti.plus.ui.components.DockDestination
+import com.mawaqiti.plus.ui.components.DockMetrics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * beta12: the dock is driven by exactly one registry, [DockDestination].
+ * beta13: the dock is driven by exactly one registry, [DockDestination], and
+ * one geometry object, [DockMetrics].
  *
- * These tests lock the parts that make "add a future feature = append one entry"
- * safe:
+ * These tests lock what makes "add a future feature = append one entry" safe and
+ * what the owner asked for in beta13:
  *
  *  - visual order (declaration order) is Settings -> Home -> Qibla, which in
- *    Arabic RTL renders rightmost -> leftmost as requested;
- *  - every entry owns a unique tab index and the three shipped values keep the
- *    beta11 tab numbering (Home = 0, Qibla = 1, Settings = 2);
- *  - [DockDestination.forTab] is the only mapping content needs, and an unknown
- *    tab resolves to null (callers fall back to Home) instead of crashing;
- *  - every entry has a label resource and an icon, and selected state is driven
- *    purely by comparing the entry's tab with the current one.
+ *    Arabic RTL renders rightmost -> leftmost;
+ *  - every entry owns a unique tab index (Home = 0, Qibla = 1, Settings = 2);
+ *  - all slots are the same fixed size and all gaps are the same fixed length;
+ *  - the indicator is always one slot big and its offset is a pure function of
+ *    the selected index, so rapid switching can never strand it;
+ *  - an unknown tab resolves to null (content falls back to Home) and index 0.
  */
 class NidaaDockTest {
 
@@ -68,6 +71,76 @@ class NidaaDockTest {
             assertTrue(destination.labelRes != 0)
             assertTrue(destination.icon.name.isNotBlank())
         }
+    }
+
+    @Test
+    fun `slots are identical and gaps are equal`() {
+        assertEquals(64.dp, DockMetrics.SLOT_WIDTH)
+        assertEquals(52.dp, DockMetrics.SLOT_HEIGHT)
+        assertEquals(6.dp, DockMetrics.GAP)
+
+        val slots = DockDestination.ordered.size
+        // Width = n slots + (n - 1) identical gaps; no SpaceBetween/weights.
+        assertEquals(
+            DockMetrics.SLOT_WIDTH * slots + DockMetrics.GAP * (slots - 1),
+            DockMetrics.dockWidth(slots)
+        )
+        // The distance between two adjacent slot starts is always slot + gap.
+        assertEquals(DockMetrics.SLOT_WIDTH + DockMetrics.GAP, DockMetrics.stride())
+    }
+
+    @Test
+    fun `indicator is always exactly one slot`() {
+        assertEquals(
+            DpSize(DockMetrics.SLOT_WIDTH, DockMetrics.SLOT_HEIGHT),
+            DockMetrics.indicatorSize()
+        )
+        assertEquals(64.dp, DockMetrics.indicatorSize().width)
+        assertEquals(52.dp, DockMetrics.indicatorSize().height)
+    }
+
+    @Test
+    fun `indicator offset lands exactly on each slot`() {
+        assertEquals(0.dp, DockMetrics.indicatorOffset(0))
+        assertEquals(70.dp, DockMetrics.indicatorOffset(1))
+        assertEquals(140.dp, DockMetrics.indicatorOffset(2))
+
+        DockDestination.ordered.forEachIndexed { index, destination ->
+            assertEquals(
+                DockMetrics.stride() * index,
+                DockMetrics.indicatorOffset(DockMetrics.indicatorIndex(destination.tab))
+            )
+        }
+    }
+
+    @Test
+    fun `rapid switching targets only the final destination`() {
+        // Simulates a burst of taps: the target is recomputed from the final
+        // tab only, never accumulated from the intermediate ones.
+        val sequence = listOf(
+            DockDestination.SETTINGS,
+            DockDestination.QIBLA,
+            DockDestination.HOME,
+            DockDestination.SETTINGS,
+            DockDestination.QIBLA
+        )
+        val final = sequence.last()
+        val expectedIndex = DockDestination.ordered.indexOf(final)
+        assertEquals(
+            DockMetrics.indicatorOffset(expectedIndex),
+            DockMetrics.indicatorOffset(DockMetrics.indicatorIndex(final.tab))
+        )
+        // Qibla is the last declaration entry, so the indicator must end at
+        // exactly two strides from the start.
+        assertEquals(DockMetrics.stride() * 2, DockMetrics.indicatorOffset(
+            DockMetrics.indicatorIndex(final.tab)
+        ))
+    }
+
+    @Test
+    fun `unknown tab falls back to the first slot`() {
+        assertEquals(0, DockMetrics.indicatorIndex(99))
+        assertEquals(0.dp, DockMetrics.indicatorOffset(DockMetrics.indicatorIndex(99)))
     }
 
     @Test
