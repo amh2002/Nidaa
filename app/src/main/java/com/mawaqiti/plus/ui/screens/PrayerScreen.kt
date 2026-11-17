@@ -408,6 +408,33 @@ object NowTimeMetrics {
 }
 
 /**
+ * beta16: the "الصلاة القادمة" caption, now its own standalone row at the top of
+ * the hero card and the second-loudest element in the card after the prayer
+ * time.
+ *
+ * beta15 kept it as a small, muted, start-aligned line because its task 2 was
+ * only the anti-overlap guard; the owner's screenshot showed the result: still a
+ * corner label. beta16 promotes it: centred on the card's visual axis, 17 sp
+ * (was 15 sp), Bold (was the body font), in the theme's gold accent (was
+ * `textMuted` cream). No badge, no pill, nothing behind it.
+ *
+ * The colour comes from [SkyPalette.accent] - the same `ReferenceGold` token the
+ * divider, the prayer time and the progress bar already use - never a literal,
+ * so every phase keeps its own accent.
+ */
+object NextPrayerLabelMetrics {
+    /** 17 sp: clearly above the 15 sp body size, inside the 16-18 sp target. */
+    val FONT_SIZE = 17.sp
+    val LINE_HEIGHT = 24.sp
+
+    /** Bold is the heaviest real Tajawal face bundled with the app. */
+    val FONT_WEIGHT = FontWeight.Bold
+
+    /** The deeper gold of the active phase (never a hardcoded colour). */
+    fun color(palette: SkyPalette) = palette.accent
+}
+
+/**
  * beta14: the current time row at the bottom of the next-prayer card.
  *
  * Text only - [NowTimeMetrics.PREFIX_RES] + " HH:MM" - in the golden accent at
@@ -469,22 +496,26 @@ internal fun HeroCard(
                 .testTag("hero_content"),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // beta12: the caption owns its own line above the name; beta14
-            // moved it to the card's RTL start edge. beta15 hardens that line
-            // as the anti-overlap guard: it is a single ellipsized line that
-            // gets the full card width (priority), and the prayer name below it
-            // is a single ellipsized line too - so the two can never share
-            // horizontal space, at any width or font scale, without relying on
-            // offsets, auto-shrink or a measured row. The clear space between
-            // them is [NidaaDimens.nextPrayerLabelGap] (>= 8 dp).
+            // beta16: the caption is its own row at the top of the card, centred
+            // on the card's visual axis and set in the deeper gold accent at
+            // 17 sp Bold - a prominent standalone line, not a corner label. It
+            // still owns the full card width and is a single ellipsized line, so
+            // it can never wrap, clip or collide with the prayer name below it;
+            // the clear space stays [NidaaDimens.nextPrayerLabelGap].
             Text(
                 text = stringResource(R.string.next_prayer),
-                style = MaterialTheme.typography.bodyMedium,
-                color = palette.textMuted,
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontFamily = Tajawal,
+                    fontSize = NextPrayerLabelMetrics.FONT_SIZE,
+                    lineHeight = NextPrayerLabelMetrics.LINE_HEIGHT,
+                    fontWeight = NextPrayerLabelMetrics.FONT_WEIGHT,
+                    letterSpacing = 0.sp
+                ),
+                color = NextPrayerLabelMetrics.color(palette),
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Start,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("next_prayer_label")

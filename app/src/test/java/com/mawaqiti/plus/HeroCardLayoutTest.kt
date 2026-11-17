@@ -13,17 +13,22 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.mawaqiti.plus.engine.table.TableEvent
 import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.ui.screens.HeroCard
 import com.mawaqiti.plus.ui.screens.HeroMetrics
 import com.mawaqiti.plus.ui.screens.HeroState
+import com.mawaqiti.plus.ui.screens.NextPrayerLabelMetrics
+import com.mawaqiti.plus.ui.theme.ColorMath
 import com.mawaqiti.plus.ui.theme.GoldenPalettes
 import com.mawaqiti.plus.ui.theme.MawaqitiTheme
 import com.mawaqiti.plus.ui.theme.NidaaDimens
+import com.mawaqiti.plus.ui.theme.SkyPalette
 import com.mawaqiti.plus.ui.theme.SkyPhase
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -135,6 +140,21 @@ class HeroCardLayoutTest {
             name.left >= card.left && name.right <= card.right + 0.5f
         )
 
+        // beta16: the caption is its own full-width row, centred on the card's
+        // vertical axis (not a start-aligned corner element).
+        val content = bounds("hero_content")
+        assertEquals(
+            "caption must span the card content width",
+            content.width.toDouble(),
+            label.width.toDouble(),
+            0.5
+        )
+        val labelCentreDelta = kotlin.math.abs(label.center.x - card.center.x)
+        assertTrue(
+            "caption is not centred on the card axis (off by $labelCentreDelta px)",
+            labelCentreDelta <= px(1.dp)
+        )
+
         // The name is one line: a wrap would double its height. (Robolectric
         // has no real Arabic advances, so this is a coarse guard here; the
         // screenshots cover the pixel truth.)
@@ -168,6 +188,7 @@ class HeroCardLayoutTest {
                 "screen=${bounds("hero_content").width / density.density}dp " +
                 "scale=${density.fontScale} " +
                 "labelToName=${gap / density.density}dp " +
+                "labelCentreOffset=${labelCentreDelta / density.density}dp " +
                 "rowCentreOffset=${centreDelta / density.density}dp " +
                 "rowToDivider=${(row.top - divider.bottom) / density.density}dp " +
                 "row=${row.left / density.density}..${row.right / density.density}dp " +
@@ -226,5 +247,47 @@ class HeroCardLayoutTest {
         )
         assertEquals(8.dp, NidaaDimens.nextPrayerLabelGap)
         assertEquals(NidaaDimens.nextPrayerLabelGap, HeroMetrics.LABEL_TO_NAME)
+    }
+
+    /** beta16 task 2: the caption must read as prominent gold, not muted body text. */
+    @Test
+    @Config(sdk = [34], qualifiers = "ar-rSA-ldrtl-w411dp-h891dp-420dpi")
+    fun `the caption is prominent and uses the deeper accent gold`() {
+        assertTrue(
+            "caption is smaller than the 16 sp target",
+            NextPrayerLabelMetrics.FONT_SIZE >= 16.sp
+        )
+        assertTrue(
+            "caption is larger than the 18 sp target",
+            NextPrayerLabelMetrics.FONT_SIZE <= 18.sp
+        )
+        assertTrue("caption is no longer 15 sp body text", NextPrayerLabelMetrics.FONT_SIZE > 15.sp)
+        assertTrue(
+            "caption must be at least Bold",
+            NextPrayerLabelMetrics.FONT_WEIGHT.weight >= FontWeight.Bold.weight
+        )
+        assertTrue(
+            "caption line height must clear the font size",
+            NextPrayerLabelMetrics.LINE_HEIGHT > NextPrayerLabelMetrics.FONT_SIZE
+        )
+
+        val night = GoldenPalettes.Night
+        val colour = NextPrayerLabelMetrics.color(night)
+        assertEquals("caption colour must be the theme accent", night.accent, colour)
+        assertNotEquals("caption must not stay on the muted cream", night.textMuted, colour)
+
+        // Legibility on the card: accent over the hero fill composited on the
+        // night gradient must clear WCAG AA for large/bold text (>= 3:1) and, in
+        // practice, normal text too (>= 4.5:1).
+        val cardBackground = ColorMath.effectiveText(night.heroFill, night.gradient.last())
+        val ratio = ColorMath.contrastRatio(colour, cardBackground)
+        assertTrue("caption contrast on the card is only %.2f:1".format(ratio), ratio >= 4.5)
+    }
+
+    @Test
+    @Config(sdk = [34], qualifiers = "en-rUS-ldltr-w411dp-h891dp-420dpi")
+    fun `english LTR card keeps the same centred caption`() {
+        render(411.dp, 1.0f)
+        assertCardGeometry()
     }
 }
