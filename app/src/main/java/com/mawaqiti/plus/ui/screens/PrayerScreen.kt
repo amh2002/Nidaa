@@ -548,23 +548,7 @@ internal fun HeroCard(
                 color = palette.accent
             )
             Spacer(Modifier.height(6.dp))
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color.Black.copy(alpha = 0.20f))
-                    .border(1.dp, palette.accent.copy(alpha = 0.35f), RoundedCornerShape(50))
-                    .padding(horizontal = 14.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.remaining_short) + " " +
-                        TimeFormatter.formatCountdown(hero.secondsLeft),
-                    fontFamily = Tajawal,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = palette.accent
-                )
-            }
+            CountdownPill(secondsLeft = hero.secondsLeft, palette = palette)
             Spacer(Modifier.height(8.dp))
             Box(
                 modifier = Modifier
@@ -654,6 +638,42 @@ private data class GridItem(
     val icon: ImageVector,
     val highlighted: Boolean = false
 )
+
+/**
+ * beta17: the "متبقي 00:15:09" pill under the hero time.
+ *
+ * The caption and the digits are ONE [Text], so they share a single text run,
+ * a single font family and - by construction - a single baseline. There is no
+ * ink offset to tune and no `alignByBaseline` row that a later edit could
+ * mis-align: the baseline equality is a property of the composition, not of a
+ * measurement. (An earlier two-Text Row plus top alignment is what made the
+ * digits appear to float; the pill has been a single Text since beta2, and the
+ * test tag below lets a regression test keep it that way.)
+ *
+ * Sizes, family, weight, colour, tabular digits and the RTL reading order
+ * ("متبقي" first, digits second) are unchanged from beta16.
+ */
+@Composable
+private fun CountdownPill(secondsLeft: Long, palette: SkyPalette) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color.Black.copy(alpha = 0.20f))
+            .border(1.dp, palette.accent.copy(alpha = 0.35f), RoundedCornerShape(50))
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+            .testTag("hero_countdown_pill"),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.remaining_short) + " " +
+                TimeFormatter.formatCountdown(secondsLeft),
+            fontFamily = Tajawal,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Medium,
+            color = palette.accent
+        )
+    }
+}
 
 @Composable
 private fun PrayerGrid(

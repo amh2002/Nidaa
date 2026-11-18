@@ -10,6 +10,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -68,6 +71,7 @@ import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.notify.NotifyEvent
 import com.mawaqiti.plus.notify.NotifyMode
 import com.mawaqiti.plus.notify.AdhanSound
+import com.mawaqiti.plus.notify.AdhanVolume
 import com.mawaqiti.plus.ui.components.AdhanSoundDropdown
 import com.mawaqiti.plus.ui.components.InfoChip
 import com.mawaqiti.plus.ui.components.PillOption
@@ -77,9 +81,12 @@ import com.mawaqiti.plus.ui.components.SettingRow
 import com.mawaqiti.plus.ui.components.SettingsSmallButton
 import com.mawaqiti.plus.ui.components.SettingsToggleRow
 import com.mawaqiti.plus.ui.components.mawaqitiSwitchColors
+import com.mawaqiti.plus.ui.theme.NidaaDimens
 import com.mawaqiti.plus.ui.theme.skyPalette
 import com.nidaa.prayer.update.UpdateState
 import java.time.LocalTime
+import java.util.Locale
+import kotlin.math.roundToInt
 
 /**
  * Settings entry point.
@@ -108,8 +115,12 @@ fun SettingsScreen(
     onEventEnabled: (NotifyEvent, Boolean) -> Unit,
     onEventMode: (NotifyEvent, NotifyMode) -> Unit,
     onApplyModeToEnabled: (NotifyMode) -> Unit,
-    onTestEvent: (NotifyEvent, NotifyMode) -> Unit,
-    onTestMode: (NotifyMode) -> Unit,
+    /** beta17: persisted adhan loudness percentage (0…100). */
+    onAdhanVolumeChange: (Int) -> Unit = {},
+    /** beta17: true while the sound-only preview is audible. */
+    previewingAdhan: Boolean = false,
+    onToggleAdhanPreview: () -> Unit = {},
+    onStopAdhanPreview: () -> Unit = {},
     updatesEnabled: Boolean = true,
     updateState: UpdateState = UpdateState.Idle,
     onUpdatesEnabled: (Boolean) -> Unit = {},
@@ -179,8 +190,10 @@ fun SettingsScreen(
         onEventEnabled = onEventEnabled,
         onEventMode = onEventMode,
         onApplyModeToEnabled = onApplyModeToEnabled,
-        onTestEvent = onTestEvent,
-        onTestMode = onTestMode,
+        onAdhanVolumeChange = onAdhanVolumeChange,
+        previewingAdhan = previewingAdhan,
+        onToggleAdhanPreview = onToggleAdhanPreview,
+        onStopAdhanPreview = onStopAdhanPreview,
         onOpenExactAlarmSettings = { NotificationScheduler.openExactAlarmSettings(context) },
         onOpenNotificationSettings = { openNotificationSettings(context) },
         onOpenBatterySettings = { openBatterySettings(context) },
@@ -240,8 +253,12 @@ fun SettingsList(
     onEventEnabled: (NotifyEvent, Boolean) -> Unit,
     onEventMode: (NotifyEvent, NotifyMode) -> Unit,
     onApplyModeToEnabled: (NotifyMode) -> Unit,
-    onTestEvent: (NotifyEvent, NotifyMode) -> Unit,
-    onTestMode: (NotifyMode) -> Unit,
+    /** beta17: persisted adhan loudness percentage (0…100). */
+    onAdhanVolumeChange: (Int) -> Unit = {},
+    /** beta17: true while the sound-only preview is audible. */
+    previewingAdhan: Boolean = false,
+    onToggleAdhanPreview: () -> Unit = {},
+    onStopAdhanPreview: () -> Unit = {},
     onOpenExactAlarmSettings: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onOpenBatterySettings: () -> Unit,
@@ -258,6 +275,11 @@ fun SettingsList(
     val palette = skyPalette
     val previewMinutes = nextPreviewMinutes(day)
     val preview = TimeFormatter.format(previewMinutes, settings.clockFormat, isArabic)
+    // beta17: leaving Settings must never leave the preview audible, and the
+    // preview must never outlive the screen that started it.
+    DisposableEffect(Unit) {
+        onDispose { onStopAdhanPreview() }
+    }
     val notifications = settings.notifications
     val masterEnabled = notifications.masterEnabled
     val modes = remember { listOf(NotifyMode.ADHAN, NotifyMode.SILENT, NotifyMode.VIBRATE) }
@@ -487,21 +509,57 @@ fun SettingsList(
 
         ItemGap()
 
-        // 5b. Adhan sound (beta14). ONE persisted choice shared by the picker
-        //     and the playback service (AdhanSoundProvider). The registry below
-        //     owns the order and the Arabic labels; this card only renders it.
+        // 5b. Adhan sound (beta14) + beta17 volume.
+        //
+        //     ONE persisted sound and ONE persisted loudness, both read at fire
+        //     time by AlarmReceiver and by the sound-only preview. The picker
+        //     and the preview button share a single horizontally aligned row so
+        //     the test always proves the current choice; the volume slider sits
+        //     directly under them inside the same card.
         SettingsCard(
+            title = stringResource(R.string.settings_adhan_sound_title),
+            description = stringResource(R.string.settings_adhan_sound_desc),
             modifier = Modifier.testTag("settings_adhan_sound")
         ) {
-            SettingRowBlock(
-                title = stringResource(R.string.settings_adhan_sound_title),
-                description = stringResource(R.string.settings_adhan_sound_desc)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(NidaaDimens.adhanPickerGap),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                AdhanSoundDropdown(
-                    selected = settings.adhanSound,
-                    onSelect = onSelectAdhanSound
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    AdhanSoundDropdown(
+                        selected = settings.adhanSound,
+                        onSelect = {
+                            // A stale preview would contradict the new pick.
+                            onStopAdhanPreview()
+                            onSelectAdhanSound(it)
+                        }
+                    )
+                }
+                SettingsSmallButton(
+                    label = stringResource(
+                        if (previewingAdhan) R.string.settings_adhan_test_stop
+                        else R.string.settings_adhan_test
+                    ),
+                    onClick = onToggleAdhanPreview,
+                    modifier = Modifier.testTag("settings_adhan_test_button")
                 )
             }
+
+            Spacer(Modifier.height(NidaaDimens.adhanVolumeGap))
+
+            AdhanVolumeRow(
+                volume = settings.adhanVolume,
+                onChange = onAdhanVolumeChange,
+                onCommit = {
+                    // Restarting the preview is the caller's business; stopping
+                    // it here keeps the audible track in step with the slider.
+                    if (previewingAdhan) onStopAdhanPreview()
+                }
+            )
         }
 
         ItemGap()
@@ -530,7 +588,35 @@ fun SettingsList(
             }
         }
 
-        // 7. One card per event, each with its own switch, mode and test button.
+        // 6b. Apply one mode to every enabled event (beta17: moved to the TOP of
+        //     the prayer-notifications section, directly before Fajr). Behaviour,
+        //     styling and strings are untouched - only the position changed, so
+        //     "set everything at once" no longer requires scrolling past six
+        //     event cards.
+        ItemGap()
+        SettingsCard(
+            title = stringResource(R.string.notify_apply_all),
+            description = stringResource(R.string.notify_apply_all_desc),
+            modifier = Modifier.testTag("notify_apply_all")
+        ) {
+            SegmentedPillRow(
+                options = modes.map { mode -> PillOption(modeLabel(mode), mode == applyMode) },
+                onSelect = { index -> applyMode = modes[index] },
+                fillWidth = true
+            )
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                SettingsSmallButton(
+                    label = stringResource(R.string.notify_apply),
+                    onClick = { onApplyModeToEnabled(applyMode) }
+                )
+            }
+        }
+
+        // 7. One card per event, each with its own switch and mode.
         for (event in NotifyEvent.entries) {
             ItemGap()
             val current = notifications.forEvent(event)
@@ -571,49 +657,6 @@ fun SettingsList(
                     enabled = masterEnabled,
                     modifier = Modifier.testTag("event_modes_${event.storageKey}")
                 )
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.notify_test_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = palette.textMuted,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    SettingsSmallButton(
-                        label = stringResource(R.string.notify_test),
-                        enabled = masterEnabled,
-                        modifier = Modifier.testTag("event_test_${event.storageKey}"),
-                        onClick = { onTestEvent(event, current.mode) }
-                    )
-                }
-            }
-        }
-
-        ItemGap()
-
-        // 8. Apply one mode to every enabled event.
-        SettingsCard(
-            title = stringResource(R.string.notify_apply_all),
-            description = stringResource(R.string.notify_apply_all_desc)
-        ) {
-            SegmentedPillRow(
-                options = modes.map { mode -> PillOption(modeLabel(mode), mode == applyMode) },
-                onSelect = { index -> applyMode = modes[index] },
-                fillWidth = true
-            )
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                SettingsSmallButton(
-                    label = stringResource(R.string.notify_apply),
-                    onClick = { onApplyModeToEnabled(applyMode) }
-                )
             }
         }
 
@@ -645,39 +688,7 @@ fun SettingsList(
             )
         }
 
-        // 10. Debug-only direct delivery buttons.
-        if (BuildConfig.DEBUG) {
-            ItemGap()
-            SettingsCard(
-                title = stringResource(R.string.notify_test_group),
-                description = stringResource(R.string.notify_test_group_desc)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SettingsSmallButton(
-                        label = stringResource(R.string.notify_test_adhan),
-                        onClick = { onTestMode(NotifyMode.ADHAN) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    SettingsSmallButton(
-                        label = stringResource(R.string.notify_test_silent),
-                        onClick = { onTestMode(NotifyMode.SILENT) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    SettingsSmallButton(
-                        label = stringResource(R.string.notify_test_vibrate),
-                        onClick = { onTestMode(NotifyMode.VIBRATE) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-
-        ItemGap()
-
-        // 11. About — the LAST item of the list. The claims live here exactly
+        // 10. About — the LAST item of the list. The claims live here exactly
         //     once; the old standalone footer card is gone.
         SettingsCard(
             title = stringResource(R.string.settings_about_title),
@@ -752,6 +763,70 @@ private fun SettingRowBlock(
         title = title,
         description = description
     ) { control() }
+}
+
+/**
+ * beta17: the adhan loudness row, directly under the picker.
+ *
+ * The slider keeps a local value while the thumb moves (a DataStore write per
+ * pixel would be wasteful) and persists exactly once per gesture. The chosen
+ * percentage is always visible on the row, so a screen reader and the eye read
+ * the same number. [Slider] itself is RTL-aware: 0 % starts at the right edge
+ * in Arabic and the golden accent marks the filled side.
+ */
+@Composable
+private fun AdhanVolumeRow(
+    volume: Int,
+    onChange: (Int) -> Unit,
+    onCommit: () -> Unit
+) {
+    val palette = skyPalette
+    var local by remember(volume) { mutableIntStateOf(AdhanVolume.normalize(volume)) }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.settings_adhan_volume_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = palette.text,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = stringResource(
+                    R.string.settings_adhan_volume_value,
+                    // Latin digits, like every time and date in the app: the
+                    // Arabic default locale would otherwise render ١٠٠٪ here
+                    // and read differently from the rest of the screen.
+                    remember(local) { String.format(Locale.US, "%d", local) }
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = palette.accent,
+                modifier = Modifier.testTag("settings_adhan_volume_value")
+            )
+        }
+        Slider(
+            value = local.toFloat(),
+            onValueChange = { local = it.roundToInt() },
+            onValueChangeFinished = {
+                onChange(local)
+                onCommit()
+            },
+            valueRange = AdhanVolume.MIN.toFloat()..AdhanVolume.MAX.toFloat(),
+            colors = SliderDefaults.colors(
+                thumbColor = palette.accent,
+                activeTrackColor = palette.accent,
+                inactiveTrackColor = palette.text.copy(alpha = 0.18f),
+                activeTickColor = palette.sheet,
+                inactiveTickColor = palette.text.copy(alpha = 0.35f)
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("settings_adhan_volume_slider")
+        )
+    }
 }
 
 @Composable

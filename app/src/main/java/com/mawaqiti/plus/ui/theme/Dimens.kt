@@ -19,4 +19,30 @@ object NidaaDimens {
      * the floor, so a future tweak may grow it but must not shrink it.
      */
     val nextPrayerLabelGap = 8.dp
+
+    /**
+     * beta17: space between the adhan picker and the sound-test button that
+     * sits beside it. Kept small so both fit on one 360 dp row without
+     * clipping at fontScale 1.3.
+     */
+    val adhanPickerGap = 8.dp
+
+    /**
+     * beta17: space between the picker/test row and the volume slider inside
+     * the same adhan card.
+     */
+    val adhanVolumeGap = 14.dp
+
+    /**
+     * beta17: optical lift for the city-search hint.
+     *
+     * The magnifier is a 20 dp icon and centres exactly on the field's axis.
+     * The hint is text: its line box centres on the font baseline, so the
+     * glyph ink (the only part a person sees) sits above that axis by the
+     * glyph descent - measured at 4 px / 1.5 dp in Arabic at 411 dp.
+     * Compensating by exactly that descent puts the hint and the magnifier on
+     * one optical line; it is a font-metric correction, not a layout fudge,
+     * so it scales with density and font scale.
+     */
+    val searchHintOpticalLift = 1.5.dp
 }

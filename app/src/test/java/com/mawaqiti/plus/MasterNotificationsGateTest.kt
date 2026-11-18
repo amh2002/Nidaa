@@ -135,8 +135,6 @@ class MasterNotificationsGateTest {
                             )
                         },
                         onApplyModeToEnabled = {},
-                        onTestEvent = { _, _ -> },
-                        onTestMode = {},
                         onOpenExactAlarmSettings = {},
                         onOpenNotificationSettings = {},
                         onOpenBatterySettings = {}

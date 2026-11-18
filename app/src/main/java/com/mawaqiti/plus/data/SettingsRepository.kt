@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.notify.AdhanSound
+import com.mawaqiti.plus.notify.AdhanVolume
 import com.mawaqiti.plus.notify.EventNotification
 import com.mawaqiti.plus.notify.NotificationSettings
 import com.mawaqiti.plus.notify.NotifyEvent
@@ -38,6 +39,8 @@ class SettingsRepository(private val context: Context) {
         val fontScale = floatPreferencesKey("font_scale")
         /** beta14: selected adhan ("alaqsa_full" ... "alkurd_full"). */
         val adhanSound = stringPreferencesKey("adhan_sound")
+        /** beta17: adhan loudness percent 0..100; absent means 100. */
+        val adhanVolume = intPreferencesKey("adhan_volume")
         val notifyMaster = booleanPreferencesKey("notify_master")
         fun eventEnabled(event: NotifyEvent) =
             booleanPreferencesKey("notify_${event.storageKey}_enabled")
@@ -72,6 +75,9 @@ class SettingsRepository(private val context: Context) {
                     }
                 ),
                 adhanSound = AdhanSound.fromKey(prefs[Keys.adhanSound]),
+                adhanVolume = AdhanVolume.normalize(
+                    prefs[Keys.adhanVolume] ?: AdhanVolume.DEFAULT
+                ),
                 widgetLanguage = AppLanguage.fromTagOrNull(prefs[Keys.widgetLanguage])
             )
         }
@@ -110,6 +116,15 @@ class SettingsRepository(private val context: Context) {
      */
     suspend fun setAdhanSound(sound: AdhanSound) = edit {
         it[Keys.adhanSound] = sound.storageKey
+    }
+
+    /**
+     * beta17: the adhan loudness. Stored as an integer percentage next to the
+     * sound choice, so the picker, the slider, the preview and the prayer
+     * playback all read the same two values from the same DataStore.
+     */
+    suspend fun setAdhanVolume(percent: Int) = edit {
+        it[Keys.adhanVolume] = AdhanVolume.normalize(percent)
     }
 
     suspend fun setEventEnabled(event: NotifyEvent, enabled: Boolean) = edit {

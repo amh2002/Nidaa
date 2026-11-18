@@ -31,6 +31,11 @@ import com.mawaqiti.plus.R
  * opened through that same provider, so playback has exactly one source of
  * truth and the choice applies to the very next alarm on every Android version
  * without re-creating a channel.
+ *
+ * beta17: the loudness arrives the same way (resolved from the persisted
+ * percentage) and is applied with `MediaPlayer.setVolume` on this player only.
+ * The audio path is unchanged - MediaPlayer on `USAGE_ALARM` - so the volume
+ * is a true amplitude scalar and the notification channels stay untouched.
  */
 class AdhanPlaybackService : Service() {
 
@@ -48,11 +53,12 @@ class AdhanPlaybackService : Service() {
                 val stopLabel = intent.getStringExtra(EXTRA_STOP_LABEL)
                     ?: getString(R.string.notify_stop)
                 val sound = AdhanSound.fromKey(intent.getStringExtra(EXTRA_ADHAN_KEY))
+                val volume = intent.getIntExtra(EXTRA_ADHAN_VOLUME, AdhanVolume.DEFAULT)
                 // Channels may have been removed (app data cleared / beta6
                 // migration): make sure they exist before the foreground post.
                 NotificationChannels.ensure(this)
                 startForegroundCompat(id, buildNotification(id, title, body, stopLabel))
-                play(sound)
+                play(sound, volume)
             }
         }
         return START_NOT_STICKY
@@ -105,10 +111,18 @@ class AdhanPlaybackService : Service() {
      * beta14: plays the selected registry entry through [AdhanSoundProvider].
      * The descriptor is the packaged file itself - no trimming, conversion or
      * copy - so the shipped bytes are exactly the owner's master file.
+     *
+     * beta17: [volumePercent] sets this player's linear gain; 100 % is 1.0f,
+     * which is what every install used before the slider existed.
      */
-    private fun play(sound: AdhanSound) {
+    private fun play(sound: AdhanSound, volumePercent: Int) {
         stopPlayback()
-        Log.d(TAG, "playing ${sound.rawName} (res ${sound.rawRes})")
+        val gain = AdhanVolume.gain(volumePercent)
+        Log.d(
+            TAG,
+            "playing ${sound.rawName} (res ${sound.rawRes}) at " +
+                "${AdhanVolume.normalize(volumePercent)}% (gain $gain)"
+        )
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -122,6 +136,7 @@ class AdhanPlaybackService : Service() {
                     setDataSource(it.fileDescriptor, it.startOffset, it.length)
                 }
                 prepare()
+                setVolume(gain, gain)
                 start()
                 setOnCompletionListener { stopEverything() }
             } catch (error: Exception) {
@@ -154,6 +169,7 @@ class AdhanPlaybackService : Service() {
         private const val EXTRA_BODY = "body"
         private const val EXTRA_STOP_LABEL = "stop_label"
         private const val EXTRA_ADHAN_KEY = "adhan_key"
+        private const val EXTRA_ADHAN_VOLUME = "adhan_volume"
         private const val DEFAULT_ID = 7000
         private const val REQUEST_OPEN = 6100
         private const val REQUEST_STOP = 6101
@@ -164,7 +180,9 @@ class AdhanPlaybackService : Service() {
             title: String,
             body: String,
             stopLabel: String,
-            sound: AdhanSound
+            sound: AdhanSound,
+            /** beta17: persisted loudness percentage, passed through verbatim. */
+            volumePercent: Int = AdhanVolume.DEFAULT
         ) {
             val intent = Intent(context, AdhanPlaybackService::class.java).apply {
                 action = ACTION_START
@@ -173,6 +191,7 @@ class AdhanPlaybackService : Service() {
                 putExtra(EXTRA_BODY, body)
                 putExtra(EXTRA_STOP_LABEL, stopLabel)
                 putExtra(EXTRA_ADHAN_KEY, sound.storageKey)
+                putExtra(EXTRA_ADHAN_VOLUME, AdhanVolume.normalize(volumePercent))
             }
             ContextCompat.startForegroundService(context, intent)
         }

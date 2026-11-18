@@ -27,16 +27,17 @@ object NotificationDispatcher {
         minutes: Int,
         clockFormat: ClockFormat,
         language: AppLanguage,
-        isTest: Boolean,
         /** beta14: the user's adhan choice, resolved once per delivery. */
-        adhanSound: AdhanSound = AdhanSound.DEFAULT
+        adhanSound: AdhanSound = AdhanSound.DEFAULT,
+        /** beta17: the user's adhan loudness, resolved once per delivery. */
+        adhanVolume: Int = AdhanVolume.DEFAULT
     ) {
         val isArabic = language == AppLanguage.ARABIC
         val localized = NotificationText.localizedContext(context, language)
         val title = NotificationText.title(localized, event)
         val time = TimeFormatter.format(minutes, clockFormat, isArabic)
         val body = NotificationText.body(localized, city.displayName(isArabic), time)
-        val notificationId = event.requestCodeBase + if (isTest) TEST_ID_OFFSET else 0
+        val notificationId = event.requestCodeBase
 
         if (mode == NotifyMode.ADHAN) {
             AdhanPlaybackService.start(
@@ -45,7 +46,8 @@ object NotificationDispatcher {
                 title = title,
                 body = body,
                 stopLabel = localized.getString(R.string.notify_stop),
-                sound = adhanSound
+                sound = adhanSound,
+                volumePercent = adhanVolume
             )
         } else {
             postQuiet(context, notificationId, mode, title, body)
@@ -106,6 +108,5 @@ object NotificationDispatcher {
         return NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-    const val TEST_ID_OFFSET = 100
     private const val REQUEST_OPEN = 6000
 }

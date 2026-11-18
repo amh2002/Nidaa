@@ -112,6 +112,7 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
     val day by viewModel.day.collectAsState()
     val today by viewModel.today.collectAsState()
     val goldenPhase by viewModel.goldenPhase.collectAsState()
+    val previewingAdhan by viewModel.previewing.collectAsState()
     val isArabic = isArabicLocale()
 
     // beta 7.95: isolated updater state. The toggle is read from the updater's
@@ -214,8 +215,10 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         onEventEnabled = viewModel::setEventEnabled,
                         onEventMode = viewModel::setEventMode,
                         onApplyModeToEnabled = viewModel::applyModeToEnabledEvents,
-                        onTestEvent = viewModel::testEvent,
-                        onTestMode = viewModel::testMode,
+                        onAdhanVolumeChange = viewModel::setAdhanVolume,
+                        previewingAdhan = previewingAdhan,
+                        onToggleAdhanPreview = viewModel::toggleAdhanPreview,
+                        onStopAdhanPreview = viewModel::stopAdhanPreview,
                         updatesEnabled = updatesEnabled,
                         updateState = updateState,
                         onUpdatesEnabled = { enabled ->

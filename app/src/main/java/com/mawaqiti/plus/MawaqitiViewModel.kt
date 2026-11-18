@@ -15,7 +15,9 @@ import com.mawaqiti.plus.data.SettingsRepository
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.engine.table.TableEngine
 import com.mawaqiti.plus.format.ClockFormat
+import com.mawaqiti.plus.notify.AdhanPreview
 import com.mawaqiti.plus.notify.AdhanSound
+import com.mawaqiti.plus.notify.AdhanSoundProvider
 import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.notify.NotifyEvent
 import com.mawaqiti.plus.notify.NotifyMode
@@ -62,6 +64,10 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     val city: StateFlow<City> = settings
         .map { cityRepository.byOrder(it.cityOrder) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, cityRepository.defaultCity())
+
+    /** beta17: true while the settings sound preview is audible. */
+    private val _previewing = MutableStateFlow(false)
+    val previewing: StateFlow<Boolean> = _previewing.asStateFlow()
 
     private val initialDay: TableDay = TableEngine.day(
         profile = cityRepository.defaultCity().profile,
@@ -228,18 +234,37 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     }
 
     /** Fires one event's notification in its own mode five seconds from now. */
-    fun testEvent(event: NotifyEvent, mode: NotifyMode) {
-        NotificationScheduler.scheduleTest(getApplication(), event, mode)
+    fun setAdhanVolume(percent: Int) = viewModelScope.launch {
+        settingsRepository.setAdhanVolume(percent)
     }
 
-    /** Debug group: one direct test per delivery type. */
-    fun testMode(mode: NotifyMode) {
-        val event = when (mode) {
-            NotifyMode.ADHAN -> NotifyEvent.MAGHRIB
-            NotifyMode.SILENT -> NotifyEvent.FAJR
-            NotifyMode.VIBRATE -> NotifyEvent.ASR
+    /**
+     * beta17: the sound-only preview shown beside the picker.
+     *
+     * It reads the persisted sound and volume, hands them to [AdhanPreview] -
+     * the same provider and the same `USAGE_ALARM` MediaPlayer path the prayer
+     * playback uses - and never posts a notification. [previewing] only drives
+     * the button label; the audio state itself lives in [AdhanPreview].
+     */
+    fun toggleAdhanPreview() {
+        if (_previewing.value) {
+            stopAdhanPreview()
+            return
         }
-        NotificationScheduler.scheduleTest(getApplication(), event, mode)
+        val current = settings.value
+        _previewing.value = true
+        AdhanPreview.play(
+            context = getApplication(),
+            sound = AdhanSoundProvider.resolve(current),
+            volumePercent = current.adhanVolume
+        ) {
+            _previewing.value = false
+        }
+    }
+
+    fun stopAdhanPreview() {
+        AdhanPreview.stop()
+        _previewing.value = false
     }
 
     private suspend fun scheduleNotifications() {

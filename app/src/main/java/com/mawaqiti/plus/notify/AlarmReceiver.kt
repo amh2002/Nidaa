@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
- * Receives prayer, midnight and test alarms.
+ * Receives prayer and midnight alarms.
  *
  * The event's enabled flag and mode are read from DataStore here, at fire
  * time. Changing a mode after an alarm was scheduled can therefore never
@@ -27,12 +27,9 @@ class AlarmReceiver : BroadcastReceiver() {
             try {
                 when (intent.action) {
                     NotificationScheduler.ACTION_FIRE -> handleFire(app, intent)
-                    NotificationScheduler.ACTION_TEST -> handleTest(app, intent)
                     NotificationScheduler.ACTION_MIDNIGHT -> Unit
                 }
-                if (intent.action != NotificationScheduler.ACTION_TEST) {
-                    runCatching { NotificationScheduler.scheduleAll(app) }
-                }
+                runCatching { NotificationScheduler.scheduleAll(app) }
                 WidgetUpdater.updateAll(app)
             } finally {
                 pending.finish()
@@ -56,35 +53,9 @@ class AlarmReceiver : BroadcastReceiver() {
             minutes = minutes,
             clockFormat = settings.clockFormat,
             language = settings.language,
-            isTest = false,
-            adhanSound = AdhanSoundProvider.resolve(settings)
+            adhanSound = AdhanSoundProvider.resolve(settings),
+            adhanVolume = settings.adhanVolume
         )
-    }
-
-    private suspend fun handleTest(context: Context, intent: Intent) {
-        val settings = SettingsRepository(context).settings.first()
-        val event = NotifyEvent.fromKey(intent.getStringExtra(NotificationScheduler.EXTRA_EVENT))
-            ?: return
-        val mode = NotifyMode.fromKey(intent.getStringExtra(NotificationScheduler.EXTRA_MODE))
-        val city = CityRepository(context).byOrder(settings.cityOrder)
-        val minutes = intent.getIntExtra(NotificationScheduler.EXTRA_MINUTES, 0)
-        val displayMinutes = if (minutes > 0) minutes else currentMinutes()
-        NotificationDispatcher.deliver(
-            context = context,
-            event = event,
-            mode = mode,
-            city = city,
-            minutes = displayMinutes,
-            clockFormat = settings.clockFormat,
-            language = settings.language,
-            isTest = true,
-            adhanSound = AdhanSoundProvider.resolve(settings)
-        )
-    }
-
-    private fun currentMinutes(): Int {
-        val now = java.time.LocalTime.now()
-        return now.hour * 60 + now.minute
     }
 }
 

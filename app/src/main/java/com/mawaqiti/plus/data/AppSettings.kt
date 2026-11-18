@@ -2,6 +2,7 @@ package com.mawaqiti.plus.data
 
 import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.notify.AdhanSound
+import com.mawaqiti.plus.notify.AdhanVolume
 import com.mawaqiti.plus.notify.NotificationSettings
 
 enum class AppLanguage(val tag: String) {
@@ -63,6 +64,13 @@ data class AppSettings(
      * أذان الأقصى تكبيرة ([AdhanSound.DEFAULT]).
      */
     val adhanSound: AdhanSound = AdhanSound.DEFAULT,
+    /**
+     * beta17: adhan loudness in percent (0…100). 100 is the default, so every
+     * existing install keeps the pre-beta17 loudness until the slider moves.
+     * Read at fire time by [com.mawaqiti.plus.notify.AlarmReceiver] and by the
+     * settings preview, exactly like [adhanSound].
+     */
+    val adhanVolume: Int = AdhanVolume.DEFAULT,
     /**
      * Widget-only language override (`widget.lang` in DataStore). Null means
      * "never chosen": the widget then follows [language], which is exactly the

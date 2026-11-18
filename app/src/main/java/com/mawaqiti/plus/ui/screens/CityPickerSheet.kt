@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -60,6 +62,7 @@ import com.mawaqiti.plus.data.Country
 import com.mawaqiti.plus.ui.CitySearch
 import com.mawaqiti.plus.ui.theme.GoldenPalettes
 import com.mawaqiti.plus.ui.theme.GoldenPhase
+import com.mawaqiti.plus.ui.theme.NidaaDimens
 import com.mawaqiti.plus.ui.theme.SkyPalette
 import java.text.Collator
 import java.util.Locale
@@ -253,8 +256,16 @@ fun CityPickerSheet(
     }
 }
 
+/**
+ * beta17: the live search field of the city sheet.
+ *
+ * `internal` (not private) so the geometry regression test can render exactly
+ * this composable at 360/411 dp and both font scales: the vertical centring of
+ * the hint and the magnifier is a layout property of this function, and testing
+ * it through the modal sheet would test the sheet's animation instead.
+ */
 @Composable
-private fun SearchField(
+internal fun SearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     placeholder: String,
@@ -265,7 +276,9 @@ private fun SearchField(
     BasicTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("city_search_field"),
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = palette.text),
         cursorBrush = SolidColor(palette.accent),
@@ -287,15 +300,31 @@ private fun SearchField(
                     imageVector = Icons.Filled.Search,
                     contentDescription = null,
                     tint = palette.accent.copy(alpha = 0.80f),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier
+                        .size(20.dp)
+                        .testTag("city_search_icon")
                 )
                 Spacer(Modifier.width(8.dp))
-                Box(modifier = Modifier.weight(1f)) {
+                // beta17: the placeholder is centred on the field's content
+                // box. It used to be top-aligned inside a taller Box, which put
+                // the ink line ~4 px above the field centre at every width;
+                // centring the Box content removes that offset without any
+                // absolute pixel arithmetic.
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterStart
+                ) {
                     if (query.isEmpty()) {
                         Text(
                             text = placeholder,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = palette.text.copy(alpha = 0.60f)
+                            color = palette.text.copy(alpha = 0.60f),
+                            // Optical centring: the icon is a vector and needs
+                            // none, the hint is text and centres on its
+                            // baseline (see NidaaDimens.searchHintOpticalLift).
+                            modifier = Modifier
+                                .offset(y = NidaaDimens.searchHintOpticalLift)
+                                .testTag("city_search_hint")
                         )
                     }
                     innerTextField()

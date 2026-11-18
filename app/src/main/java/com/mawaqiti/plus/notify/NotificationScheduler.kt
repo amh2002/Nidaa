@@ -32,12 +32,10 @@ import kotlinx.coroutines.sync.withLock
 object NotificationScheduler {
 
     const val ACTION_FIRE = "com.nidaa.prayer.action.FIRE_PRAYER"
-    const val ACTION_TEST = "com.nidaa.prayer.action.TEST_NOTIFICATION"
     const val ACTION_MIDNIGHT = "com.nidaa.prayer.action.MIDNIGHT"
 
     const val EXTRA_EVENT = "event"
     const val EXTRA_MINUTES = "minutes"
-    const val EXTRA_MODE = "mode"
 
     private const val EXTRA_EPOCH = "epoch"
 
@@ -45,7 +43,6 @@ object NotificationScheduler {
     private const val KEY_PLAN = "plan"
 
     private const val MIDNIGHT_REQUEST_CODE = 4200
-    private const val TEST_REQUEST_CODE_BASE = 9000
     private const val WINDOW_LENGTH_MS = 15 * 60 * 1000L
     private const val MIDNIGHT_SLACK_SECONDS = 3L
 
@@ -92,27 +89,6 @@ object NotificationScheduler {
 
         scheduleMidnight(context, manager, now)
         WidgetUpdater.updateAll(context)
-    }
-
-    fun scheduleTest(context: Context, event: NotifyEvent, mode: NotifyMode) {
-        val manager = context.getSystemService(AlarmManager::class.java) ?: return
-        val triggerAt = System.currentTimeMillis() + 5_000L
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            action = ACTION_TEST
-            data = Uri.parse(
-                "mawaqiti://test/${event.storageKey}/${mode.storageKey}/$triggerAt"
-            )
-            putExtra(EXTRA_EVENT, event.storageKey)
-            putExtra(EXTRA_MODE, mode.storageKey)
-            putExtra(EXTRA_EPOCH, triggerAt)
-        }
-        val pending = PendingIntent.getBroadcast(
-            context,
-            TEST_REQUEST_CODE_BASE + event.ordinal,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        setExactOrWindow(manager, triggerAt, pending)
     }
 
     /** True when exact alarms can currently be scheduled (always true below API 31). */

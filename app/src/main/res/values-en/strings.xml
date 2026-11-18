@@ -114,8 +114,6 @@
     <string name="notify_mode_adhan">Adhan</string>
     <string name="notify_mode_silent">Silent</string>
     <string name="notify_mode_vibrate">Vibrate</string>
-    <string name="notify_test">Test</string>
-    <string name="notify_test_desc">Sends this event\'s notification in 5 seconds.</string>
     <string name="notify_apply_all">Apply to all</string>
     <string name="notify_apply_all_desc">Set the chosen mode for every enabled event.</string>
     <string name="notify_apply">Apply</string>
@@ -125,11 +123,6 @@
     <string name="notify_permission_desc">Tap to open notification settings and allow it.</string>
     <string name="notify_battery_title">Battery optimization</string>
     <string name="notify_battery_desc">Battery optimization can delay notifications. Tap to open settings.</string>
-    <string name="notify_test_group">Test notifications</string>
-    <string name="notify_test_group_desc">Direct delivery tests for each type.</string>
-    <string name="notify_test_adhan">Adhan</string>
-    <string name="notify_test_silent">Silent</string>
-    <string name="notify_test_vibrate">Vibrate</string>
     <string name="notify_rationale_title">Enable notifications</string>
     <string name="notify_rationale_body">Nidaa needs notification permission to show each prayer time. We use notifications for nothing else.</string>
     <string name="notify_rationale_allow">Allow</string>
@@ -148,6 +141,11 @@
     <!-- beta14: adhan sound picker (order matches AdhanSound.ordered) -->
     <string name="settings_adhan_sound_title">Adhan sound</string>
     <string name="settings_adhan_sound_desc">Pick the adhan played for notifications. It applies to the next alerts immediately.</string>
+    <!-- beta17: sound-only preview + loudness slider -->
+    <string name="settings_adhan_test">Listen</string>
+    <string name="settings_adhan_test_stop">Stop</string>
+    <string name="settings_adhan_volume_title">Adhan volume</string>
+    <string name="settings_adhan_volume_value">%1$s%%</string>
     <string name="adhan_alaqsa_full">Al-Aqsa adhan (full)</string>
     <string name="adhan_alaqsa_tkbera">Al-Aqsa takbir</string>
     <string name="adhan_makkah_full">Makkah adhan (full)</string>

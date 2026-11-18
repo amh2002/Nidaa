@@ -114,8 +114,6 @@
     <string name="notify_mode_adhan">الأذان</string>
     <string name="notify_mode_silent">صامت</string>
     <string name="notify_mode_vibrate">اهتزاز</string>
-    <string name="notify_test">تجربة</string>
-    <string name="notify_test_desc">يرسل تنبيه هذا الوقت بعد 5 ثوانٍ.</string>
     <string name="notify_apply_all">تطبيق على الكل</string>
     <string name="notify_apply_all_desc">تعيين الوضع المحدد لكل الأوقات المفعّلة.</string>
     <string name="notify_apply">تطبيق</string>
@@ -125,11 +123,6 @@
     <string name="notify_permission_desc">اضغط لفتح إعدادات الإشعارات والسماح بها.</string>
     <string name="notify_battery_title">تحسين البطارية</string>
     <string name="notify_battery_desc">قد يؤخر تحسين البطارية وصول التنبيهات. اضغط لفتح الإعدادات.</string>
-    <string name="notify_test_group">اختبار التنبيهات</string>
-    <string name="notify_test_group_desc">أزرار تجريب مباشرة لكل نوع توصيل.</string>
-    <string name="notify_test_adhan">أذان</string>
-    <string name="notify_test_silent">صامت</string>
-    <string name="notify_test_vibrate">اهتزاز</string>
     <string name="notify_rationale_title">تفعيل الإشعارات</string>
     <string name="notify_rationale_body">يحتاج التطبيق إلى إذن الإشعارات ليعرض لك وقت كل صلاة. لا نستخدم الإشعارات لأي غرض آخر.</string>
     <string name="notify_rationale_allow">السماح</string>
@@ -148,6 +141,11 @@
     <!-- beta14: adhan sound picker (order matches AdhanSound.ordered) -->
     <string name="settings_adhan_sound_title">صوت الأذان</string>
     <string name="settings_adhan_sound_desc">اختر الأذان الذي يُشغَّل عند التنبيه. يُطبَّق على التنبيهات التالية فورًا.</string>
+    <!-- beta17: sound-only preview + loudness slider -->
+    <string name="settings_adhan_test">استمع</string>
+    <string name="settings_adhan_test_stop">إيقاف</string>
+    <string name="settings_adhan_volume_title">مستوى صوت الأذان</string>
+    <string name="settings_adhan_volume_value">%1$s%%</string>
     <string name="adhan_alaqsa_full">أذان الأقصى كامل</string>
     <string name="adhan_alaqsa_tkbera">أذان الأقصى تكبيرة</string>
     <string name="adhan_makkah_full">أذان الحرم المكي كامل</string>
