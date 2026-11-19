@@ -640,18 +640,23 @@ private data class GridItem(
 )
 
 /**
- * beta17: the "متبقي 00:15:09" pill under the hero time.
+ * beta18: the "متبقي 00:15:09" pill under the hero time.
  *
- * The caption and the digits are ONE [Text], so they share a single text run,
- * a single font family and - by construction - a single baseline. There is no
- * ink offset to tune and no `alignByBaseline` row that a later edit could
- * mis-align: the baseline equality is a property of the composition, not of a
- * measurement. (An earlier two-Text Row plus top alignment is what made the
- * digits appear to float; the pill has been a single Text since beta2, and the
- * test tag below lets a regression test keep it that way.)
+ * The caption and the digits are two [Text]s laid out in a single [Row] and
+ * BOTH carry `Modifier.alignByBaseline()`. That contract is what makes the two
+ * glyph baselines identical: the row computes one baseline for the group and
+ * places each child so its own baseline lands on it, independent of the font
+ * files, the script or the font scale. No vertical padding, offset or spacer
+ * is used to fake the alignment.
  *
- * Sizes, family, weight, colour, tabular digits and the RTL reading order
- * ("متبقي" first, digits second) are unchanged from beta16.
+ * beta17 declared this row "already a single Text" and only extracted it, so
+ * the concatenated string it shipped could never expose a baseline contract
+ * (and the reported defect - digits riding high - stayed visible). The split
+ * below is the actual fix; the word gap is the `countdownWordGap` token and
+ * the digits keep their tabular treatment via `fontFeatureSettings = "tnum"`.
+ *
+ * Sizes, family, weight, colour, pill styling and the RTL reading order
+ * ("متبقي" first, digits second) are unchanged from beta16/beta17.
  */
 @Composable
 private fun CountdownPill(secondsLeft: Long, palette: SkyPalette) {
@@ -665,12 +670,25 @@ private fun CountdownPill(secondsLeft: Long, palette: SkyPalette) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = stringResource(R.string.remaining_short) + " " +
-                TimeFormatter.formatCountdown(secondsLeft),
+            text = stringResource(R.string.remaining_short),
             fontFamily = Tajawal,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
-            color = palette.accent
+            color = palette.accent,
+            modifier = Modifier
+                .alignByBaseline()
+                .testTag("hero_countdown_caption")
+        )
+        Spacer(Modifier.width(NidaaDimens.countdownWordGap))
+        Text(
+            text = TimeFormatter.formatCountdown(secondsLeft),
+            fontFamily = Tajawal,
+            style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Medium,
+            color = palette.accent,
+            modifier = Modifier
+                .alignByBaseline()
+                .testTag("hero_countdown_value")
         )
     }
 }

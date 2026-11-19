@@ -51,6 +51,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -509,7 +510,37 @@ fun SettingsList(
 
         ItemGap()
 
-        // 5b. Adhan sound (beta14) + beta17 volume.
+        // 5b. Notifications master switch (beta18: moved to the TOP of this
+        //     group so the on/off control is the first thing seen). Behaviour,
+        //     wiring, strings and styling are untouched - only the position
+        //     changed.
+        SettingsCard(
+            title = stringResource(R.string.settings_notifications),
+            description = stringResource(R.string.settings_notifications_desc),
+            modifier = Modifier.testTag("settings_notifications_master_card")
+        ) {
+            SettingsToggleRow(
+                title = stringResource(R.string.notifications_master),
+                description = stringResource(R.string.notifications_master_desc),
+                checked = notifications.masterEnabled,
+                onCheckedChange = onNotificationsEnabled,
+                modifier = Modifier.testTag("notifications_master_toggle"),
+                toggleTestTag = "notifications_master_switch"
+            )
+            if (!masterEnabled) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = stringResource(R.string.notifications_off_caption),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = palette.accent,
+                    modifier = Modifier.testTag("notifications_off_caption")
+                )
+            }
+        }
+
+        ItemGap()
+
+        // 5c. Adhan sound (beta14) + beta17 volume.
         //
         //     ONE persisted sound and ONE persisted loudness, both read at fire
         //     time by AlarmReceiver and by the sound-only preview. The picker
@@ -560,32 +591,6 @@ fun SettingsList(
                     if (previewingAdhan) onStopAdhanPreview()
                 }
             )
-        }
-
-        ItemGap()
-
-        // 6. Notifications master switch.
-        SettingsCard(
-            title = stringResource(R.string.settings_notifications),
-            description = stringResource(R.string.settings_notifications_desc)
-        ) {
-            SettingsToggleRow(
-                title = stringResource(R.string.notifications_master),
-                description = stringResource(R.string.notifications_master_desc),
-                checked = notifications.masterEnabled,
-                onCheckedChange = onNotificationsEnabled,
-                modifier = Modifier.testTag("notifications_master_toggle"),
-                toggleTestTag = "notifications_master_switch"
-            )
-            if (!masterEnabled) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = stringResource(R.string.notifications_off_caption),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = palette.accent,
-                    modifier = Modifier.testTag("notifications_off_caption")
-                )
-            }
         }
 
         // 6b. Apply one mode to every enabled event (beta17: moved to the TOP of
@@ -660,32 +665,46 @@ fun SettingsList(
             }
         }
 
-        ItemGap()
-
         // 9. System status rows, only when they need attention.
+        //
+        //    beta18: a visible status row is followed by the same card gap used
+        //    between every other Settings card, so the last one (typically the
+        //    battery row) can never sit flush against the About card. Each row
+        //    also carries the shared `statusCardPadding` and never truncates
+        //    its description.
+        var anyStatusCard = false
         if (!canScheduleExact) {
             ItemGap()
             StatusCard(
                 title = stringResource(R.string.notify_exact_title),
                 description = stringResource(R.string.notify_exact_desc),
-                onClick = onOpenExactAlarmSettings
+                onClick = onOpenExactAlarmSettings,
+                testTag = "status_exact_card"
             )
+            anyStatusCard = true
         }
         if (!notificationsGranted) {
             ItemGap()
             StatusCard(
                 title = stringResource(R.string.notify_permission_title),
                 description = stringResource(R.string.notify_permission_desc),
-                onClick = onOpenNotificationSettings
+                onClick = onOpenNotificationSettings,
+                testTag = "status_permission_card"
             )
+            anyStatusCard = true
         }
         if (batteryOptimized) {
             ItemGap()
             StatusCard(
                 title = stringResource(R.string.notify_battery_title),
                 description = stringResource(R.string.notify_battery_desc),
-                onClick = onOpenBatterySettings
+                onClick = onOpenBatterySettings,
+                testTag = "status_battery_card"
             )
+            anyStatusCard = true
+        }
+        if (anyStatusCard) {
+            ItemGap()
         }
 
         // 10. About — the LAST item of the list. The claims live here exactly
@@ -829,10 +848,30 @@ private fun AdhanVolumeRow(
     }
 }
 
+/**
+ * beta18: a system-status row (exact alarms, notification permission, battery).
+ *
+ * Sizing is content-driven end to end: [SettingsCard] -> [GlassCard] wrap their
+ * content (no fixed height anywhere), the content padding comes from the theme
+ * on every side, and the description is allowed unlimited lines with visible
+ * overflow. The description can therefore never be clipped at the card's bottom
+ * edge, whatever the font scale or text length.
+ *
+ * The whole card stays clickable through the untouched [SettingsCard] `onClick`.
+ */
 @Composable
-private fun StatusCard(title: String, description: String, onClick: () -> Unit) {
+private fun StatusCard(
+    title: String,
+    description: String,
+    onClick: () -> Unit,
+    testTag: String? = null
+) {
     val palette = skyPalette
-    SettingsCard(onClick = onClick) {
+    SettingsCard(
+        contentPadding = PaddingValues(NidaaDimens.statusCardPadding),
+        onClick = onClick,
+        modifier = if (testTag != null) Modifier.testTag(testTag) else Modifier
+    ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
@@ -843,14 +882,26 @@ private fun StatusCard(title: String, description: String, onClick: () -> Unit) 
         Text(
             text = description,
             style = MaterialTheme.typography.bodySmall,
-            color = palette.textMuted
+            color = palette.textMuted,
+            maxLines = Int.MAX_VALUE,
+            overflow = TextOverflow.Visible,
+            modifier = if (testTag != null) {
+                Modifier.testTag("${testTag}_description")
+            } else {
+                Modifier
+            }
         )
     }
 }
 
+/**
+ * beta18: the single card-to-card distance for the Settings list, read from the
+ * `NidaaDimens.cardGap` theme token so every pair of neighbouring cards shares
+ * one value (including the status rows and the About card).
+ */
 @Composable
 private fun ItemGap() {
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(NidaaDimens.cardGap))
 }
 
 @Composable

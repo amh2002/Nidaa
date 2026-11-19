@@ -45,4 +45,27 @@ object NidaaDimens {
      * so it scales with density and font scale.
      */
     val searchHintOpticalLift = 1.5.dp
+
+    /**
+     * beta18: horizontal space between the "متبقي" caption and the countdown
+     * digits in the hero pill. The two are now separate [Text]s joined by
+     * `Modifier.alignByBaseline()`, so the word gap is an explicit token instead
+     * of a space character buried in a concatenated string. 4 dp reproduces the
+     * advance of one space at the pill's 14 sp type size.
+     */
+    val countdownWordGap = 4.dp
+
+    /**
+     * beta18: the single card-to-card spacing used by the Settings list. Every
+     * `ItemGap()` reads this token, so two neighbouring cards can never end up
+     * flush against each other.
+     */
+    val cardGap = 12.dp
+
+    /**
+     * beta18: content padding of the system-status cards (exact alarms,
+     * notification permission, battery). Applied on all four sides through the
+     * card's `contentPadding`, so the description can never touch a border.
+     */
+    val statusCardPadding = 16.dp
 }
