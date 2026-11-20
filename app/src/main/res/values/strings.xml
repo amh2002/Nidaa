@@ -187,4 +187,37 @@
     <string name="update_notification_body">الإصدار %1$s جاهز للتنزيل من داخل التطبيق.</string>
     <string name="update_channel_name">تحديثات التطبيق</string>
     <string name="update_channel_desc">إشعار واحد عند توفر إصدار جديد من نداء.</string>
+
+    <!-- beta20: install hardening, deep links and diagnosability -->
+    <string name="update_ready_notification_title">التحديث جاهز للتثبيت</string>
+    <string name="update_ready_notification_body">تم تنزيل %1$s والتحقق منه. اضغط للتثبيت الآن.</string>
+
+    <string name="settings_updates_needs_permission">اسمح لنداء بتثبيت التطبيقات ثم تابع.</string>
+    <string name="settings_updates_installing">جارٍ فتح مثبّت النظام…</string>
+    <string name="settings_updates_allow_install">السماح والتثبيت</string>
+    <string name="settings_updates_install_settings">إعدادات تثبيت التطبيقات</string>
+    <string name="settings_updates_last_install_success">آخر محاولة تثبيت: نجحت.</string>
+    <string name="settings_updates_last_install_failure">آخر محاولة تثبيت: فشلت — %1$s</string>
+
+    <string name="install_outcome_success">تم التثبيت بنجاح.</string>
+    <string name="install_outcome_pending">بانتظار تأكيد النظام.</string>
+    <string name="install_outcome_aborted">أُلغي التثبيت قبل اكتماله.</string>
+    <string name="install_outcome_blocked">منع النظام التثبيت. اسمح لنداء بتثبيت التطبيقات ثم أعد المحاولة.</string>
+    <string name="install_outcome_invalid">ملف التحديث غير صالح. أعد تنزيله ثم حاول مجددًا.</string>
+    <string name="install_outcome_conflict">تعارض مع نسخة أخرى مثبتة. أزل النسخة المتعارضة ثم أعد المحاولة.</string>
+    <string name="install_outcome_storage">لا توجد مساحة كافية للتثبيت. حرّر مساحة ثم أعد المحاولة.</string>
+    <string name="install_outcome_timeout">انتهت مهلة التثبيت. أعد المحاولة.</string>
+    <string name="install_outcome_incompatible">هذا التحديث غير متوافق مع جهازك أو نسخة أندرويد.</string>
+    <string name="install_outcome_unknown">تعذر إكمال التثبيت لسبب غير معروف.</string>
+
+    <string name="install_guidance_huawei">على Huawei/Honor: أوقف «الوضع الصرف» (Pure Mode) ثم اسمح لنداء بتثبيت التطبيقات من المصادر الخارجية.</string>
+    <string name="install_guidance_xiaomi">على Xiaomi/Redmi/POCO: الإعدادات ← كلمات المرور والأمان ← التثبيت من مصادر غير معروفة ← اسمح لنداء.</string>
+    <string name="install_guidance_samsung">على Samsung: الإعدادات ← الأمان ← تثبيت تطبيقات غير معروفة ← اختر نداء واسمح.</string>
+    <string name="install_guidance_generic">اسمح لنداء بتثبيت التطبيقات من إعدادات النظام، ثم أعد المحاولة.</string>
+
+    <string name="update_permission_title">السماح بتثبيت التحديث</string>
+    <string name="update_permission_message">يحتاج أندرويد إلى إذن «تثبيت تطبيقات غير معروفة» من أجل نداء. افتح الإعدادات واسمح، ثم عد إلى التطبيق وسيُستأنف التثبيت تلقائيًا.</string>
+    <string name="update_permission_open_settings">فتح الإعدادات</string>
+    <string name="update_permission_open_releases">فتح صفحة الإصدارات</string>
+    <string name="update_permission_later">لاحقًا</string>
 </resources>

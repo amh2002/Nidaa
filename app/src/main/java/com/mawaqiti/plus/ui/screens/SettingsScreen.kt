@@ -84,6 +84,7 @@ import com.mawaqiti.plus.ui.components.SettingsToggleRow
 import com.mawaqiti.plus.ui.components.mawaqitiSwitchColors
 import com.mawaqiti.plus.ui.theme.NidaaDimens
 import com.mawaqiti.plus.ui.theme.skyPalette
+import com.nidaa.prayer.update.InstallAttempt
 import com.nidaa.prayer.update.UpdateState
 import java.time.LocalTime
 import java.util.Locale
@@ -129,6 +130,8 @@ fun SettingsScreen(
     onDownloadUpdate: () -> Unit = {},
     onInstallUpdate: () -> Unit = {},
     onOpenReleasesPage: () -> Unit = {},
+    lastInstallAttempt: InstallAttempt? = null,
+    onOpenInstallSettings: () -> Unit = {},
     /** beta10: persisted appearance choice; AUTO is the default. */
     onSelectTheme: (AppTheme) -> Unit = {}
 ) {
@@ -205,6 +208,8 @@ fun SettingsScreen(
         onDownloadUpdate = onDownloadUpdate,
         onInstallUpdate = onInstallUpdate,
         onOpenReleasesPage = onOpenReleasesPage,
+        lastInstallAttempt = lastInstallAttempt,
+        onOpenInstallSettings = onOpenInstallSettings,
         onSelectTheme = onSelectTheme
     )
 
@@ -270,6 +275,8 @@ fun SettingsList(
     onDownloadUpdate: () -> Unit = {},
     onInstallUpdate: () -> Unit = {},
     onOpenReleasesPage: () -> Unit = {},
+    lastInstallAttempt: InstallAttempt? = null,
+    onOpenInstallSettings: () -> Unit = {},
     /** beta10: appearance choice (see [SettingsScreen]). */
     onSelectTheme: (AppTheme) -> Unit = {}
 ) {
@@ -492,7 +499,9 @@ fun SettingsList(
             onCheckNow = onCheckForUpdates,
             onDownload = onDownloadUpdate,
             onInstall = onInstallUpdate,
-            onOpenReleases = onOpenReleasesPage
+            onOpenReleases = onOpenReleasesPage,
+            lastInstall = lastInstallAttempt,
+            onOpenInstallSettings = onOpenInstallSettings
         )
 
         // 5. Summer time: Palestine only.

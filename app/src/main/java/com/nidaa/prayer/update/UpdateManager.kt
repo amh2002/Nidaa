@@ -3,7 +3,10 @@ package com.nidaa.prayer.update
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import com.mawaqiti.plus.BuildConfig
+import com.mawaqiti.plus.data.AppLanguage
+import com.mawaqiti.plus.data.SettingsRepository
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -19,8 +23,10 @@ import kotlinx.coroutines.launch
  *
  * This object never touches the engine, the widgets or the alarm pipeline; it
  * only knows about releases, the app cache, WorkManager and the installer.
- * Failures are exposed as state (manual check) or swallowed (automatic check),
- * never as a crash.
+ * Failures are exposed as state (manual action) or swallowed (automatic check),
+ * never as a crash. Install is only ever started from a user tap in the
+ * foreground: background work stops at [UpdateState.ReadyToInstall] and posts a
+ * notification.
  */
 object UpdateManager {
 
@@ -28,6 +34,10 @@ object UpdateManager {
 
     private val _state = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val state: StateFlow<UpdateState> = _state.asStateFlow()
+
+    /** Increments whenever the owner must be shown the permission explainer. */
+    private val _permissionPrompt = MutableStateFlow(0L)
+    val permissionPrompt: StateFlow<Long> = _permissionPrompt.asStateFlow()
 
     private var checkJob: Job? = null
     private var downloadJob: Job? = null
@@ -105,6 +115,10 @@ object UpdateManager {
                     _state.value = UpdateState.Downloading(release, progress)
                 }
                 _state.value = UpdateState.ReadyToInstall(release)
+                // Download completion never installs. If this ran in the
+                // background (or the app is left), the notification is the way
+                // back into the foreground install UI.
+                UpdateNotifier.notifyReady(app, release, languageOf(app))
             } catch (error: Throwable) {
                 target.delete()
                 _state.value = UpdateState.Failed(release, kindOf(error))
@@ -112,44 +126,113 @@ object UpdateManager {
         }
     }
 
-    /** Starts the platform installer; verification has already happened. */
+    /**
+     * Foreground entry point (settings install button). The caller must pass a
+     * foreground context: [UpdateWorker] and the receiver never call this.
+     */
     fun install(context: Context) {
         val release = when (val current = _state.value) {
             is UpdateState.ReadyToInstall -> current.release
-            is UpdateState.Available -> current.release
+            is UpdateState.NeedsPermission -> current.release
             is UpdateState.Failed -> current.release
+            is UpdateState.Available -> current.release
             else -> null
         } ?: return
-        val apk = UpdateStorage.apkFile(context.applicationContext, release)
+
+        if (!ApkInstaller.canInstall(context)) {
+            requestPermission(release)
+            return
+        }
+        startInstall(context, release)
+    }
+
+    /** Called from `Activity.onResume`: continue after the system settings page. */
+    fun resumeAfterPermission(context: Context) {
+        val release = when (val current = _state.value) {
+            is UpdateState.NeedsPermission -> current.release
+            else -> null
+        } ?: return
+        if (!ApkInstaller.canInstall(context)) return
+        startInstall(context, release)
+    }
+
+    fun openPermissionSettings(context: Context) {
+        ApkInstaller.openPermissionSettings(context)
+    }
+
+    private fun requestPermission(release: ReleaseInfo) {
+        _state.value = UpdateState.NeedsPermission(release)
+        _permissionPrompt.value = _permissionPrompt.value + 1
+    }
+
+    private fun startInstall(app: Context, release: ReleaseInfo) {
+        val apk = UpdateStorage.apkFile(app, release)
         if (!apk.exists()) {
+            recordAttempt(app, InstallStatusCode.FAILURE, InstallOutcome.START_FAILED, "APK missing")
             _state.value = UpdateState.Failed(release, FailureKind.DOWNLOAD)
             return
         }
-        when (ApkInstaller.install(context, apk)) {
-            InstallStart.Started -> Unit
-            InstallStart.NeedsPermission -> {
-                ApkInstaller.openPermissionSettings(context)
-                _state.value = UpdateState.Failed(release, FailureKind.PERMISSION)
+        _state.value = UpdateState.Installing(release)
+        when (val started = ApkInstaller.install(app, apk)) {
+            InstallStart.Started -> Log.i(ApkInstaller.TAG, "installer started for ${release.tag}")
+
+            InstallStart.NeedsPermission -> requestPermission(release)
+
+            is InstallStart.Failed -> {
+                Log.w(ApkInstaller.TAG, "installer did not start: ${started.message}")
+                recordAttempt(
+                    app,
+                    InstallStatusCode.FAILURE,
+                    InstallOutcome.START_FAILED,
+                    started.message
+                )
+                _state.value = UpdateState.Failed(release, FailureKind.INSTALL)
             }
-            is InstallStart.Failed -> _state.value = UpdateState.Failed(release, FailureKind.INSTALL)
         }
     }
 
-    /** Called by [InstallResultReceiver]. */
-    fun onInstallFinished(context: Context, success: Boolean) {
-        val release = when (val current = _state.value) {
-            is UpdateState.ReadyToInstall -> current.release
-            is UpdateState.Available -> current.release
-            else -> null
-        }
-        if (success) _state.value = UpdateState.Idle
-        if (success && release != null) {
-            val app = context.applicationContext
-            scope.launch {
-                runCatching {
-                    val store = UpdatesStore(app)
-                    store.setPending(null)
-                    store.markNotified(release.tag)
+    /** Called by [InstallResultReceiver] while the system confirmation shows. */
+    fun onInstallPending(context: Context) {
+        val release = releaseOfState() ?: return
+        if (_state.value is UpdateState.Installing) return
+        _state.value = UpdateState.Installing(release)
+    }
+
+    /**
+     * Called by [InstallResultReceiver] for every terminal STATUS_*. Persists
+     * the attempt (status code + system message) and updates the visible state.
+     */
+    fun onInstallStatus(context: Context, statusCode: Int, statusMessage: String?) {
+        val app = context.applicationContext
+        val outcome = InstallOutcome.fromStatusCode(statusCode)
+        scope.launch {
+            val store = runCatching { UpdatesStore(app) }.getOrNull()
+            val release = releaseOfState() ?: store?.pendingRelease()
+            runCatching { store?.recordInstallAttempt(InstallAttempt(
+                timestampMs = System.currentTimeMillis(),
+                statusCode = statusCode,
+                outcome = outcome,
+                message = statusMessage
+            )) }
+
+            when (outcome) {
+                InstallOutcome.SUCCESS -> {
+                    runCatching {
+                        store?.setPending(null)
+                        if (release != null) store?.markNotified(release.tag)
+                    }
+                    _state.value = UpdateState.Idle
+                    UpdateNotifier.cancelAll(app)
+                    Log.i(ApkInstaller.TAG, "install succeeded${release?.let { " for ${it.tag}" } ?: ""}")
+                }
+
+                InstallOutcome.PENDING_USER_ACTION -> Unit
+
+                else -> {
+                    Log.w(ApkInstaller.TAG, "install failed: ${outcome.name}")
+                    if (release != null) {
+                        _state.value = UpdateState.Failed(release, FailureKind.INSTALL)
+                    }
                 }
             }
         }
@@ -161,7 +244,7 @@ object UpdateManager {
         UpdateScheduler.sync(app, enabled)
     }
 
-    /** Browser fallback for a failed manual check. */
+    /** Browser fallback for a failed manual check / blocked install. */
     fun openReleasesPage(context: Context) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(ReleaseInfo.RELEASES_PAGE))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -173,6 +256,35 @@ object UpdateManager {
         downloadJob?.cancel()
         _state.value = UpdateState.Idle
     }
+
+    private fun releaseOfState(): ReleaseInfo? = when (val current = _state.value) {
+        is UpdateState.Available -> current.release
+        is UpdateState.ReadyToInstall -> current.release
+        is UpdateState.NeedsPermission -> current.release
+        is UpdateState.Installing -> current.release
+        is UpdateState.Failed -> current.release
+        else -> null
+    }
+
+    private fun recordAttempt(
+        context: Context,
+        code: Int,
+        outcome: InstallOutcome,
+        message: String?
+    ) {
+        val app = context.applicationContext
+        scope.launch {
+            runCatching {
+                UpdatesStore(app).recordInstallAttempt(
+                    InstallAttempt(System.currentTimeMillis(), code, outcome, message)
+                )
+            }
+        }
+    }
+
+    private suspend fun languageOf(context: Context): AppLanguage = runCatching {
+        SettingsRepository(context).settings.first().language
+    }.getOrDefault(AppLanguage.ARABIC)
 
     private fun kindOf(error: Throwable): FailureKind = when (error) {
         is MissingChecksumException, is ChecksumMismatchException -> FailureKind.CHECKSUM

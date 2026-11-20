@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import android.os.Build
 import com.mawaqiti.plus.R
 import com.mawaqiti.plus.ui.components.GlassCard
 import com.mawaqiti.plus.ui.components.SettingsCard
@@ -29,8 +30,11 @@ import com.mawaqiti.plus.ui.components.SettingsSmallButton
 import com.mawaqiti.plus.ui.components.SettingsToggleRow
 import com.mawaqiti.plus.ui.theme.skyPalette
 import com.nidaa.prayer.update.FailureKind
+import com.nidaa.prayer.update.InstallAttempt
+import com.nidaa.prayer.update.OemFamily
 import com.nidaa.prayer.update.ReleaseInfo
 import com.nidaa.prayer.update.UpdateState
+import com.nidaa.prayer.update.oemFamilyFor
 
 /** Display label for a release tag (`v1.0.0-beta7.95` -> `1.0.0-beta7.95`). */
 private fun versionLabel(release: ReleaseInfo): String = release.tag.removePrefix("v")
@@ -98,13 +102,18 @@ fun UpdatesSettingsCard(
     onDownload: () -> Unit,
     onInstall: () -> Unit,
     onOpenReleases: () -> Unit,
+    lastInstall: InstallAttempt? = null,
+    onOpenInstallSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val palette = skyPalette
+    val oemFamily = oemFamilyFor(Build.MANUFACTURER, Build.BRAND)
     val release = when (state) {
         is UpdateState.Available -> state.release
         is UpdateState.Downloading -> state.release
         is UpdateState.ReadyToInstall -> state.release
+        is UpdateState.NeedsPermission -> state.release
+        is UpdateState.Installing -> state.release
         is UpdateState.Failed -> state.release
         else -> null
     }
@@ -179,6 +188,17 @@ fun UpdatesSettingsCard(
                 bold = true
             )
 
+            is UpdateState.NeedsPermission -> StatusLine(
+                text = stringResource(R.string.settings_updates_needs_permission),
+                color = palette.accent,
+                bold = true
+            )
+
+            is UpdateState.Installing -> StatusLine(
+                text = stringResource(R.string.settings_updates_installing),
+                color = palette.textMuted
+            )
+
             is UpdateState.Failed -> StatusLine(
                 text = stringResource(failureMessage(state.kind)),
                 color = palette.accent,
@@ -188,6 +208,23 @@ fun UpdatesSettingsCard(
             UpdateState.Idle -> Unit
         }
 
+        if (lastInstall != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = if (lastInstall.succeeded) {
+                    stringResource(R.string.settings_updates_last_install_success)
+                } else {
+                    stringResource(
+                        R.string.settings_updates_last_install_failure,
+                        stringResource(lastInstall.outcome.messageRes)
+                    )
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = palette.textMuted,
+                modifier = Modifier.testTag("updates_last_attempt")
+            )
+        }
+
         Spacer(Modifier.height(12.dp))
 
         Row(
@@ -195,7 +232,10 @@ fun UpdatesSettingsCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (state !is UpdateState.Checking && state !is UpdateState.Downloading) {
+            if (state !is UpdateState.Checking &&
+                state !is UpdateState.Downloading &&
+                state !is UpdateState.Installing
+            ) {
                 SettingsSmallButton(
                     label = stringResource(R.string.settings_updates_check_now),
                     onClick = onCheckNow,
@@ -221,6 +261,16 @@ fun UpdatesSettingsCard(
                         .weight(1f)
                         .testTag("updates_install")
                 )
+
+                is UpdateState.NeedsPermission -> SettingsSmallButton(
+                    label = stringResource(R.string.settings_updates_allow_install),
+                    onClick = onInstall,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("updates_allow_install")
+                )
+
+                is UpdateState.Installing -> Unit
 
                 is UpdateState.Failed -> when (state.kind) {
                     FailureKind.NETWORK -> SettingsSmallButton(
@@ -256,6 +306,41 @@ fun UpdatesSettingsCard(
             }
         }
 
+        val failedInstall = state as? UpdateState.Failed
+        if (failedInstall != null &&
+            (failedInstall.kind == FailureKind.PERMISSION ||
+                failedInstall.kind == FailureKind.INSTALL)
+        ) {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = stringResource(installGuidanceRes(oemFamily)),
+                style = MaterialTheme.typography.labelSmall,
+                color = palette.textMuted,
+                modifier = Modifier.testTag("updates_install_guidance")
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SettingsSmallButton(
+                    label = stringResource(R.string.settings_updates_install_settings),
+                    onClick = onOpenInstallSettings,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("updates_install_settings")
+                )
+                SettingsSmallButton(
+                    label = stringResource(R.string.settings_updates_open_releases),
+                    onClick = onOpenReleases,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("updates_open_releases")
+                )
+            }
+        }
+
         if (release != null && state is UpdateState.Failed) {
             Spacer(Modifier.height(6.dp))
             Text(
@@ -279,6 +364,14 @@ private fun StatusLine(
         fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
         color = color
     )
+}
+
+/** OEM-specific Arabic guidance for a blocked / failed install. */
+fun installGuidanceRes(family: OemFamily): Int = when (family) {
+    OemFamily.HUAWEI_HONOR -> R.string.install_guidance_huawei
+    OemFamily.XIAOMI -> R.string.install_guidance_xiaomi
+    OemFamily.SAMSUNG -> R.string.install_guidance_samsung
+    OemFamily.GENERIC -> R.string.install_guidance_generic
 }
 
 private fun failureMessage(kind: FailureKind): Int = when (kind) {

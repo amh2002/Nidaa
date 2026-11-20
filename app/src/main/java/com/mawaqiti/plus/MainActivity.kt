@@ -13,7 +13,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,9 +58,14 @@ import com.nidaa.prayer.update.UpdateState
 import com.nidaa.prayer.update.UpdatesStore
 
 class MainActivity : AppCompatActivity() {
+
+    /** Incremented for every update-notification / banner deep link. */
+    private var openUpdatesSignal by mutableIntStateOf(0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        handleUpdateIntent(intent)
         val viewModel: MawaqitiViewModel by viewModels()
         applyDebugPhase(intent, viewModel)
         setContent {
@@ -64,7 +73,10 @@ class MainActivity : AppCompatActivity() {
             val golden by vm.goldenPhase.collectAsState()
             MawaqitiTheme(paletteOverride = GoldenPalettes.of(golden)) {
                 CompositionLocalProvider(LocalGoldenPhase provides golden) {
-                    MawaqitiApp(viewModel = vm)
+                    MawaqitiApp(
+                        viewModel = vm,
+                        openUpdatesSignal = openUpdatesSignal
+                    )
                 }
             }
         }
@@ -73,8 +85,24 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleUpdateIntent(intent)
         val viewModel: MawaqitiViewModel by viewModels()
         applyDebugPhase(intent, viewModel)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Returning from the "install unknown apps" system page resumes the
+        // install that was waiting for permission.
+        UpdateManager.resumeAfterPermission(this)
+    }
+
+    /** Update notifications and the home banner deep-link to «التحديثات». */
+    private fun handleUpdateIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_UPDATES, false) == true) {
+            intent.removeExtra(EXTRA_OPEN_UPDATES)
+            openUpdatesSignal++
+        }
     }
 
     /**
@@ -92,6 +120,9 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_PHASE = "nidaa_phase"
+
+        /** Explicit deep link from update notifications into «التحديثات». */
+        const val EXTRA_OPEN_UPDATES = "nidaa_open_updates"
     }
 }
 
@@ -105,7 +136,10 @@ class MainActivity : AppCompatActivity() {
 private const val TAB_ABOUT = 99
 
 @Composable
-fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
+fun MawaqitiApp(
+    viewModel: MawaqitiViewModel = viewModel(),
+    openUpdatesSignal: Int = 0
+) {
     val storedSettings by viewModel.settingsState.collectAsState()
     val settings = storedSettings ?: AppSettings()
     val city by viewModel.city.collectAsState()
@@ -117,22 +151,40 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
 
     // beta 7.95: isolated updater state. The toggle is read from the updater's
     // own DataStore; the banner only appears for an actually newer release.
-    val appContext = LocalContext.current.applicationContext
+    val activityContext = LocalContext.current
+    val appContext = activityContext.applicationContext
     val updatesStore = remember(appContext) { UpdatesStore(appContext) }
     val updatesEnabled by updatesStore.enabled.collectAsState(initial = true)
+    val lastInstall by updatesStore.lastInstallAttempt.collectAsState(initial = null)
     val updateState by UpdateManager.state.collectAsState()
+    val permissionPrompt by UpdateManager.permissionPrompt.collectAsState()
     val updateRelease: ReleaseInfo? = when (val current = updateState) {
         is UpdateState.Available -> current.release
         is UpdateState.Downloading -> current.release
         is UpdateState.ReadyToInstall -> current.release
+        is UpdateState.NeedsPermission -> current.release
+        is UpdateState.Installing -> current.release
         else -> null
     }
     LaunchedEffect(appContext) {
         UpdateManager.loadPending(appContext)
     }
 
+    var permissionDialogFor by remember { mutableStateOf(0L) }
+    LaunchedEffect(permissionPrompt) {
+        if (permissionPrompt > 0) permissionDialogFor = permissionPrompt
+    }
+
     var selectedTab by rememberSaveable { mutableIntStateOf(DockDestination.HOME.tab) }
     var showCityPicker by rememberSaveable { mutableStateOf(false) }
+
+    // Notification / banner deep link: land on Settings, where «التحديثات» lives.
+    LaunchedEffect(openUpdatesSignal) {
+        if (openUpdatesSignal > 0) {
+            showCityPicker = false
+            selectedTab = DockDestination.SETTINGS.tab
+        }
+    }
 
     BackHandler(enabled = selectedTab != DockDestination.HOME.tab) {
         selectedTab = DockDestination.HOME.tab
@@ -226,8 +278,12 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
                         },
                         onCheckForUpdates = { UpdateManager.checkNow(appContext, manual = true) },
                         onDownloadUpdate = { UpdateManager.download(appContext) },
-                        onInstallUpdate = { UpdateManager.install(appContext) },
+                        onInstallUpdate = { UpdateManager.install(activityContext) },
                         onOpenReleasesPage = { UpdateManager.openReleasesPage(appContext) },
+                        lastInstallAttempt = lastInstall,
+                        onOpenInstallSettings = {
+                            UpdateManager.openPermissionSettings(activityContext)
+                        },
                         onSelectTheme = viewModel::setTheme
                     )
 
@@ -254,6 +310,30 @@ fun MawaqitiApp(viewModel: MawaqitiViewModel = viewModel()) {
             isArabic = isArabic,
             onDismiss = { showCityPicker = false },
             onSelect = viewModel::selectCity
+        )
+    }
+
+    if (permissionDialogFor > 0) {
+        AlertDialog(
+            onDismissRequest = { permissionDialogFor = 0L },
+            title = { Text(stringResource(R.string.update_permission_title)) },
+            text = { Text(stringResource(R.string.update_permission_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    permissionDialogFor = 0L
+                    UpdateManager.openPermissionSettings(activityContext)
+                }) {
+                    Text(stringResource(R.string.update_permission_open_settings))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    permissionDialogFor = 0L
+                    UpdateManager.openReleasesPage(activityContext)
+                }) {
+                    Text(stringResource(R.string.update_permission_open_releases))
+                }
+            }
         )
     }
     }

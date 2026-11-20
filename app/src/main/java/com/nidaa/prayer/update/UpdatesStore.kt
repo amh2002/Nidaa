@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -60,6 +61,34 @@ class UpdatesStore(context: Context) {
 
     suspend fun setEnabled(enabled: Boolean) = edit { it[Keys.enabled] = enabled }
 
+    // ---------------------------------------------------------- install log
+
+    /** Last user-initiated install attempt, or null when none was recorded. */
+    val lastInstallAttempt: Flow<InstallAttempt?> = preferences.map { prefs ->
+        val at = prefs[Keys.lastInstallAt] ?: return@map null
+        val status = prefs[Keys.lastInstallStatus] ?: InstallStatusCode.FAILURE
+        val outcome = prefs[Keys.lastInstallOutcome]
+            ?.let { runCatching { InstallOutcome.valueOf(it) }.getOrNull() }
+            ?: InstallOutcome.fromStatusCode(status)
+        InstallAttempt(
+            timestampMs = at,
+            statusCode = status,
+            outcome = outcome,
+            message = prefs[Keys.lastInstallMessage]?.takeIf { it.isNotBlank() }
+        )
+    }
+
+    suspend fun lastInstallAttemptNow(): InstallAttempt? = lastInstallAttempt.first()
+
+    suspend fun recordInstallAttempt(attempt: InstallAttempt) = edit { prefs ->
+        prefs[Keys.lastInstallAt] = attempt.timestampMs
+        prefs[Keys.lastInstallStatus] = attempt.statusCode
+        prefs[Keys.lastInstallOutcome] = attempt.outcome.name
+        val message = attempt.message?.takeIf { it.isNotBlank() }
+        if (message == null) prefs.remove(Keys.lastInstallMessage)
+        else prefs[Keys.lastInstallMessage] = message
+    }
+
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
         appContext.updatesDataStore.edit { prefs -> block(prefs) }
     }
@@ -69,5 +98,9 @@ class UpdatesStore(context: Context) {
         val lastAutoCheck = longPreferencesKey("last_auto_check_ms")
         val notifiedTag = stringPreferencesKey("last_notified_tag")
         val pending = stringPreferencesKey("pending_release")
+        val lastInstallAt = longPreferencesKey("last_install_at_ms")
+        val lastInstallStatus = intPreferencesKey("last_install_status")
+        val lastInstallOutcome = stringPreferencesKey("last_install_outcome")
+        val lastInstallMessage = stringPreferencesKey("last_install_message")
     }
 }
