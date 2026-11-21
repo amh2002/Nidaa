@@ -57,9 +57,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -671,57 +674,71 @@ private data class GridItem(
 )
 
 /**
- * beta18: the "متبقي 00:15:09" pill under the hero time.
+ * beta23.1: the "متبقي 00:15:09" pill under the hero time, as ONE [Text].
  *
- * The caption and the digits are two [Text]s laid out in a single [Row] and
- * BOTH carry `Modifier.alignByBaseline()`. That contract is what makes the two
- * glyph baselines identical: the row computes one baseline for the group and
- * places each child so its own baseline lands on it, independent of the font
- * files, the script or the font scale. No vertical padding, offset or spacer
- * is used to fake the alignment.
+ * beta17 shipped one concatenated [Text], beta18 split it into two [Text]s in a
+ * [Row] and beta23 gave both children `Modifier.alignByBaseline()`. A native
+ * screenshot of the beta23 build (411 dp, font scale 1.0) shows the two runs
+ * already ended on the same pixel row - ink top 777 and ink bottom 803 for the
+ * label and for the digits - so none of those attempts had a baseline offset
+ * left to remove, which is why the pill never looked different. What the eye
+ * reports is a font-metric fact, not a layout one: Tajawal's lining digits are
+ * full cap height while the Arabic body sits far lower, so the digits read as
+ * *taller*, never as *higher*.
  *
- * beta17 declared this row "already a single Text" and only extracted it, so
- * the concatenated string it shipped could never expose a baseline contract
- * (and the reported defect - digits riding high - stayed visible). The split
- * below is the actual fix; the word gap is the `countdownWordGap` token and
- * the digits keep their tabular treatment via `fontFeatureSettings = "tnum"`.
+ * The pill is one [Text] again, but not beta17's flat concatenation: the label
+ * and the digits are two runs of one [AnnotatedString], each carrying its own
+ * [SpanStyle]. One run pair in one layout means one baseline for both runs by
+ * construction - no `alignByBaseline`, no vertical padding compensation and no
+ * offsets can make them drift - and the digits keep their tabular figures via
+ * `fontFeatureSettings = "tnum"` on the shared [androidx.compose.ui.text.TextStyle].
  *
- * Sizes, family, weight, colour, pill styling and the RTL reading order
- * ("متبقي" first, digits second) are unchanged from beta16/beta17.
+ * RTL order needs no handling: the label is the leading run, so it is laid out
+ * on the right and the LTR digits follow it. Shape, colour, padding, type size
+ * and type family are unchanged from beta23.
  */
 @Composable
 private fun CountdownPill(secondsLeft: Long, palette: SkyPalette) {
-    Row(
+    val label = stringResource(R.string.remaining_short)
+    val digits = TimeFormatter.formatCountdown(secondsLeft)
+    val text = remember(label, digits, palette.accent) {
+        buildAnnotatedString {
+            // Leading run: the Arabic label (right-most in RTL).
+            withStyle(
+                SpanStyle(
+                    fontFamily = Tajawal,
+                    fontWeight = FontWeight.Medium,
+                    color = palette.accent
+                )
+            ) { append(label) }
+            // The word gap is the shared run's space glyph; it belongs to the
+            // paragraph, so bidi resolves it between the two directions.
+            append(' ')
+            // Trailing run: the countdown digits (LTR, one numeric run).
+            withStyle(
+                SpanStyle(
+                    fontFamily = Tajawal,
+                    fontWeight = FontWeight.Medium,
+                    color = palette.accent
+                )
+            ) { append(digits) }
+        }
+    }
+    Text(
+        text = text,
+        fontFamily = Tajawal,
+        style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+        fontWeight = FontWeight.Medium,
+        color = palette.accent,
+        maxLines = 1,
+        softWrap = false,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(Color.Black.copy(alpha = 0.20f))
             .border(1.dp, palette.accent.copy(alpha = 0.35f), RoundedCornerShape(50))
             .padding(horizontal = 14.dp, vertical = 6.dp)
-            .testTag("hero_countdown_pill"),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = stringResource(R.string.remaining_short),
-            fontFamily = Tajawal,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Medium,
-            color = palette.accent,
-            modifier = Modifier
-                .alignByBaseline()
-                .testTag("hero_countdown_caption")
-        )
-        Spacer(Modifier.width(NidaaDimens.countdownWordGap))
-        Text(
-            text = TimeFormatter.formatCountdown(secondsLeft),
-            fontFamily = Tajawal,
-            style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.Medium,
-            color = palette.accent,
-            modifier = Modifier
-                .alignByBaseline()
-                .testTag("hero_countdown_value")
-        )
-    }
+            .testTag("hero_countdown_pill")
+    )
 }
 
 @Composable

@@ -5,12 +5,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
@@ -31,19 +33,22 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import kotlin.math.abs
 
 /**
- * beta18: "متبقي" and the countdown digits share one visual baseline.
+ * beta23.1: the "متبقي" pill is ONE text, so its two runs cannot disagree.
  *
- * beta17 shipped this pill as ONE concatenated `Text` and claimed the baseline
- * was therefore correct. That claim could not fail: a single text run has no
- * two baselines to compare, so the guard only asserted "one child" and the
- * reported digit lift stayed on screen. The pill is now two [androidx.compose.material3.Text]s
- * in a [androidx.compose.foundation.layout.Row], BOTH carrying
- * `Modifier.alignByBaseline()`, so the baseline equality is a real contract and
- * this test measures it: each text's first-line baseline (layout baseline +
- * its position in the root) must be identical at font scale 1.0 and 1.3.
+ * beta17 shipped one concatenated `Text`, beta18/beta23 split it into two
+ * `Text`s and aligned them with `Modifier.alignByBaseline()`. The rendered
+ * beta23 pill already had both runs on the same pixel row, so no alignment
+ * attempt could change what the owner saw. The pill is now a single [Text]
+ * again, but with the label and the digits as two styled runs of one
+ * `AnnotatedString`, which makes the shared baseline a layout invariant rather
+ * than an alignment contract: one text layout, one baseline, one line.
+ *
+ * These tests assert that invariant directly (exactly one text node holding
+ * both runs, one line, both runs reporting line 0) and that the RTL order and
+ * the tabular digit width that the alignment attempts were protecting are
+ * still intact.
  */
 @RunWith(RobolectricTestRunner::class)
 class CountdownPillTest {
@@ -52,6 +57,9 @@ class CountdownPillTest {
     val compose = createComposeRule()
 
     private val context: Context = ApplicationProvider.getApplicationContext()
+
+    /** Ticked by the tabular-width test; everything else uses the initial value. */
+    private val secondsLeft = mutableStateOf(22 * 60L)
 
     private fun render(fontScale: Float) {
         compose.setContent {
@@ -69,7 +77,7 @@ class CountdownPillTest {
                             hero = HeroState(
                                 event = TableEvent.ISHA,
                                 minutes = 18 * 60 + 3,
-                                secondsLeft = 22 * 60L,
+                                secondsLeft = secondsLeft.value,
                                 progress = 0.42f
                             ),
                             progress = 0.42f,
@@ -86,83 +94,101 @@ class CountdownPillTest {
         compose.waitForIdle()
     }
 
-    /** Root-space y of the first-line baseline of the text at [tag]. */
-    private fun baselineOf(tag: String): Float {
+    private fun pillLayout(): TextLayoutResult {
         val layouts = mutableListOf<TextLayoutResult>()
-        compose.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.GetTextLayoutResult) { get ->
-            get(layouts)
-        }
-        assertTrue("no text layout for $tag", layouts.isNotEmpty())
-        val y = compose.onNodeWithTag(tag).fetchSemanticsNode().positionInRoot.y
-        return y + layouts.first().getLineBaseline(0)
+        compose.onNodeWithTag(PILL)
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { get -> get(layouts) }
+        assertTrue("the pill must expose one text layout", layouts.isNotEmpty())
+        return layouts.first()
     }
 
-    private fun assertSharedBaseline(widthDp: Int, fontScale: Float) {
+    /** Width of the pill's text layout in px - the run that must not jitter. */
+    private fun pillWidth(): Int = pillLayout().size.width
+
+    private fun assertSingleTextPill(widthDp: Int, fontScale: Float) {
         render(fontScale)
 
-        compose.onNodeWithTag("hero_countdown_pill").assertExists()
+        val label = context.getString(R.string.remaining_short)
+        val expected = "$label 00:22:00"
 
-        val caption = context.getString(R.string.remaining_short)
-        val digits = "00:22:00"
-        compose.onAllNodesWithText(caption).assertCountEquals(1)
-        compose.onAllNodesWithText(digits).assertCountEquals(1)
+        // One node carries the whole pill: the previous two-Text row (and its
+        // per-run tags) must be gone, otherwise a baseline offset is possible.
+        compose.onAllNodesWithTag("hero_countdown_caption").assertCountEquals(0)
+        compose.onAllNodesWithTag("hero_countdown_value").assertCountEquals(0)
+        compose.onNodeWithTag(PILL).assertTextEquals(expected)
 
-        // RTL reading order: the caption is the leading (right-most) child.
-        val captionBox = compose.onNodeWithTag("hero_countdown_caption")
-            .fetchSemanticsNode().boundsInRoot
-        val valueBox = compose.onNodeWithTag("hero_countdown_value")
-            .fetchSemanticsNode().boundsInRoot
-        assertTrue(
-            "caption must stay first in RTL order (caption $captionBox vs digits $valueBox)",
-            captionBox.left >= valueBox.right - 1f
-        )
-        assertTrue(
-            "countdown must not overlap the caption",
-            valueBox.right <= captionBox.left + 1f
-        )
-
-        // The contract under test: identical first-line baselines.
-        val captionBaseline = baselineOf("hero_countdown_caption")
-        val valueBaseline = baselineOf("hero_countdown_value")
-        println(
-            "beta18-baseline width=${widthDp}dp fontScale=$fontScale " +
-                "caption=$captionBaseline value=$valueBaseline " +
-                "offset=${abs(captionBaseline - valueBaseline)}"
-        )
+        // One line means one baseline for both runs - by construction.
+        val layout = pillLayout()
+        assertEquals("$widthDp/$fontScale must stay on one line", 1, layout.lineCount)
+        assertEquals("label run is on the single line", 0, layout.getLineForOffset(0))
         assertEquals(
-            "baseline offset at ${widthDp}dp fontScale $fontScale",
-            0f,
-            abs(captionBaseline - valueBaseline),
-            0.01f
+            "digits run is on the single line",
+            0,
+            layout.getLineForOffset(layout.layoutInput.text.text.length - 1)
         )
 
-        // The pill still lives inside the hero card.
-        val pill = compose.onNodeWithTag("hero_countdown_pill").fetchSemanticsNode().boundsInRoot
+        // RTL reading order: the label is the leading, right-most run and the
+        // LTR digits follow it to the left.
+        val labelBox = layout.getBoundingBox(0)
+        val digitBox = layout.getBoundingBox(layout.layoutInput.text.text.length - 1)
+        assertTrue(
+            "label must stay right of the digits (label $labelBox digits $digitBox)",
+            labelBox.left >= digitBox.right - 1f
+        )
+
+        // No wrap, and the pill still lives inside the hero card.
         val card = compose.onNodeWithTag("hero_card").fetchSemanticsNode().boundsInRoot
-        assertTrue("pill escapes the hero card", pill.left >= card.left && pill.right <= card.right)
+        assertTrue(
+            "pill text escapes the hero card",
+            layout.size.width <= card.width
+        )
+
+        println(
+            "beta23.1-pill width=${widthDp}dp fontScale=$fontScale " +
+                "lineCount=${layout.lineCount} baseline=${layout.getLineBaseline(0)} " +
+                "textSize=${layout.size} cardWidth=${card.width}"
+        )
     }
 
     @Test
     @Config(sdk = [34], qualifiers = "ar-rSA-ldrtl-w360dp-h640dp-xhdpi")
-    fun `shared baseline at 360dp fontScale 1_0`() {
-        assertSharedBaseline(360, 1.0f)
+    fun `single text pill at 360dp fontScale 1_0`() {
+        assertSingleTextPill(360, 1.0f)
     }
 
     @Test
     @Config(sdk = [34], qualifiers = "ar-rSA-ldrtl-w360dp-h640dp-xhdpi")
-    fun `shared baseline at 360dp fontScale 1_3`() {
-        assertSharedBaseline(360, 1.3f)
+    fun `single text pill at 360dp fontScale 1_3`() {
+        assertSingleTextPill(360, 1.3f)
     }
 
     @Test
     @Config(sdk = [34], qualifiers = "ar-rSA-ldrtl-w411dp-h891dp-xhdpi")
-    fun `shared baseline at 411dp fontScale 1_0`() {
-        assertSharedBaseline(411, 1.0f)
+    fun `single text pill at 411dp fontScale 1_0`() {
+        assertSingleTextPill(411, 1.0f)
     }
 
     @Test
     @Config(sdk = [34], qualifiers = "ar-rSA-ldrtl-w480dp-h1000dp-xhdpi")
-    fun `shared baseline at 480dp fontScale 1_3`() {
-        assertSharedBaseline(480, 1.3f)
+    fun `single text pill at 480dp fontScale 1_3`() {
+        assertSingleTextPill(480, 1.3f)
+    }
+
+    @Test
+    @Config(sdk = [34], qualifiers = "ar-rSA-ldrtl-w411dp-h891dp-xhdpi")
+    fun `tabular digits keep the pill width while ticking`() {
+        render(1.0f)
+        val before = pillWidth()
+        secondsLeft.value = 11 * 3600L + 11 * 60L + 11L
+        compose.waitForIdle()
+        compose.onNodeWithTag(PILL)
+            .assertTextEquals(context.getString(R.string.remaining_short) + " 11:11:11")
+        val after = pillWidth()
+        println("beta23.1-tabular pillWidth 00:22:00=$before 11:11:11=$after")
+        assertEquals("the pill must not jitter while the countdown ticks", before, after)
+    }
+
+    private companion object {
+        const val PILL = "hero_countdown_pill"
     }
 }
