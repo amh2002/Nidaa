@@ -16,6 +16,8 @@ object NotificationRouting {
     const val CHANNEL_ADHAN = "adhan_v2"
     const val CHANNEL_SILENT = "silent_v2"
     const val CHANNEL_VIBRATE = "vibrate_v2"
+    /** beta22: sound is disabled on this channel; the pre-alert only vibrates. */
+    const val CHANNEL_PRE_ALERT = "pre_alert_v1"
 
     /**
      * Ids created by beta4 and beta5. They are deleted at startup so the user

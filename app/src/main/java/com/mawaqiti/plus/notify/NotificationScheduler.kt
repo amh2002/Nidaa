@@ -32,17 +32,24 @@ import kotlinx.coroutines.sync.withLock
 object NotificationScheduler {
 
     const val ACTION_FIRE = "com.nidaa.prayer.action.FIRE_PRAYER"
+    /** beta22: the silent vibration reminder that fires before the adhan. */
+    const val ACTION_PRE_ALERT = "com.nidaa.prayer.action.PRE_ALERT"
     const val ACTION_MIDNIGHT = "com.nidaa.prayer.action.MIDNIGHT"
 
     const val EXTRA_EVENT = "event"
     const val EXTRA_MINUTES = "minutes"
+    const val EXTRA_PRE_MINUTES = "pre_minutes"
 
     private const val EXTRA_EPOCH = "epoch"
 
     private const val PREFS = "mawaqiti_scheduler"
     private const val KEY_PLAN = "plan"
+    /** beta22: pre-alerts are tracked separately so 0 can cancel every one. */
+    private const val KEY_PRE_PLAN = "pre_plan"
 
     private const val MIDNIGHT_REQUEST_CODE = 4200
+    /** beta22: keeps pre-alert request codes clear of events, midnight and open. */
+    private const val PRE_ALERT_REQUEST_CODE_OFFSET = 200
     private const val WINDOW_LENGTH_MS = 15 * 60 * 1000L
     private const val MIDNIGHT_SLACK_SECONDS = 3L
 
@@ -68,9 +75,11 @@ object NotificationScheduler {
         val manager = context.getSystemService(AlarmManager::class.java) ?: return
 
         cancelPreviousPlan(context, manager)
+        cancelPreviousPreAlerts(context, manager)
 
+        val alarms = SchedulePlanner.plan(now, source)
         val scheduled = HashSet<String>()
-        for (alarm in SchedulePlanner.plan(now, source)) {
+        for (alarm in alarms) {
             val epoch = alarm.fireAt.toInstant().toEpochMilli()
             val minutes = alarm.fireAt.hour * 60 + alarm.fireAt.minute
             val pending = firePendingIntent(
@@ -86,6 +95,10 @@ object NotificationScheduler {
             .edit()
             .putStringSet(KEY_PLAN, scheduled)
             .apply()
+
+        // beta22: one pre-alert per upcoming prayer, from the same plan and
+        // through the same exact/window mechanism. 0 plans nothing.
+        schedulePreAlerts(context, manager, alarms, now, settings.preAlertMinutes)
 
         scheduleMidnight(context, manager, now)
         WidgetUpdater.updateAll(context)
@@ -148,6 +161,67 @@ object NotificationScheduler {
             manager.cancel(firePendingIntent(context, event, epoch, 0))
         }
         prefs.edit().remove(KEY_PLAN).apply()
+    }
+
+    /**
+     * beta22: schedules this plan's pre-alerts. Any past reminder is skipped by
+     * [PreAlertPlanner], so a disabled setting or a stale plan never leaves an
+     * alarm behind - the caller has already cancelled the previous pre-plan.
+     */
+    private fun schedulePreAlerts(
+        context: Context,
+        manager: AlarmManager,
+        alarms: List<PlannedAlarm>,
+        now: ZonedDateTime,
+        minutesBefore: Int
+    ) {
+        val scheduled = HashSet<String>()
+        for (alert in PreAlertPlanner.plan(alarms, now, minutesBefore)) {
+            val epoch = alert.fireAt.toInstant().toEpochMilli()
+            setExactOrWindow(
+                manager,
+                epoch,
+                preAlertPendingIntent(context, alert.event, epoch, minutesBefore)
+            )
+            scheduled += planKey(alert.event, epoch)
+        }
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putStringSet(KEY_PRE_PLAN, scheduled)
+            .apply()
+    }
+
+    private fun preAlertPendingIntent(
+        context: Context,
+        event: NotifyEvent,
+        epoch: Long,
+        minutesBefore: Int
+    ): PendingIntent {
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            action = ACTION_PRE_ALERT
+            data = Uri.parse("mawaqiti://prealert/${event.storageKey}/$epoch")
+            putExtra(EXTRA_EVENT, event.storageKey)
+            putExtra(EXTRA_PRE_MINUTES, minutesBefore)
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            event.requestCodeBase + PRE_ALERT_REQUEST_CODE_OFFSET,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun cancelPreviousPreAlerts(context: Context, manager: AlarmManager) {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val plan = prefs.getStringSet(KEY_PRE_PLAN, emptySet()).orEmpty()
+        for (entry in plan) {
+            val parts = entry.split('|')
+            if (parts.size != 2) continue
+            val event = NotifyEvent.fromKey(parts[0]) ?: continue
+            val epoch = parts[1].toLongOrNull() ?: continue
+            manager.cancel(preAlertPendingIntent(context, event, epoch, 0))
+        }
+        prefs.edit().remove(KEY_PRE_PLAN).apply()
     }
 
     private fun scheduleMidnight(

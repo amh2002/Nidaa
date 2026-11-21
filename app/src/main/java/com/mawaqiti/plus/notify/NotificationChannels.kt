@@ -70,7 +70,23 @@ object NotificationChannels {
             setShowBadge(true)
         }
 
-        manager.createNotificationChannels(listOf(adhan, silent, vibrate))
+        // beta22: «تنبيه قبل الصلاة» - vibration only. The sound is switched
+        // off for the life of the channel, so a pre-alert can never become a
+        // second adhan even if a future caller forgets to silence itself.
+        val preAlert = channel(
+            context = context,
+            id = NotificationRouting.CHANNEL_PRE_ALERT,
+            nameRes = R.string.notify_channel_pre_alert,
+            descriptionRes = R.string.notify_channel_pre_alert_desc,
+            importance = NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            setSound(null, null)
+            enableVibration(true)
+            vibrationPattern = longArrayOf(0, 400, 200, 400)
+            setShowBadge(false)
+        }
+
+        manager.createNotificationChannels(listOf(adhan, silent, vibrate, preAlert))
     }
 
     private fun channel(

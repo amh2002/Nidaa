@@ -66,6 +66,7 @@ import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.data.Country
 import com.mawaqiti.plus.data.FontScale
 import com.mawaqiti.plus.data.LayoutMode
+import com.mawaqiti.plus.data.PreAlertMinutes
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.format.TimeFormatter
@@ -136,7 +137,9 @@ fun SettingsScreen(
     /** beta10: persisted appearance choice; AUTO is the default. */
     onSelectTheme: (AppTheme) -> Unit = {},
     /** beta21: persisted display layout; MOBILE is the default. */
-    onSelectLayout: (LayoutMode) -> Unit = {}
+    onSelectLayout: (LayoutMode) -> Unit = {},
+    /** beta22: persisted pre-prayer lead time in minutes; 0 disables it. */
+    onSelectPreAlert: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     var statusTick by remember { mutableIntStateOf(0) }
@@ -214,7 +217,8 @@ fun SettingsScreen(
         lastInstallAttempt = lastInstallAttempt,
         onOpenInstallSettings = onOpenInstallSettings,
         onSelectTheme = onSelectTheme,
-        onSelectLayout = onSelectLayout
+        onSelectLayout = onSelectLayout,
+        onSelectPreAlert = onSelectPreAlert
     )
 
     if (showRationale) {
@@ -284,7 +288,9 @@ fun SettingsList(
     /** beta10: appearance choice (see [SettingsScreen]). */
     onSelectTheme: (AppTheme) -> Unit = {},
     /** beta21: display layout choice (see [SettingsScreen]). */
-    onSelectLayout: (LayoutMode) -> Unit = {}
+    onSelectLayout: (LayoutMode) -> Unit = {},
+    /** beta22: pre-prayer lead time in minutes (see [SettingsScreen]). */
+    onSelectPreAlert: (Int) -> Unit = {}
 ) {
     val palette = skyPalette
     val previewMinutes = nextPreviewMinutes(day)
@@ -710,6 +716,57 @@ fun SettingsList(
                     fillWidth = true,
                     enabled = masterEnabled,
                     modifier = Modifier.testTag("event_modes_${event.storageKey}")
+                )
+            }
+        }
+
+        // 8. Pre-prayer alert (beta22): one silent, vibration-only reminder per
+        //    prayer, N minutes before the adhan. Same SettingsCard +
+        //    SegmentedPillRow tokens as «وضع العرض», split 3 + 2 like the
+        //    font-size picker so five options never clip at 360 dp. It closes
+        //    the notifications group, so the beta18 master → sound → apply →
+        //    Fajr order stays exactly as that regression test asserts.
+        ItemGap()
+        SettingsCard(
+            title = stringResource(R.string.settings_pre_alert_title),
+            description = stringResource(R.string.settings_pre_alert_desc),
+            modifier = Modifier.testTag("settings_pre_alert_card")
+        ) {
+            val preAlertLabels = listOf(
+                R.string.pre_alert_off,
+                R.string.pre_alert_5,
+                R.string.pre_alert_10,
+                R.string.pre_alert_15,
+                R.string.pre_alert_30
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SegmentedPillRow(
+                    options = PreAlertMinutes.OPTIONS.take(3).mapIndexed { index, minutes ->
+                        PillOption(
+                            stringResource(preAlertLabels[index]),
+                            settings.preAlertMinutes == minutes,
+                            testTag = "pre_alert_option_$minutes"
+                        )
+                    },
+                    onSelect = { index -> onSelectPreAlert(PreAlertMinutes.OPTIONS[index]) },
+                    selectedColor = palette.accent,
+                    selectedTextColor = palette.sheet,
+                    fillWidth = true
+                )
+                SegmentedPillRow(
+                    options = PreAlertMinutes.OPTIONS.drop(3).mapIndexed { index, minutes ->
+                        PillOption(
+                            stringResource(preAlertLabels[3 + index]),
+                            settings.preAlertMinutes == minutes,
+                            testTag = "pre_alert_option_$minutes"
+                        )
+                    },
+                    onSelect = { index ->
+                        onSelectPreAlert(PreAlertMinutes.OPTIONS[3 + index])
+                    },
+                    selectedColor = palette.accent,
+                    selectedTextColor = palette.sheet,
+                    fillWidth = true
                 )
             }
         }

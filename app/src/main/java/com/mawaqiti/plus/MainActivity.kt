@@ -293,7 +293,8 @@ fun MawaqitiApp(
                             UpdateManager.openPermissionSettings(activityContext)
                         },
                         onSelectTheme = viewModel::setTheme,
-                        onSelectLayout = viewModel::setLayoutMode
+                        onSelectLayout = viewModel::setLayoutMode,
+                        onSelectPreAlert = viewModel::setPreAlertMinutes
                     )
 
                     DockDestination.HOME, null -> {

@@ -192,6 +192,16 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
         settingsRepository.setLayoutMode(mode)
     }
 
+    /**
+     * beta22: pre-prayer lead time. Every alarm plan is rebuilt, so a new value
+     * replaces all five reminders at once and 0 cancels them without leaving a
+     * pending alarm behind.
+     */
+    fun setPreAlertMinutes(minutes: Int) = viewModelScope.launch {
+        settingsRepository.setPreAlertMinutes(minutes)
+        scheduleNotifications()
+    }
+
     /** beta 7.9: in-app text size; observed by the root provider, no restart. */
     fun setFontScale(scale: Float) = viewModelScope.launch {
         settingsRepository.setFontScale(scale)

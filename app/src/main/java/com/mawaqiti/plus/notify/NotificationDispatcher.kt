@@ -54,6 +54,57 @@ object NotificationDispatcher {
         }
     }
 
+    /**
+     * beta22: posts the pre-prayer reminder.
+     *
+     * It never touches [AdhanPlaybackService] and silences itself explicitly:
+     * the notification vibrates only, so no setting or channel default can turn
+     * it into a second adhan. Tapping it opens the same main screen as a prayer
+     * notification.
+     */
+    fun deliverPreAlert(
+        context: Context,
+        event: NotifyEvent,
+        minutesBefore: Int,
+        language: AppLanguage
+    ) {
+        if (!canPost(context)) return
+
+        val localized = NotificationText.localizedContext(context, language)
+        val title = localized.getString(R.string.pre_alert_title)
+        val body = NotificationText.preAlertBody(localized, minutesBefore, event)
+
+        val openApp = PendingIntent.getActivity(
+            context,
+            REQUEST_OPEN,
+            Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(
+            context,
+            NotificationRouting.CHANNEL_PRE_ALERT
+        )
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setContentIntent(openApp)
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            // No sound, ever: vibration only (and on pre-O devices the pattern
+            // below is the only haptic, since there is no channel yet).
+            .setSound(null)
+            .setVibrate(longArrayOf(0, 400, 200, 400))
+
+        NotificationManagerCompat.from(context)
+            .notify(PRE_ALERT_NOTIFICATION_BASE + event.ordinal, builder.build())
+    }
+
     private fun postQuiet(
         context: Context,
         notificationId: Int,
@@ -109,4 +160,6 @@ object NotificationDispatcher {
     }
 
     private const val REQUEST_OPEN = 6000
+    /** beta22: its own id range so reminders never replace prayer notifications. */
+    private const val PRE_ALERT_NOTIFICATION_BASE = 4500
 }

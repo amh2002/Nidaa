@@ -145,6 +145,19 @@
     <string name="notify_channel_vibrate">اهتزاز</string>
     <string name="notify_channel_vibrate_desc">إشعار بالاهتزاز فقط</string>
 
+    <!-- beta22: pre-prayer alert (silent, vibration only) -->
+    <string name="notify_channel_pre_alert">تنبيه قبل الصلاة</string>
+    <string name="notify_channel_pre_alert_desc">تنبيه بالاهتزاز فقط قبل الأذان، من دون صوت</string>
+    <string name="settings_pre_alert_title">التنبيه قبل الصلاة</string>
+    <string name="settings_pre_alert_desc">تذكير بالاهتزاز فقط قبل الأذان بالمدة المختارة. «معطّل» يوقف كل التنبيهات المسبقة.</string>
+    <string name="pre_alert_off">معطّل</string>
+    <string name="pre_alert_5">5 دقائق</string>
+    <string name="pre_alert_10">10 دقائق</string>
+    <string name="pre_alert_15">15 دقيقة</string>
+    <string name="pre_alert_30">30 دقيقة</string>
+    <string name="pre_alert_title">تنبيه الصلاة</string>
+    <string name="pre_alert_body">تبقى %1$d دقائق على أذان %2$s</string>
+
     <!-- beta14: adhan sound picker (order matches AdhanSound.ordered) -->
     <string name="settings_adhan_sound_title">صوت الأذان</string>
     <string name="settings_adhan_sound_desc">اختر الأذان الذي يُشغَّل عند التنبيه. يُطبَّق على التنبيهات التالية فورًا.</string>

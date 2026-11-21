@@ -35,6 +35,8 @@ class SettingsRepository(private val context: Context) {
         val theme = stringPreferencesKey("theme")
         /** beta21: display layout ("mobile" | "tv"); absent means mobile. */
         val layoutMode = stringPreferencesKey("layout_mode")
+        /** beta22: pre-prayer lead time in minutes (0 = disabled). */
+        val preAlertMinutes = intPreferencesKey("pre_alert_minutes")
         /** beta5: widget language, intentionally independent of the UI language. */
         val widgetLanguage = stringPreferencesKey("widget.lang")
         /** beta 7.9: in-app text multiplier, default 1.0. */
@@ -64,6 +66,9 @@ class SettingsRepository(private val context: Context) {
                 clockFormat = ClockFormat.fromKey(prefs[Keys.clockFormat]),
                 theme = AppTheme.fromKey(prefs[Keys.theme]),
                 layoutMode = LayoutMode.fromKey(prefs[Keys.layoutMode]),
+                preAlertMinutes = PreAlertMinutes.normalize(
+                    prefs[Keys.preAlertMinutes] ?: PreAlertMinutes.DISABLED
+                ),
                 fontScale = FontScale.normalize(prefs[Keys.fontScale] ?: FontScale.DEFAULT),
                 notifications = NotificationSettings(
                     masterEnabled = prefs[Keys.notifyMaster] ?: true,
@@ -104,6 +109,14 @@ class SettingsRepository(private val context: Context) {
      */
     suspend fun setLayoutMode(mode: LayoutMode) = edit {
         it[Keys.layoutMode] = mode.storageKey
+    }
+
+    /**
+     * beta22: pre-prayer lead time. Only [PreAlertMinutes.OPTIONS] are stored;
+     * the scheduler re-reads it on every plan, so 0 cancels all pre-alerts.
+     */
+    suspend fun setPreAlertMinutes(minutes: Int) = edit {
+        it[Keys.preAlertMinutes] = PreAlertMinutes.normalize(minutes)
     }
 
     /** beta 7.9: stores one of [FontScale.STEPS]; applied without restart. */

@@ -55,6 +55,23 @@ enum class LayoutMode(val storageKey: String) {
 }
 
 /**
+ * beta22: how many minutes before the adhan the silent pre-alert fires.
+ *
+ * 0 (the default) disables every pre-alert: nothing is scheduled and no alarm
+ * remains. The four other values are the only legal ones - anything else falls
+ * back to [DISABLED] - and the value is persisted as an Int under
+ * `pre_alert_minutes` in the same DataStore as every other setting.
+ */
+object PreAlertMinutes {
+    const val DISABLED = 0
+
+    /** The picker options, in display order. */
+    val OPTIONS = listOf(0, 5, 10, 15, 30)
+
+    fun normalize(minutes: Int): Int = if (minutes in OPTIONS) minutes else DISABLED
+}
+
+/**
  * Everything the beta persists. Times and the qibla bearing are derived from
  * [cityOrder] alone, so there is no latitude/longitude state to keep in sync.
  */
@@ -71,6 +88,8 @@ data class AppSettings(
     val theme: AppTheme = AppTheme.AUTO,
     /** beta21: MOBILE keeps the post-beta20 phone layout; TV is the landscape dashboard. */
     val layoutMode: LayoutMode = LayoutMode.MOBILE,
+    /** beta22: minutes before the adhan for the silent pre-alert; 0 = disabled. */
+    val preAlertMinutes: Int = PreAlertMinutes.DISABLED,
     /**
      * beta 7.9: in-app text multiplier over the system font scale
      * (0.8 … 1.2, one of [FontScale.STEPS]).

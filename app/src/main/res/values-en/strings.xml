@@ -138,6 +138,19 @@
     <string name="notify_channel_vibrate">Vibrate</string>
     <string name="notify_channel_vibrate_desc">Vibration only</string>
 
+    <!-- beta22: pre-prayer alert (silent, vibration only) -->
+    <string name="notify_channel_pre_alert">Before prayer</string>
+    <string name="notify_channel_pre_alert_desc">Vibration only, before the adhan, with no sound</string>
+    <string name="settings_pre_alert_title">Pre-prayer alert</string>
+    <string name="settings_pre_alert_desc">A vibration-only reminder before the adhan, at the chosen lead time. “Off” removes every pre-alert.</string>
+    <string name="pre_alert_off">Off</string>
+    <string name="pre_alert_5">5 minutes</string>
+    <string name="pre_alert_10">10 minutes</string>
+    <string name="pre_alert_15">15 minutes</string>
+    <string name="pre_alert_30">30 minutes</string>
+    <string name="pre_alert_title">Prayer alert</string>
+    <string name="pre_alert_body">%1$d minutes left until the adhan of %2$s</string>
+
     <!-- beta14: adhan sound picker (order matches AdhanSound.ordered) -->
     <string name="settings_adhan_sound_title">Adhan sound</string>
     <string name="settings_adhan_sound_desc">Pick the adhan played for notifications. It applies to the next alerts immediately.</string>

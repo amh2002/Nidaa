@@ -31,6 +31,13 @@ enum class NotifyEvent(val storageKey: String, val requestCodeBase: Int) {
         }
 
     companion object {
+        /**
+         * beta22: the five prayers that get a pre-alert. Sunrise must never be
+         * announced ahead of time and the last third is a derived night time,
+         * not a prayer, so both stay out of the pre-alert plan.
+         */
+        val PRE_ALERT_EVENTS = listOf(FAJR, DHUHR, ASR, MAGHRIB, ISHA)
+
         fun fromKey(key: String?): NotifyEvent? =
             entries.firstOrNull { it.storageKey == key }
     }

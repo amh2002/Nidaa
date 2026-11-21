@@ -27,6 +27,7 @@ class AlarmReceiver : BroadcastReceiver() {
             try {
                 when (intent.action) {
                     NotificationScheduler.ACTION_FIRE -> handleFire(app, intent)
+                    NotificationScheduler.ACTION_PRE_ALERT -> handlePreAlert(app, intent)
                     NotificationScheduler.ACTION_MIDNIGHT -> Unit
                 }
                 runCatching { NotificationScheduler.scheduleAll(app) }
@@ -55,6 +56,30 @@ class AlarmReceiver : BroadcastReceiver() {
             language = settings.language,
             adhanSound = AdhanSoundProvider.resolve(settings),
             adhanVolume = settings.adhanVolume
+        )
+    }
+
+    /**
+     * beta22: the pre-adhan reminder. The lead time is re-read here, so turning
+     * the setting off between scheduling and firing can never produce a stale
+     * reminder, and a reminder is only delivered for a prayer whose own
+     * notification is still enabled.
+     */
+    private suspend fun handlePreAlert(context: Context, intent: Intent) {
+        val settings = SettingsRepository(context).settings.first()
+        val minutesBefore = settings.preAlertMinutes
+        if (minutesBefore <= 0) return
+
+        val event = NotifyEvent.fromKey(intent.getStringExtra(NotificationScheduler.EXTRA_EVENT))
+            ?: return
+        if (event !in NotifyEvent.PRE_ALERT_EVENTS) return
+        if (!NotificationRouting.shouldDeliver(settings.notifications, event)) return
+
+        NotificationDispatcher.deliverPreAlert(
+            context = context,
+            event = event,
+            minutesBefore = minutesBefore,
+            language = settings.language
         )
     }
 }

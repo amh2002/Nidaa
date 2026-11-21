@@ -46,4 +46,8 @@ object NotificationText {
 
     fun body(context: Context, cityLabel: String, time: String): String =
         context.getString(R.string.notify_body, cityLabel, time)
+
+    /** beta22: «تبقى X دقائق على أذان <اسم الصلاة>». */
+    fun preAlertBody(context: Context, minutesBefore: Int, event: NotifyEvent): String =
+        context.getString(R.string.pre_alert_body, minutesBefore, eventLabel(context, event))
 }
