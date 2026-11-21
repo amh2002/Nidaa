@@ -278,7 +278,7 @@ private fun Header(
 }
 
 @Composable
-private fun CityChip(
+internal fun CityChip(
     city: City,
     isArabic: Boolean,
     palette: SkyPalette,
@@ -331,7 +331,7 @@ internal data class HeroState(
     val progress: Float
 )
 
-private fun heroState(day: TableDay, now: LocalTime): HeroState {
+internal fun heroState(day: TableDay, now: LocalTime): HeroState {
     val nowSeconds = now.toSecondOfDay().toLong()
     val events = listOf(
         TableEvent.FAJR to day.fajr,
@@ -848,7 +848,7 @@ private fun GridCard(
 }
 
 @Composable
-private fun prayerLabel(event: TableEvent): String = when (event) {
+internal fun prayerLabel(event: TableEvent): String = when (event) {
     TableEvent.FAJR -> stringResource(R.string.prayer_fajr)
     TableEvent.SUNRISE -> stringResource(R.string.prayer_sunrise)
     TableEvent.DHUHR -> stringResource(R.string.prayer_dhuhr)
@@ -857,7 +857,7 @@ private fun prayerLabel(event: TableEvent): String = when (event) {
     TableEvent.ISHA -> stringResource(R.string.prayer_isha)
 }
 
-private fun dateFormatter(isArabic: Boolean): DateTimeFormatter {
+internal fun dateFormatter(isArabic: Boolean): DateTimeFormatter {
     val locale = if (isArabic) Locale.forLanguageTag("ar") else Locale.ENGLISH
     val pattern = if (isArabic) "EEEE، d MMMM yyyy" else "EEEE, d MMMM yyyy"
     return DateTimeFormatter.ofPattern(pattern, locale).withDecimalStyle(DecimalStyle.STANDARD)
@@ -873,7 +873,7 @@ private fun dateFormatter(isArabic: Boolean): DateTimeFormatter {
  * background and never shows a stale value after returning.
  */
 @Composable
-private fun rememberForegroundClock(): LocalTime {
+internal fun rememberForegroundClock(): LocalTime {
     val owner = LocalContext.current.lifecycleOwnerOrNull()
     var now by remember { mutableStateOf(LocalTime.now()) }
     var foreground by remember {

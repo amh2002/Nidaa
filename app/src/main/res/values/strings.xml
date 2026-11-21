@@ -76,6 +76,13 @@
     <string name="theme_auto">تلقائي</string>
     <string name="theme_night">ليلي (ذهبي)</string>
 
+    <!-- beta21: display layout (phone layout / landscape TV dashboard) -->
+    <string name="settings_layout_title">وضع العرض</string>
+    <string name="settings_layout_desc">«جوال» يحافظ على تخطيط الهاتف، و«تلفاز» يفعّل لوحة أفقية للشاشات الكبيرة تُظهر الصلوات الخمس معًا. يُطبَّق فورًا.</string>
+    <string name="layout_mobile">جوال</string>
+    <string name="layout_tv">تلفاز</string>
+    <string name="tv_today">مواقيت اليوم</string>
+
     <!-- beta10: current time line inside the next-prayer card -->
     <string name="now_label">الآن</string>
 

@@ -33,6 +33,8 @@ class SettingsRepository(private val context: Context) {
         val clockFormat = stringPreferencesKey("clock_format")
         /** beta10: appearance ("auto" | "night"); absent means auto. */
         val theme = stringPreferencesKey("theme")
+        /** beta21: display layout ("mobile" | "tv"); absent means mobile. */
+        val layoutMode = stringPreferencesKey("layout_mode")
         /** beta5: widget language, intentionally independent of the UI language. */
         val widgetLanguage = stringPreferencesKey("widget.lang")
         /** beta 7.9: in-app text multiplier, default 1.0. */
@@ -61,6 +63,7 @@ class SettingsRepository(private val context: Context) {
                 languageInitialized = prefs[Keys.languageInitialized] ?: false,
                 clockFormat = ClockFormat.fromKey(prefs[Keys.clockFormat]),
                 theme = AppTheme.fromKey(prefs[Keys.theme]),
+                layoutMode = LayoutMode.fromKey(prefs[Keys.layoutMode]),
                 fontScale = FontScale.normalize(prefs[Keys.fontScale] ?: FontScale.DEFAULT),
                 notifications = NotificationSettings(
                     masterEnabled = prefs[Keys.notifyMaster] ?: true,
@@ -93,6 +96,14 @@ class SettingsRepository(private val context: Context) {
     /** beta10: appearance; "auto" is the default when nothing is stored. */
     suspend fun setTheme(theme: AppTheme) = edit {
         it[Keys.theme] = theme.storageKey
+    }
+
+    /**
+     * beta21: display layout. Read by the root composable on the same settings
+     * flow as every other toggle, so the switch is applied without a restart.
+     */
+    suspend fun setLayoutMode(mode: LayoutMode) = edit {
+        it[Keys.layoutMode] = mode.storageKey
     }
 
     /** beta 7.9: stores one of [FontScale.STEPS]; applied without restart. */

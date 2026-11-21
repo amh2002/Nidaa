@@ -37,6 +37,24 @@ enum class AppTheme(val storageKey: String) {
 }
 
 /**
+ * beta21: display layout, chosen in Settings → «وضع العرض».
+ *
+ * [MOBILE] is the unchanged post-beta20 phone layout (the default), [TV] is the
+ * landscape at-a-glance dashboard for Android-powered screens. The choice is
+ * presentation-only - no engine value depends on it - and is persisted in the
+ * same DataStore as every other setting, so it survives restarts.
+ */
+enum class LayoutMode(val storageKey: String) {
+    MOBILE("mobile"),
+    TV("tv");
+
+    companion object {
+        fun fromKey(key: String?): LayoutMode =
+            entries.firstOrNull { it.storageKey.equals(key, ignoreCase = true) } ?: MOBILE
+    }
+}
+
+/**
  * Everything the beta persists. Times and the qibla bearing are derived from
  * [cityOrder] alone, so there is no latitude/longitude state to keep in sync.
  */
@@ -51,6 +69,8 @@ data class AppSettings(
     val clockFormat: ClockFormat = ClockFormat.H24,
     /** beta10: AUTO follows the golden phases, NIGHT pins the golden night look. */
     val theme: AppTheme = AppTheme.AUTO,
+    /** beta21: MOBILE keeps the post-beta20 phone layout; TV is the landscape dashboard. */
+    val layoutMode: LayoutMode = LayoutMode.MOBILE,
     /**
      * beta 7.9: in-app text multiplier over the system font scale
      * (0.8 … 1.2, one of [FontScale.STEPS]).

@@ -65,6 +65,7 @@ import com.mawaqiti.plus.data.AppTheme
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.data.Country
 import com.mawaqiti.plus.data.FontScale
+import com.mawaqiti.plus.data.LayoutMode
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.format.TimeFormatter
@@ -133,7 +134,9 @@ fun SettingsScreen(
     lastInstallAttempt: InstallAttempt? = null,
     onOpenInstallSettings: () -> Unit = {},
     /** beta10: persisted appearance choice; AUTO is the default. */
-    onSelectTheme: (AppTheme) -> Unit = {}
+    onSelectTheme: (AppTheme) -> Unit = {},
+    /** beta21: persisted display layout; MOBILE is the default. */
+    onSelectLayout: (LayoutMode) -> Unit = {}
 ) {
     val context = LocalContext.current
     var statusTick by remember { mutableIntStateOf(0) }
@@ -210,7 +213,8 @@ fun SettingsScreen(
         onOpenReleasesPage = onOpenReleasesPage,
         lastInstallAttempt = lastInstallAttempt,
         onOpenInstallSettings = onOpenInstallSettings,
-        onSelectTheme = onSelectTheme
+        onSelectTheme = onSelectTheme,
+        onSelectLayout = onSelectLayout
     )
 
     if (showRationale) {
@@ -278,7 +282,9 @@ fun SettingsList(
     lastInstallAttempt: InstallAttempt? = null,
     onOpenInstallSettings: () -> Unit = {},
     /** beta10: appearance choice (see [SettingsScreen]). */
-    onSelectTheme: (AppTheme) -> Unit = {}
+    onSelectTheme: (AppTheme) -> Unit = {},
+    /** beta21: display layout choice (see [SettingsScreen]). */
+    onSelectLayout: (LayoutMode) -> Unit = {}
 ) {
     val palette = skyPalette
     val previewMinutes = nextPreviewMinutes(day)
@@ -426,6 +432,40 @@ fun SettingsList(
                     selectedTextColor = palette.sheet
                 )
             }
+        }
+
+        ItemGap()
+
+        // 3a-2. Display layout (beta21). «جوال» keeps the post-beta20 phone
+        //       layout; «تلفاز» switches the whole app to the landscape
+        //       dashboard. Persisted in the same DataStore and observed at the
+        //       root, so the switch is live in both directions.
+        SettingsCard(
+            title = stringResource(R.string.settings_layout_title),
+            description = stringResource(R.string.settings_layout_desc),
+            modifier = Modifier.testTag("settings_layout_card")
+        ) {
+            SegmentedPillRow(
+                options = listOf(
+                    PillOption(
+                        stringResource(R.string.layout_mobile),
+                        settings.layoutMode == LayoutMode.MOBILE,
+                        testTag = "layout_option_mobile"
+                    ),
+                    PillOption(
+                        stringResource(R.string.layout_tv),
+                        settings.layoutMode == LayoutMode.TV,
+                        testTag = "layout_option_tv"
+                    )
+                ),
+                onSelect = { index ->
+                    onSelectLayout(if (index == 0) LayoutMode.MOBILE else LayoutMode.TV)
+                },
+                // Same golden selection token as the appearance picker.
+                selectedColor = palette.accent,
+                selectedTextColor = palette.sheet,
+                fillWidth = true
+            )
         }
 
         ItemGap()

@@ -11,6 +11,7 @@ import com.mawaqiti.plus.data.AppTheme
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.data.CityRepository
 import com.mawaqiti.plus.data.Country
+import com.mawaqiti.plus.data.LayoutMode
 import com.mawaqiti.plus.data.SettingsRepository
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.engine.table.TableEngine
@@ -180,6 +181,15 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     /** beta10: appearance choice, applied through [goldenPhase]. */
     fun setTheme(theme: AppTheme) = viewModelScope.launch {
         settingsRepository.setTheme(theme)
+    }
+
+    /**
+     * beta21: display layout. The root composable observes [settings], so the
+     * new layout (and the TV orientation hint in `MainActivity`) applies
+     * immediately - no restart, no lost state.
+     */
+    fun setLayoutMode(mode: LayoutMode) = viewModelScope.launch {
+        settingsRepository.setLayoutMode(mode)
     }
 
     /** beta 7.9: in-app text size; observed by the root provider, no restart. */

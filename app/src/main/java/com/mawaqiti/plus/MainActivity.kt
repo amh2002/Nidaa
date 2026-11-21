@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
@@ -11,6 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -30,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -39,6 +43,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
+import com.mawaqiti.plus.data.LayoutMode
 import com.mawaqiti.plus.ui.components.DockDestination
 import com.mawaqiti.plus.ui.components.NidaaDock
 import com.mawaqiti.plus.ui.components.isArabicLocale
@@ -47,11 +52,13 @@ import com.mawaqiti.plus.ui.screens.CityPickerSheet
 import com.mawaqiti.plus.ui.screens.PrayerScreen
 import com.mawaqiti.plus.ui.screens.QiblaScreen
 import com.mawaqiti.plus.ui.screens.SettingsScreen
+import com.mawaqiti.plus.ui.screens.TvHomeScreen
 import com.mawaqiti.plus.ui.theme.GoldenPalettes
 import com.mawaqiti.plus.ui.theme.GoldenPhase
 import com.mawaqiti.plus.ui.theme.GoldenSkyBackground
 import com.mawaqiti.plus.ui.theme.LocalGoldenPhase
 import com.mawaqiti.plus.ui.theme.MawaqitiTheme
+import com.mawaqiti.plus.ui.theme.NidaaDimens
 import com.nidaa.prayer.update.ReleaseInfo
 import com.nidaa.prayer.update.UpdateManager
 import com.nidaa.prayer.update.UpdateState
@@ -201,6 +208,7 @@ fun MawaqitiApp(
     }
 
     SetSystemBarAppearance(dark = GoldenPalettes.of(goldenPhase).dark)
+    ApplyLayoutOrientation(settings.layoutMode)
 
     // beta 7.9: the user's in-app multiplier composes with the system font
     // scale; settings is observed here, so a change re-renders immediately.
@@ -284,20 +292,53 @@ fun MawaqitiApp(
                         onOpenInstallSettings = {
                             UpdateManager.openPermissionSettings(activityContext)
                         },
-                        onSelectTheme = viewModel::setTheme
+                        onSelectTheme = viewModel::setTheme,
+                        onSelectLayout = viewModel::setLayoutMode
                     )
 
-                    DockDestination.HOME, null -> PrayerScreen(
-                        city = city,
-                        day = day,
-                        date = today,
-                        isArabic = isArabic,
-                        clockFormat = settings.clockFormat,
-                        onChooseCity = { showCityPicker = true },
-                        onOpenAbout = { selectedTab = TAB_ABOUT },
-                        updateRelease = updateRelease,
-                        onOpenUpdate = { selectedTab = DockDestination.SETTINGS.tab }
-                    )
+                    DockDestination.HOME, null -> {
+                        // beta21: the TV dashboard (and its landscape orientation
+                        // hint) lives only in TV mode. Below 600 dp of *window*
+                        // width - e.g. a phone in portrait - we fall back to the
+                        // unchanged mobile home, so nothing can overlap. Mobile
+                        // mode never reaches this branch at all.
+                        val home: @Composable () -> Unit = {
+                            PrayerScreen(
+                                city = city,
+                                day = day,
+                                date = today,
+                                isArabic = isArabic,
+                                clockFormat = settings.clockFormat,
+                                onChooseCity = { showCityPicker = true },
+                                onOpenAbout = { selectedTab = TAB_ABOUT },
+                                updateRelease = updateRelease,
+                                onOpenUpdate = { selectedTab = DockDestination.SETTINGS.tab }
+                            )
+                        }
+                        if (settings.layoutMode == LayoutMode.TV) {
+                            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                                if (maxWidth >= TV_MIN_WIDTH) {
+                                    TvHomeScreen(
+                                        city = city,
+                                        day = day,
+                                        date = today,
+                                        isArabic = isArabic,
+                                        clockFormat = settings.clockFormat,
+                                        onChooseCity = { showCityPicker = true },
+                                        onOpenAbout = { selectedTab = TAB_ABOUT },
+                                        updateRelease = updateRelease,
+                                        onOpenUpdate = {
+                                            selectedTab = DockDestination.SETTINGS.tab
+                                        }
+                                    )
+                                } else {
+                                    home()
+                                }
+                            }
+                        } else {
+                            home()
+                        }
+                    }
                 }
             }
         }
@@ -336,6 +377,49 @@ fun MawaqitiApp(
             }
         )
     }
+    }
+}
+
+/**
+ * beta21: the minimum *window* width for the TV dashboard.
+ *
+ * 600 dp is the platform's "large screen" line. A narrower window - notably a
+ * phone held in portrait while TV mode is selected - keeps the unchanged mobile
+ * home, so the landscape composition can never be squeezed into an overlap.
+ */
+private val TV_MIN_WIDTH = NidaaDimens.tvDashboardMinWidth
+
+/**
+ * beta21: applies the orientation policy of the selected layout.
+ *
+ * - جوال: exactly the manifest's portrait lock (the setter is skipped because
+ *   the activity already reports PORTRAIT, so mobile behaviour is untouched).
+ * - تلفاز on a television or a large screen: prefer landscape, rotating with
+ *   the sensor so both landscape sides work.
+ * - تلفاز on a phone: no lock at all; the user can rotate, and the home falls
+ *   back to the mobile layout whenever the window is too narrow.
+ */
+@Composable
+private fun ApplyLayoutOrientation(layoutMode: LayoutMode) {
+    val context = LocalContext.current
+    val activity = context.findActivity()
+    val configuration = LocalConfiguration.current
+    val smallestWidth = configuration.smallestScreenWidthDp
+    val isTelevision =
+        (configuration.uiMode and Configuration.UI_MODE_TYPE_MASK) ==
+            Configuration.UI_MODE_TYPE_TELEVISION
+
+    LaunchedEffect(layoutMode, activity, smallestWidth, isTelevision) {
+        val host = activity ?: return@LaunchedEffect
+        val requested = when {
+            layoutMode == LayoutMode.MOBILE -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            isTelevision || smallestWidth >= 600 ->
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+        if (host.requestedOrientation != requested) {
+            host.requestedOrientation = requested
+        }
     }
 }
 

@@ -19,6 +19,19 @@
         android:name="android.hardware.sensor.compass"
         android:required="false" />
 
+    <!-- beta21: the TV dashboard must be installable on Android TV / set-top
+         boxes, which have no touchscreen. Phones are unaffected. -->
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <!-- beta21: the phone activity is portrait-locked, which would otherwise
+         imply a required portrait screen and hide the app from Android TV.
+         The TV mode re-orients at runtime, so the feature is optional. -->
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="false" />
+
     <application
         android:name=".MawaqitiApplication"
         android:allowBackup="false"
@@ -114,6 +127,13 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- beta21: also appear on Android TV launchers. Kept as a separate
+                 filter (the platform ignores a LEANBACK_LAUNCHER category mixed
+                 into the phone filter), and no leanback library is pulled in. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
