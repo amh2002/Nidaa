@@ -133,7 +133,12 @@ class CityParityTest {
 
     // ------------------------------------------------------------------ data
 
-    private data class City(val name: String, val minDiff: Int, val profile: String)
+    private data class City(
+        val name: String,
+        val minDiff: Int,
+        val profile: String,
+        val country: String
+    )
 
     private data class Expectation(
         val city: String,
@@ -159,9 +164,13 @@ class CityParityTest {
             City(
                 name = item.getString("nameAr").trim(),
                 minDiff = item.getInt("minDiff"),
-                profile = item.getString("profile")
+                profile = item.getString("profile"),
+                country = item.getString("country")
             )
         }
+            // beta23 adds the twelve Jordanian cities with their own generated
+            // tables; this beta7 parity gate covers the original 90 entries.
+            .filter { it.country != "JO" }
     }
 
     private fun loadParityExpectations(): List<Expectation> {

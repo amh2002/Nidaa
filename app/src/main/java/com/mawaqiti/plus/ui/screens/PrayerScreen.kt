@@ -67,6 +67,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.mawaqiti.plus.R
 import com.mawaqiti.plus.data.City
+import com.mawaqiti.plus.data.Country
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.engine.table.TableEvent
 import com.mawaqiti.plus.format.ClockFormat
@@ -76,9 +77,13 @@ import com.mawaqiti.plus.ui.components.GlassCard
 import com.mawaqiti.plus.ui.components.PrayerIcons
 import com.mawaqiti.plus.ui.components.dashedOutline
 import com.mawaqiti.plus.ui.theme.AmiriBold
+import com.mawaqiti.plus.ui.theme.CelestialIcon
+import com.mawaqiti.plus.ui.theme.CelestialPhase
 import com.mawaqiti.plus.ui.theme.GoldenHeroDecor
 import com.mawaqiti.plus.ui.theme.NidaaDimens
+import com.mawaqiti.plus.ui.theme.PhaseBounds
 import com.mawaqiti.plus.ui.theme.SkyPalette
+import com.mawaqiti.plus.ui.theme.celestialPhase
 import com.mawaqiti.plus.ui.theme.Tajawal
 import com.mawaqiti.plus.ui.theme.skyPalette
 import com.nidaa.prayer.update.ReleaseInfo
@@ -109,6 +114,12 @@ fun PrayerScreen(
     val nowMinute = now.hour * 60 + now.minute
     val nowText = remember(nowMinute, clockFormat, isArabic) {
         TimeFormatter.format(nowMinute, clockFormat, isArabic)
+    }
+    // beta23: the card's celestial indicator. It reads only the engine's own
+    // times, and it is keyed on the same minute tick the countdown uses, so the
+    // sun/moon swaps exactly on the computed prayer minute.
+    val celestial = remember(day, nowMinute) {
+        celestialPhase(nowMinute, PhaseBounds.fromDay(day))
     }
     val progress by animateFloatAsState(
         targetValue = hero.progress,
@@ -145,7 +156,8 @@ fun PrayerScreen(
             isArabic = isArabic,
             clockFormat = clockFormat,
             palette = palette,
-            nowText = nowText
+            nowText = nowText,
+            celestial = celestial
         )
 
         Spacer(Modifier.height(12.dp))
@@ -174,7 +186,12 @@ fun PrayerScreen(
         // scrolling content, and the Scaffold's bar padding keeps it clear of
         // the navigation bar.
         Text(
-            text = stringResource(R.string.official_note),
+            // beta23: Jordan follows the Ministry of Awqaf calendar, not the
+            // Palestinian timetable, so the footer must follow the city.
+            text = stringResource(
+                if (city.country == Country.JO) R.string.official_note_jordan
+                else R.string.official_note
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = palette.textMuted,
             modifier = Modifier.fillMaxWidth(),
@@ -478,7 +495,8 @@ internal fun HeroCard(
     isArabic: Boolean,
     clockFormat: ClockFormat,
     palette: SkyPalette,
-    nowText: String
+    nowText: String,
+    celestial: CelestialPhase
 ) {
     GlassCard(
         modifier = Modifier.testTag("hero_card"),
@@ -486,9 +504,22 @@ internal fun HeroCard(
         corner = 24.dp,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // Crescent, stars, clouds and skyline, drawn behind the content but
-        // only in the top-right and bottom strips.
+        // Stars and the arcade silhouette, drawn behind the content but only in
+        // the top strip and along the bottom edge.
         GoldenHeroDecor(Modifier.matchParentSize())
+
+        // beta23: the celestial indicator. It replaces the single fixed
+        // crescent the card used to paint, and follows the computed prayer
+        // times (moon at night, rising/full/low/setting sun by day).
+        CelestialIcon(
+            phase = celestial,
+            palette = palette,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 4.dp, end = 10.dp)
+                .size(84.dp)
+                .testTag("hero_celestial")
+        )
 
         Column(
             modifier = Modifier

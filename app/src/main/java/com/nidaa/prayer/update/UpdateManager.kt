@@ -32,6 +32,10 @@ object UpdateManager {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    /** Release tags already retried through the MIUI system-installer path. */
+    private val miuiRerouted: MutableSet<String> =
+        java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
     private val _state = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val state: StateFlow<UpdateState> = _state.asStateFlow()
 
@@ -204,7 +208,10 @@ object UpdateManager {
      */
     fun onInstallStatus(context: Context, statusCode: Int, statusMessage: String?) {
         val app = context.applicationContext
-        val outcome = InstallOutcome.fromStatusCode(statusCode)
+        // beta23: on MIUI a blocked result is the vendor user-restriction rule,
+        // and the APK is immediately retried through the system installer.
+        val miui = MiuiDevices.isMiuiOnDevice()
+        val outcome = InstallOutcome.forStatus(statusCode, miui)
         scope.launch {
             val store = runCatching { UpdatesStore(app) }.getOrNull()
             val release = releaseOfState() ?: store?.pendingRelease()
@@ -231,11 +238,31 @@ object UpdateManager {
                 else -> {
                     Log.w(ApkInstaller.TAG, "install failed: ${outcome.name}")
                     if (release != null) {
-                        _state.value = UpdateState.Failed(release, FailureKind.INSTALL)
+                        val rerouted = outcome == InstallOutcome.MIUI_RESTRICTED &&
+                            rerouteToSystemInstaller(app, release)
+                        if (!rerouted) {
+                            _state.value = UpdateState.Failed(release, FailureKind.INSTALL)
+                        }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * beta23: one-shot MIUI fallback. The status receiver has already persisted
+     * the Xiaomi-specific reason, so this only has to hand the verified APK to
+     * the system installer - once per release, so a phone that keeps blocking
+     * cannot loop.
+     */
+    private fun rerouteToSystemInstaller(app: Context, release: ReleaseInfo): Boolean {
+        if (!miuiRerouted.add(release.tag)) return false
+        val apk = UpdateStorage.apkFile(app, release)
+        if (!apk.exists()) return false
+        val started = ApkInstaller.retryWithSystemInstaller(app, apk)
+        val ok = started is InstallStart.Started
+        Log.i(ApkInstaller.TAG, "MIUI reroute to system installer: ${if (ok) "started" else "failed"}")
+        return ok
     }
 
     fun setEnabled(context: Context, enabled: Boolean) {

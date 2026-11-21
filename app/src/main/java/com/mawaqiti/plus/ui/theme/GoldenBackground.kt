@@ -9,32 +9,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import java.util.Random
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * Beta 9 "Golden Night" background.
  *
  * Same vertical gradient contract as [LivingSkyBackground] (three palette
  * stops, optional horizon tint, optional bottom glow) plus the ornaments taken
- * from the owner's reference: a deterministic star field, soft clouds, thin
- * botanical corner branches and a mosque silhouette along the bottom edge.
+ * from the owner's reference: a deterministic star field, soft clouds and - as
+ * of beta23 - a symmetric Islamic night scene along the bottom edge.
  *
- * Stars/moon are not drawn behind text: the star field stops at 55% of the
- * height, the skyline is a near-black silhouette (darkening the bottom, which
- * only helps the cream text) and the botanicals stay in the bottom corners,
- * clear of the wordmark, chip and cards.
+ * Stars are not drawn behind text: the star field stops at 55% of the height,
+ * and the scene is a near-black silhouette that only darkens the very bottom,
+ * which raises the contrast of the cream text above it.
  */
 @Composable
 fun GoldenSkyBackground(modifier: Modifier = Modifier) {
@@ -86,44 +80,34 @@ fun GoldenSkyBackground(modifier: Modifier = Modifier) {
             drawClouds(palette.text, clouds)
         }
 
-        val botanical = palette.accent.copy(alpha = if (palette.dark) 0.16f else 0.20f)
-        drawBotanical(
-            origin = Offset(size.width - size.minDimension * 0.03f, size.height * 0.985f),
-            scale = size.minDimension * 0.30f,
-            direction = -1f,
-            color = botanical
-        )
-        drawBotanical(
-            origin = Offset(size.minDimension * 0.03f, size.height * 0.985f),
-            scale = size.minDimension * 0.24f,
-            direction = 1f,
-            color = botanical
-        )
-
-        // Silhouette hugging the bottom edge: darker than the sky, so the note
-        // and footer buttons keep their contrast.
-        drawSkyline(
+        // beta23: the abstract oval "botanicals" that used to sit in the two
+        // bottom corners are gone. In their place is one meaningful, mirror-
+        // symmetric scene: a mosque with a dome and two minarets, flanking
+        // palms and a low arcade, in the same near-black silhouette value so
+        // the cards, the note and the dock keep their contrast.
+        drawIslamicScene(
             color = Color(0xFF010208).copy(alpha = 0.55f),
+            // The floating dock covers roughly the bottom fifth of the phone
+            // screen, so the skyline is based a little higher than the edge:
+            // the dome, both minarets and the palms then read ABOVE the dock
+            // instead of hiding behind its pill, while the ground slab still
+            // runs to the bottom edge.
             baseY = size.height * 0.955f
         )
     }
 }
 
 /**
- * The hero-card illustration: crescent, a few stars, clouds and a small mosque
- * skyline. Painted behind the hero content; the crescent lives in the top-right
- * corner and the skyline in the bottom 12%, so the centred text never sits on
- * top of it.
+ * The hero-card illustration: a few stars and a small arcade silhouette.
+ *
+ * beta23 removed the fixed crescent that used to live here. The card now owns a
+ * real [CelestialIcon] that follows the computed prayer times, so this decor
+ * must never draw a moon of its own.
  */
 @Composable
 fun GoldenHeroDecor(modifier: Modifier = Modifier) {
     val palette = skyPalette
     val phase = LocalGoldenPhase.current
-    val moon by animateFloatAsState(
-        targetValue = moonAlphaFor(phase),
-        animationSpec = tween(PHASE_FADE_MS),
-        label = "goldenMoon"
-    )
     val stars by animateFloatAsState(
         targetValue = starAlphaFor(phase),
         animationSpec = tween(PHASE_FADE_MS),
@@ -142,36 +126,11 @@ fun GoldenHeroDecor(modifier: Modifier = Modifier) {
             drawStarField(field, alpha = stars * 0.85f, color = palette.text, maxY = 0.34f,
                 minX = 0.62f)
         }
-        if (moon > 0.01f) {
-            val radius = size.minDimension * 0.11f
-            val center = Offset(size.width * 0.845f, size.height * 0.20f)
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(palette.accent.copy(alpha = 0.22f * moon), palette.accent.copy(alpha = 0f)),
-                    center = center,
-                    radius = radius * 2.4f
-                ),
-                radius = radius * 2.4f,
-                center = center
-            )
-            drawPath(
-                path = crescentPath(center, radius),
-                color = palette.accent.copy(alpha = 0.95f * moon)
-            )
-            drawPath(
-                path = sparklePath(
-                    center = center + Offset(radius * 1.15f, radius * 0.95f),
-                    outer = radius * 0.34f,
-                    inner = radius * 0.11f
-                ),
-                color = Color(0xFFFFF6E0).copy(alpha = 0.90f * moon)
-            )
-        }
         if (skyline > 0.01f) {
-            drawSkyline(
+            drawIslamicScene(
                 color = Color(0xFF010208).copy(alpha = 0.45f * skyline),
-                baseY = size.height * 0.90f,
-                heightFraction = 0.55f
+                baseY = size.height * 0.955f,
+                compact = true
             )
         }
     }
@@ -186,14 +145,6 @@ internal fun starAlphaFor(phase: GoldenPhase): Float = when (phase) {
     GoldenPhase.MORNING -> 0.22f
     GoldenPhase.AFTERNOON -> 0.10f
     GoldenPhase.SUNSET -> 0.10f
-}
-
-internal fun moonAlphaFor(phase: GoldenPhase): Float = when (phase) {
-    GoldenPhase.NIGHT -> 1f
-    GoldenPhase.DAWN -> 0.55f
-    GoldenPhase.MORNING -> 0.15f
-    GoldenPhase.AFTERNOON -> 0.08f
-    GoldenPhase.SUNSET -> 0.18f
 }
 
 internal fun cloudAlphaFor(phase: GoldenPhase): Float = when (phase) {
@@ -282,132 +233,206 @@ private fun DrawScope.drawClouds(color: Color, alpha: Float) {
 }
 
 /**
- * Thin, stylised branch with round leaves, used in both bottom corners.
- * [direction] is -1 for the right corner (growing leftward) and +1 for the left.
+ * beta23: the Islamic night scene that replaces the old abstract shapes.
+ *
+ * One closed path carries the architecture (base slab, two minarets with their
+ * balconies and spires, the drummed central dome with its finial, two flanking
+ * half domes and the low arcade wings), then two palms are stroked on top of it.
+ * Every x is expressed from the horizontal centre and mirrored, so the scene is
+ * exactly symmetric and therefore identical in RTL and LTR layouts.
+ *
+ * Contrast contract: the caller passes a near-black colour with a low alpha, so
+ * the scene can only *darken* the bottom of the screen - the light cream text,
+ * the gold accent and every glass card keep or gain contrast over it.
+ *
+ * [compact] shrinks the vertical proportions for the small arcade strip inside
+ * the hero card.
  */
-private fun DrawScope.drawBotanical(
-    origin: Offset,
-    scale: Float,
-    direction: Float,
-    color: Color
-) {
-    val stem = Path().apply {
-        moveTo(origin.x, origin.y)
-        quadraticTo(
-            origin.x + direction * scale * 0.42f,
-            origin.y - scale * 0.42f,
-            origin.x + direction * scale * 0.16f,
-            origin.y - scale
-        )
-    }
-    drawPath(
-        path = stem,
-        color = color,
-        style = Stroke(width = scale * 0.014f, cap = StrokeCap.Round)
-    )
-
-    val leaves = listOf(
-        Triple(0.16f, 0.16f, 0.115f),
-        Triple(0.34f, 0.40f, 0.100f),
-        Triple(0.17f, 0.52f, 0.090f),
-        Triple(0.30f, 0.72f, 0.078f)
-    )
-    for ((dx, dy, leaf) in leaves) {
-        val center = Offset(
-            origin.x + direction * scale * dx,
-            origin.y - scale * dy
-        )
-        val w = scale * leaf * 2.1f
-        val h = scale * leaf
-        drawOval(
-            color = color,
-            topLeft = Offset(center.x - w * 0.5f, center.y - h * 0.5f),
-            size = Size(w, h)
-        )
-    }
-}
-
-/**
- * Mosque silhouette: two domes and two minarets over a solid base. All values
- * are normalised to the canvas, so the same function works for the full-screen
- * background and for the small hero-card strip.
- */
-private fun DrawScope.drawSkyline(
+private fun DrawScope.drawIslamicScene(
     color: Color,
     baseY: Float,
-    heightFraction: Float = 1f
+    compact: Boolean = false
 ) {
     val w = size.width
     val h = size.height
-    val unit = h * heightFraction
-    val minaret = w * 0.030f
+    // Every horizontal value is a fraction of the width and every vertical one a
+    // fraction of a single "rise" band, so the same numbers mirror exactly and
+    // scale from a phone to the small arcade strip in the hero card.
+    val rise = h * if (compact) 0.16f else 0.19f
+    fun x(f: Float) = w * f
+    fun yv(f: Float) = baseY - rise * f
 
-    val path = Path().apply {
-        moveTo(0f, h)
-        lineTo(0f, baseY)
+    // Ground slab: from the baseline to the bottom edge of the screen.
+    drawRect(color = color, topLeft = Offset(0f, baseY), size = Size(w, h - baseY))
 
-        // Left minaret
-        lineTo(w * 0.085f, baseY)
-        lineTo(w * 0.085f, baseY - unit * 0.075f)
-        lineTo(w * 0.085f + minaret, baseY - unit * 0.075f)
-        lineTo(w * 0.085f + minaret, baseY)
+    // ---- arcade wings, mirrored -------------------------------------------
+    for (side in listOf(1f, -1f)) {
+        fun sx(f: Float) = x(0.5f + side * f)
+        val bandTop = yv(0.26f)
+        val left = minOf(sx(0.122f), sx(0.238f))
+        val right = maxOf(sx(0.122f), sx(0.238f))
+        drawRect(
+            color = color,
+            topLeft = Offset(left, bandTop),
+            size = Size(right - left, baseY - bandTop)
+        )
+        // Three small domes over the arcade openings.
+        for (index in 0 until 3) {
+            val cx = sx(0.142f + index * 0.038f)
+            drawCircle(color = color, radius = rise * 0.075f, center = Offset(cx, bandTop))
+        }
+    }
 
-        // Small dome
-        lineTo(w * 0.255f, baseY)
-        quadraticTo(w * 0.325f, baseY - unit * 0.085f, w * 0.395f, baseY)
+    // ---- side halls and their half domes ---------------------------------
+    for (side in listOf(1f, -1f)) {
+        fun sx(f: Float) = x(0.5f + side * f)
+        val hallLeft = minOf(sx(0.238f), sx(0.395f))
+        val hallRight = maxOf(sx(0.238f), sx(0.395f))
+        drawRect(
+            color = color,
+            topLeft = Offset(hallLeft, yv(0.30f)),
+            size = Size(hallRight - hallLeft, baseY - yv(0.30f))
+        )
+        val dome = Path().apply {
+            moveTo(hallLeft, yv(0.30f))
+            quadraticTo(
+                (hallLeft + hallRight) / 2f, yv(0.58f),
+                hallRight, yv(0.30f)
+            )
+            lineTo(hallRight, yv(0.30f))
+            close()
+        }
+        drawPath(dome, color)
+    }
 
-        // Large dome with a slim finial
-        lineTo(w * 0.470f, baseY)
-        lineTo(w * 0.505f, baseY - unit * 0.020f)
-        quadraticTo(w * 0.585f, baseY - unit * 0.140f, w * 0.665f, baseY - unit * 0.020f)
-        lineTo(w * 0.700f, baseY)
-
-        // Right minaret
-        lineTo(w * 0.855f, baseY)
-        lineTo(w * 0.855f, baseY - unit * 0.095f)
-        lineTo(w * 0.855f + minaret, baseY - unit * 0.095f)
-        lineTo(w * 0.855f + minaret, baseY)
-
-        lineTo(w, baseY)
-        lineTo(w, h)
+    // ---- main hall --------------------------------------------------------
+    val hallLeft = x(0.395f)
+    val hallRight = x(0.605f)
+    drawRect(
+        color = color,
+        topLeft = Offset(hallLeft, yv(0.30f)),
+        size = Size(hallRight - hallLeft, baseY - yv(0.30f))
+    )
+    // Drum under the dome.
+    drawRect(
+        color = color,
+        topLeft = Offset(x(0.410f), yv(0.52f)),
+        size = Size(x(0.590f) - x(0.410f), yv(0.30f) - yv(0.52f))
+    )
+    // Central dome: a bulb that closes on the drum.
+    val dome = Path().apply {
+        moveTo(x(0.410f), yv(0.52f))
+        cubicTo(
+            x(0.418f), yv(0.90f),
+            x(0.582f), yv(0.90f),
+            x(0.590f), yv(0.52f)
+        )
         close()
     }
-    drawPath(path, color)
+    drawPath(dome, color)
+    // Finial: a slim post and its bead.
+    drawRect(
+        color = color,
+        topLeft = Offset(x(0.497f), yv(1.05f)),
+        size = Size(x(0.503f) - x(0.497f), yv(0.86f) - yv(1.05f))
+    )
+    drawCircle(color = color, radius = w * 0.007f, center = Offset(x(0.5f), yv(1.08f)))
+
+    // ---- minarets, mirrored ----------------------------------------------
+    for (side in listOf(1f, -1f)) {
+        val cx = x(0.5f + side * 0.330f)
+        // Shaft.
+        drawRect(
+            color = color,
+            topLeft = Offset(cx - w * 0.011f, yv(0.72f)),
+            size = Size(w * 0.022f, baseY - yv(0.72f))
+        )
+        // Balcony.
+        drawRect(
+            color = color,
+            topLeft = Offset(cx - w * 0.022f, yv(0.72f)),
+            size = Size(w * 0.044f, yv(0.66f) - yv(0.72f))
+        )
+        // Upper shaft.
+        drawRect(
+            color = color,
+            topLeft = Offset(cx - w * 0.008f, yv(0.86f)),
+            size = Size(w * 0.016f, yv(0.66f) - yv(0.86f))
+        )
+        // Cap and spire.
+        val cap = Path().apply {
+            moveTo(cx - w * 0.015f, yv(0.86f))
+            lineTo(cx, yv(0.99f))
+            lineTo(cx + w * 0.015f, yv(0.86f))
+            close()
+        }
+        drawPath(cap, color)
+        drawCircle(color = color, radius = w * 0.006f, center = Offset(cx, yv(1.02f)))
+    }
+
+    // ---- palms, mirrored --------------------------------------------------
+    if (!compact) {
+        val palmHeight = h * 0.05f
+        drawPalm(
+            footX = x(0.052f),
+            baseY = baseY,
+            height = palmHeight,
+            lean = -w * 0.010f,
+            thickness = w * 0.007f,
+            color = color
+        )
+        drawPalm(
+            footX = x(0.948f),
+            baseY = baseY,
+            height = palmHeight,
+            lean = w * 0.010f,
+            thickness = w * 0.007f,
+            color = color
+        )
+    }
 }
 
-private fun crescentPath(center: Offset, radius: Float): Path {
-    val outer = Path().apply {
-        addOval(
-            Rect(
-                offset = center - Offset(radius, radius),
-                size = Size(radius * 2f, radius * 2f)
-            )
-        )
+/** One palm: a leaning trunk and five drooping fronds. */
+private fun DrawScope.drawPalm(
+    footX: Float,
+    baseY: Float,
+    height: Float,
+    lean: Float,
+    thickness: Float,
+    color: Color
+) {
+    val crown = Offset(footX + lean, baseY - height)
+    val trunk = Path().apply {
+        moveTo(footX, baseY)
+        quadraticTo(footX + lean * 0.4f, baseY - height * 0.55f, crown.x, crown.y)
     }
-    val biteCenter = center + Offset(radius * 0.46f, -radius * 0.20f)
-    val biteRadius = radius * 0.86f
-    val bite = Path().apply {
-        addOval(
-            Rect(
-                offset = biteCenter - Offset(biteRadius, biteRadius),
-                size = Size(biteRadius * 2f, biteRadius * 2f)
-            )
-        )
-    }
-    return Path().apply { op(outer, bite, PathOperation.Difference) }
-}
+    drawPath(
+        path = trunk,
+        color = color,
+        style = Stroke(width = thickness, cap = StrokeCap.Round)
+    )
 
-private fun sparklePath(center: Offset, outer: Float, inner: Float): Path {
-    val path = Path()
-    for (index in 0 until 8) {
-        val angle = (-90.0 + index * 45.0) * PI / 180.0
-        val radius = if (index % 2 == 0) outer else inner
-        val point = Offset(
-            center.x + (cos(angle) * radius).toFloat(),
-            center.y + (sin(angle) * radius).toFloat()
+    val spread = height * 0.62f
+    val direction = if (lean < 0f) 1f else -1f
+    for (index in 0 until 5) {
+        val t = (index / 4f) * 2f - 1f          // -1 .. 1, mirrored
+        val tip = Offset(
+            crown.x + t * spread * direction,
+            crown.y - height * (0.46f - kotlin.math.abs(t) * 0.30f)
         )
-        if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
+        val frond = Path().apply {
+            moveTo(crown.x, crown.y)
+            quadraticTo(
+                (crown.x + tip.x) / 2f,
+                crown.y - height * 0.12f,
+                tip.x,
+                tip.y
+            )
+        }
+        drawPath(
+            path = frond,
+            color = color,
+            style = Stroke(width = thickness * 0.72f, cap = StrokeCap.Round)
+        )
     }
-    path.close()
-    return path
 }

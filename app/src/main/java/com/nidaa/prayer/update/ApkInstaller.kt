@@ -50,12 +50,58 @@ object ApkInstaller {
             if (!canInstall(context)) {
                 InstallStart.NeedsPermission
             } else {
-                installWithSession(context, apk)
+                installOnThisDevice(context, apk)
             }
         } else {
             installLegacy(context, apk)
         }
     }
+
+    /**
+     * beta23: the OEM-dependent choice of install path.
+     *
+     * MIUI / HyperOS kill a third-party `PackageInstaller` session with
+     * `INSTALL_FAILED_USER_RESTRICTED`, so the system installer intent
+     * (`ACTION_INSTALL_PACKAGE` + `FLAG_GRANT_READ_URI_PERMISSION`) is the
+     * PRIMARY path there. Every other OEM keeps the session path unchanged.
+     */
+    fun installOnThisDevice(context: Context, apk: File): InstallStart =
+        if (MiuiDevices.isMiuiOnDevice()) {
+            Log.i(TAG, "MIUI/HyperOS detected: using the system installer")
+            installWithSystemInstaller(context, apk)
+        } else {
+            installWithSession(context, apk)
+        }
+
+    /**
+     * Forces the system-installer path. Used as the MIUI fallback after a
+     * `STATUS_FAILURE_BLOCKED` result or a `SecurityException`, so a blocked
+     * session still reaches MIUI's own confirmation dialog.
+     */
+    fun retryWithSystemInstaller(context: Context, apk: File): InstallStart =
+        installWithSystemInstaller(context, apk)
+
+    private fun installWithSystemInstaller(context: Context, apk: File): InstallStart = try {
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}$FILE_PROVIDER_SUFFIX",
+            apk
+        )
+        context.startActivity(systemInstallerIntent(context, uri))
+        InstallStart.Started
+    } catch (error: Throwable) {
+        Log.w(TAG, "system installer intent failed", error)
+        InstallStart.Failed(error.message ?: "Installer intent failed")
+    }
+
+    /** The `ACTION_INSTALL_PACKAGE` intent; shared with the API 24/25 path. */
+    fun systemInstallerIntent(context: Context, uri: Uri): Intent =
+        Intent(Intent.ACTION_INSTALL_PACKAGE)
+            .setDataAndType(uri, APK_MIME)
+            .addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+            )
 
     /** Status PendingIntent flags: UPDATE_CURRENT always, MUTABLE on API 31+. */
     fun statusPendingIntentFlags(sdkInt: Int): Int =
@@ -83,12 +129,7 @@ object ApkInstaller {
      * read grant are covered by unit tests without touching the filesystem.
      */
     fun legacyInstallIntent(context: Context, uri: Uri): Intent =
-        Intent(Intent.ACTION_INSTALL_PACKAGE)
-            .setDataAndType(uri, APK_MIME)
-            .addFlags(
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    Intent.FLAG_ACTIVITY_NEW_TASK
-            )
+        systemInstallerIntent(context, uri)
 
     private fun installWithSession(context: Context, apk: File): InstallStart {
         val installer = context.packageManager.packageInstaller
@@ -127,6 +168,13 @@ object ApkInstaller {
             // session belongs to the platform and must produce a status.
             if (!committed && sessionId >= 0) {
                 runCatching { installer.abandonSession(sessionId) }
+            }
+            // beta23: MIUI reports the block as a SecurityException before any
+            // session exists; hand the same APK to the system installer instead
+            // of failing the update.
+            if (error is SecurityException && MiuiDevices.isMiuiOnDevice()) {
+                Log.w(TAG, "MIUI blocked the session; rerouting to the system installer", error)
+                return installWithSystemInstaller(context, apk)
             }
             Log.w(TAG, "PackageInstaller session failed", error)
             InstallStart.Failed(error.message ?: "PackageInstaller failed")

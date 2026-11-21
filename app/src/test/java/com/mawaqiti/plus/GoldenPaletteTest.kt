@@ -5,8 +5,9 @@ import com.mawaqiti.plus.ui.theme.ColorMath
 import com.mawaqiti.plus.ui.theme.GoldenPalettes
 import com.mawaqiti.plus.ui.theme.GoldenPhase
 import com.mawaqiti.plus.ui.theme.SkyPalette
+import com.mawaqiti.plus.ui.theme.CelestialPhase
 import com.mawaqiti.plus.ui.theme.cloudAlphaFor
-import com.mawaqiti.plus.ui.theme.moonAlphaFor
+import com.mawaqiti.plus.ui.theme.celestialOf
 import com.mawaqiti.plus.ui.theme.skylineAlphaFor
 import com.mawaqiti.plus.ui.theme.starAlphaFor
 import java.util.Locale
@@ -183,9 +184,11 @@ class GoldenPaletteTest {
         assertEquals(1f, starAlphaFor(GoldenPhase.NIGHT))
         assertTrue(starAlphaFor(GoldenPhase.DAWN) > 0f)
         assertTrue(starAlphaFor(GoldenPhase.DAWN) < starAlphaFor(GoldenPhase.NIGHT))
-        assertEquals(1f, moonAlphaFor(GoldenPhase.NIGHT))
-        assertTrue(moonAlphaFor(GoldenPhase.DAWN) > 0f)
-        assertTrue(moonAlphaFor(GoldenPhase.DAWN) < moonAlphaFor(GoldenPhase.NIGHT))
+        // beta23: the fixed crescent (and its alpha ramp) is gone. The celestial
+        // indicator is a discrete phase now, and only NIGHT may be a moon.
+        assertEquals(CelestialPhase.MOON, celestialOf(GoldenPhase.NIGHT))
+        assertNotEquals(CelestialPhase.MOON, celestialOf(GoldenPhase.DAWN))
+        assertNotEquals(CelestialPhase.MOON, celestialOf(GoldenPhase.MORNING))
         // The silhouette stays visible in every phase, it is what grounds the
         // layout; clouds never disappear either.
         for (phase in GoldenPhase.entries) {

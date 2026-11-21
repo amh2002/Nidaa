@@ -46,6 +46,7 @@ import com.mawaqiti.plus.data.AppSettings
 import com.mawaqiti.plus.data.LayoutMode
 import com.mawaqiti.plus.ui.components.DockDestination
 import com.mawaqiti.plus.ui.components.NidaaDock
+import com.mawaqiti.plus.ui.components.NidaaSplash
 import com.mawaqiti.plus.ui.components.isArabicLocale
 import com.mawaqiti.plus.ui.screens.AboutScreen
 import com.mawaqiti.plus.ui.screens.CityPickerSheet
@@ -75,15 +76,26 @@ class MainActivity : AppCompatActivity() {
         handleUpdateIntent(intent)
         val viewModel: MawaqitiViewModel by viewModels()
         applyDebugPhase(intent, viewModel)
+        applyDebugLayout(intent, viewModel)
         setContent {
             val vm: MawaqitiViewModel = viewModel()
             val golden by vm.goldenPhase.collectAsState()
+            // beta23: the splash is a pure overlay on top of an already composed
+            // app, so the ViewModel, the settings read and the first table
+            // lookup all run while it is visible. rememberSaveable keeps it from
+            // replaying on a configuration change.
+            var showSplash by rememberSaveable { mutableStateOf(true) }
             MawaqitiTheme(paletteOverride = GoldenPalettes.of(golden)) {
                 CompositionLocalProvider(LocalGoldenPhase provides golden) {
-                    MawaqitiApp(
-                        viewModel = vm,
-                        openUpdatesSignal = openUpdatesSignal
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        MawaqitiApp(
+                            viewModel = vm,
+                            openUpdatesSignal = openUpdatesSignal
+                        )
+                        if (showSplash) {
+                            NidaaSplash(onFinish = { showSplash = false })
+                        }
+                    }
                 }
             }
         }
@@ -95,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         handleUpdateIntent(intent)
         val viewModel: MawaqitiViewModel by viewModels()
         applyDebugPhase(intent, viewModel)
+        applyDebugLayout(intent, viewModel)
     }
 
     override fun onResume() {
@@ -125,8 +138,24 @@ class MainActivity : AppCompatActivity() {
         viewModel.setPhaseOverride(GoldenPhase.fromKey(raw))
     }
 
+    /**
+     * beta23 debug-only layout pin, used to capture the TV dashboard without
+     * tapping through Settings:
+     * `adb shell am start -n com.nidaa.prayer/.MainActivity --es nidaa_layout tv`
+     * (or `mobile`). No-op in release builds, exactly like [applyDebugPhase].
+     */
+    private fun applyDebugLayout(intent: Intent?, viewModel: MawaqitiViewModel) {
+        if (!BuildConfig.DEBUG) return
+        val raw = intent?.getStringExtra(EXTRA_LAYOUT) ?: return
+        val mode = if (raw.equals("tv", ignoreCase = true)) LayoutMode.TV else LayoutMode.MOBILE
+        viewModel.setLayoutMode(mode)
+    }
+
     companion object {
         const val EXTRA_PHASE = "nidaa_phase"
+
+        /** Debug-only layout pin (`tv` / `mobile`). */
+        const val EXTRA_LAYOUT = "nidaa_layout"
 
         /** Explicit deep link from update notifications into «التحديثات». */
         const val EXTRA_OPEN_UPDATES = "nidaa_open_updates"

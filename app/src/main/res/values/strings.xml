@@ -12,6 +12,9 @@
     <string name="remaining_short">متبقي</string>
     <string name="last_third">الثلث الأخير</string>
     <string name="official_note">المواقيت وفق الجدول الرسمي الفلسطيني.</string>
+    <!-- beta23: Jordan runs on the Ministry of Awqaf calendar, so the footer
+         must not claim the Palestinian timetable. -->
+    <string name="official_note_jordan">المواقيت وفق تقويم وزارة الأوقاف الأردنية.</string>
     <string name="prayer_progress_desc">الوقت المنقضي بين الصلاتين</string>
 
     <string name="prayer_fajr">الفجر</string>
@@ -229,6 +232,8 @@
     <string name="install_outcome_timeout">انتهت مهلة التثبيت. أعد المحاولة.</string>
     <string name="install_outcome_incompatible">هذا التحديث غير متوافق مع جهازك أو نسخة أندرويد.</string>
     <string name="install_outcome_unknown">تعذر إكمال التثبيت لسبب غير معروف.</string>
+    <!-- beta23: the actionable MIUI/HyperOS block. -->
+    <string name="install_outcome_xiaomi_restricted">منع MIUI التثبيت. فعّل «التثبيت عبر USB» من خيارات المطوّر (يتطلب حساب Mi)، واسمح بتثبيت تطبيقات غير معروفة لهذا التطبيق، وعطّل «تحسينات MIUI» عند الاستمرار.</string>
 
     <string name="install_guidance_huawei">على Huawei/Honor: أوقف «الوضع الصرف» (Pure Mode) ثم اسمح لنداء بتثبيت التطبيقات من المصادر الخارجية.</string>
     <string name="install_guidance_xiaomi">على Xiaomi/Redmi/POCO: الإعدادات ← كلمات المرور والأمان ← التثبيت من مصادر غير معروفة ← اسمح لنداء.</string>

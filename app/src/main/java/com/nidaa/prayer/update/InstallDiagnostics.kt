@@ -37,9 +37,27 @@ enum class InstallOutcome(val messageRes: Int) {
     INCOMPATIBLE(R.string.install_outcome_incompatible),
     FAILED(R.string.install_outcome_unknown),
     UNKNOWN(R.string.install_outcome_unknown),
-    START_FAILED(R.string.install_outcome_unknown);
+    START_FAILED(R.string.install_outcome_unknown),
+
+    /**
+     * beta23: the specific MIUI/HyperOS block. Shown and persisted in
+     * «آخر محاولة تثبيت» with the exact steps that unblock it, instead of the
+     * generic "the system prevented the install".
+     */
+    MIUI_RESTRICTED(R.string.install_outcome_xiaomi_restricted);
 
     companion object {
+        /**
+         * Maps a PackageInstaller status to a stable outcome.
+         *
+         * On MIUI a blocked session is the vendor's user-restriction rule, not
+         * a generic block, so it gets its own actionable message.
+         */
+        fun forStatus(code: Int, miui: Boolean): InstallOutcome {
+            val base = fromStatusCode(code)
+            return if (miui && (base == BLOCKED || base == FAILED)) MIUI_RESTRICTED else base
+        }
+
         /** Maps the PackageInstaller status int to a stable outcome. */
         fun fromStatusCode(code: Int): InstallOutcome = when (code) {
             InstallStatusCode.SUCCESS -> SUCCESS

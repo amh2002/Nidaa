@@ -76,7 +76,8 @@ class CountdownPillTest {
                             isArabic = true,
                             clockFormat = ClockFormat.H24,
                             palette = GoldenPalettes.Night,
-                            nowText = "10:55"
+                            nowText = "10:55",
+                            celestial = com.mawaqiti.plus.ui.theme.CelestialPhase.MOON
                         )
                     }
                 }

@@ -55,8 +55,12 @@ import com.mawaqiti.plus.format.TimeFormatter
 import com.mawaqiti.plus.ui.components.GlassCard
 import com.mawaqiti.plus.ui.components.PrayerIcons
 import com.mawaqiti.plus.ui.theme.AmiriBold
+import com.mawaqiti.plus.ui.theme.CelestialIcon
+import com.mawaqiti.plus.ui.theme.CelestialPhase
 import com.mawaqiti.plus.ui.theme.NidaaDimens
+import com.mawaqiti.plus.ui.theme.PhaseBounds
 import com.mawaqiti.plus.ui.theme.SkyPalette
+import com.mawaqiti.plus.ui.theme.celestialPhase
 import com.mawaqiti.plus.ui.theme.Tajawal
 import com.mawaqiti.plus.ui.theme.TvCompactDimens
 import com.mawaqiti.plus.ui.theme.TvDimens
@@ -101,6 +105,11 @@ fun TvHomeScreen(
     val now = rememberForegroundClock()
     val hero = remember(day, now) { heroState(day, now) }
     val nowMinute = now.hour * 60 + now.minute
+    // beta23: the same phase resolver the phone hero uses, so the TV dashboard
+    // and the phone can never disagree about sun vs moon.
+    val celestial = remember(day, nowMinute) {
+        celestialPhase(nowMinute, PhaseBounds.fromDay(day))
+    }
     val nowText = remember(nowMinute, clockFormat, isArabic) {
         TimeFormatter.format(nowMinute, clockFormat, isArabic)
     }
@@ -149,6 +158,7 @@ fun TvHomeScreen(
                 hero = hero,
                 progress = progress,
                 nowText = nowText,
+                celestial = celestial,
                 isArabic = isArabic,
                 clockFormat = clockFormat,
                 metrics = metrics,
@@ -291,6 +301,7 @@ private fun TvHeroPanel(
     hero: HeroState,
     progress: Float,
     nowText: String,
+    celestial: CelestialPhase,
     isArabic: Boolean,
     clockFormat: ClockFormat,
     metrics: TvMetrics,
@@ -318,6 +329,14 @@ private fun TvHeroPanel(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    CelestialIcon(
+                        phase = celestial,
+                        palette = palette,
+                        modifier = Modifier
+                            .size(metrics.icon * 2f)
+                            .testTag("tv_celestial")
+                    )
+                    Spacer(Modifier.height(metrics.cardTextGap))
                     Text(
                         text = stringResource(R.string.next_prayer),
                         fontFamily = Tajawal,
@@ -382,13 +401,22 @@ private fun TvHeroPanel(
                             .testTag("tv_countdown_pill"),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // beta23: caption and digits now share one baseline via
+                        // `alignByBaseline()` instead of relying on the row's
+                        // vertical centring. Centring aligns the *boxes*, which
+                        // leaves the two ink baselines apart whenever the font
+                        // metrics differ (always, between Arabic letters and
+                        // tabular digits). Same contract as the phone pill.
                         Text(
                             text = stringResource(R.string.remaining_short),
                             fontFamily = Tajawal,
                             fontSize = metrics.countdownSize,
                             fontWeight = FontWeight.Medium,
                             color = palette.accent,
-                            maxLines = 1
+                            maxLines = 1,
+                            modifier = Modifier
+                                .alignByBaseline()
+                                .testTag("tv_countdown_caption")
                         )
                         Spacer(Modifier.width(NidaaDimens.countdownWordGap))
                         Text(
@@ -399,7 +427,9 @@ private fun TvHeroPanel(
                             color = palette.accent,
                             maxLines = 1,
                             softWrap = false,
-                            modifier = Modifier.testTag("tv_countdown_value")
+                            modifier = Modifier
+                                .alignByBaseline()
+                                .testTag("tv_countdown_value")
                         )
                     }
                     Spacer(Modifier.height(metrics.cardTextGap))

@@ -213,44 +213,42 @@ fun CityPickerSheet(
 
             Spacer(Modifier.height(10.dp))
 
-            when {
-                country == Country.JO -> JordanEmptyState(palette)
-                else -> {
-                    if (searching) {
-                        SearchingRow(palette)
-                    }
-                    if (filtered.isEmpty()) {
-                        if (!searching) EmptyResult(palette)
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 430.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            items(filtered, key = { it.order }) { city ->
-                                CityResultCard(
-                                    city = city,
-                                    isArabic = isArabic,
-                                    selected = city.order == selectedCity.order,
-                                    palette = palette,
-                                    onClick = {
-                                        onSelect(city)
-                                        onDismiss()
-                                    }
-                                )
+            // beta23: Jordan now ships a verified city list, so the picker
+            // renders it exactly like the other two countries instead of the
+            // "no Jordanian cities yet" placeholder that shipped with beta22.
+            if (searching) {
+                SearchingRow(palette)
+            }
+            if (filtered.isEmpty()) {
+                if (!searching) EmptyResult(palette)
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 430.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(filtered, key = { it.order }) { city ->
+                        CityResultCard(
+                            city = city,
+                            isArabic = isArabic,
+                            selected = city.order == selectedCity.order,
+                            palette = palette,
+                            onClick = {
+                                onSelect(city)
+                                onDismiss()
                             }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            text = stringResource(R.string.cities_count, filtered.size),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = palette.textMuted,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
                         )
                     }
                 }
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = stringResource(R.string.cities_count, filtered.size),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = palette.textMuted,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -445,31 +443,6 @@ private fun CityResultCard(
                 tint = palette.accent
             )
         }
-    }
-}
-
-@Composable
-private fun JordanEmptyState(palette: SkyPalette) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 26.dp, bottom = 30.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.jordan_empty_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = palette.text,
-            textAlign = TextAlign.Center
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.jordan_empty_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = palette.textMuted,
-            textAlign = TextAlign.Center
-        )
     }
 }
 

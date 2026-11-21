@@ -61,9 +61,14 @@ class CityRepository(context: Context) {
         return result.sortedBy { it.order }
     }
 
-    private fun profileFrom(value: String): TableProfile = when (value.lowercase(Locale.US)) {
-        "makkah" -> TableProfile.MAKKAH
-        "madinah" -> TableProfile.MADINAH
+    private fun profileFrom(value: String): TableProfile = when {
+        value.equals("makkah", ignoreCase = true) -> TableProfile.MAKKAH
+        value.equals("madinah", ignoreCase = true) -> TableProfile.MADINAH
+        // beta23: `jordan_<city>` selects that city's generated table from
+        // [com.mawaqiti.plus.engine.table.JordanTables].
+        value.startsWith("jordan_", ignoreCase = true) ->
+            runCatching { TableProfile.valueOf(value.uppercase(Locale.US)) }
+                .getOrDefault(TableProfile.JORDAN_AMMAN)
         else -> TableProfile.DEFAULT
     }
 }

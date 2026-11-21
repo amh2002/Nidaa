@@ -4,11 +4,35 @@ import java.time.LocalDate
 import java.time.Year
 import java.util.Locale
 
-/** The three tables shipped in the original APK (w7.c). */
+/**
+ * The tables the app can serve.
+ *
+ * DEFAULT / MAKKAH / MADINAH ship in the original APK (w7.c). beta23 adds
+ * JORDAN: a table generated from the وزارة الأوقاف convention profile (see
+ * [JordanTables]) instead of an embedded original table. The *engine* below is
+ * untouched by that addition - it still only reads HOURS/MINUTES, applies the
+ * per-city minute offset and wraps the clock.
+ */
 enum class TableProfile {
     DEFAULT,
     MAKKAH,
-    MADINAH
+    MADINAH,
+
+    // beta23: one Jordanian table per city (see [JordanTables]). A single
+    // shared table plus a constant per-city offset cannot stay inside a
+    // +/-1 minute tolerance in a country that spans 2.6 degrees of latitude.
+    JORDAN_AMMAN,
+    JORDAN_ZARQA,
+    JORDAN_IRBID,
+    JORDAN_AQABA,
+    JORDAN_MAFRAQ,
+    JORDAN_SALT,
+    JORDAN_MADABA,
+    JORDAN_KARAK,
+    JORDAN_TAFILAH,
+    JORDAN_MAAN,
+    JORDAN_JERASH,
+    JORDAN_AJLOUN
 }
 
 /** Event order used by every table array. */
@@ -164,11 +188,32 @@ object TableEngine {
         TableProfile.DEFAULT -> PrayerTables.Default.HOURS
         TableProfile.MAKKAH -> PrayerTables.Makkah.HOURS
         TableProfile.MADINAH -> PrayerTables.Madinah.HOURS
+        else -> jordanTables[profile]?.first ?: PrayerTables.Default.HOURS
     }
 
     private fun minutesFor(profile: TableProfile): Array<IntArray> = when (profile) {
         TableProfile.DEFAULT -> PrayerTables.Default.MINUTES
         TableProfile.MAKKAH -> PrayerTables.Makkah.MINUTES
         TableProfile.MADINAH -> PrayerTables.Madinah.MINUTES
+        else -> jordanTables[profile]?.second ?: PrayerTables.Default.MINUTES
     }
+
+    /**
+     * profile -> (HOURS, MINUTES) for the twelve generated Jordanian tables.
+     * The data is generated; this wiring is the only hand-written part.
+     */
+    private val jordanTables: Map<TableProfile, Pair<Array<IntArray>, Array<IntArray>>> = mapOf(
+        TableProfile.JORDAN_AMMAN to (JordanTables.Amman.HOURS to JordanTables.Amman.MINUTES),
+        TableProfile.JORDAN_ZARQA to (JordanTables.Zarqa.HOURS to JordanTables.Zarqa.MINUTES),
+        TableProfile.JORDAN_IRBID to (JordanTables.Irbid.HOURS to JordanTables.Irbid.MINUTES),
+        TableProfile.JORDAN_AQABA to (JordanTables.Aqaba.HOURS to JordanTables.Aqaba.MINUTES),
+        TableProfile.JORDAN_MAFRAQ to (JordanTables.Mafraq.HOURS to JordanTables.Mafraq.MINUTES),
+        TableProfile.JORDAN_SALT to (JordanTables.Salt.HOURS to JordanTables.Salt.MINUTES),
+        TableProfile.JORDAN_MADABA to (JordanTables.Madaba.HOURS to JordanTables.Madaba.MINUTES),
+        TableProfile.JORDAN_KARAK to (JordanTables.Karak.HOURS to JordanTables.Karak.MINUTES),
+        TableProfile.JORDAN_TAFILAH to (JordanTables.Tafilah.HOURS to JordanTables.Tafilah.MINUTES),
+        TableProfile.JORDAN_MAAN to (JordanTables.Maan.HOURS to JordanTables.Maan.MINUTES),
+        TableProfile.JORDAN_JERASH to (JordanTables.Jerash.HOURS to JordanTables.Jerash.MINUTES),
+        TableProfile.JORDAN_AJLOUN to (JordanTables.Ajloun.HOURS to JordanTables.Ajloun.MINUTES)
+    )
 }

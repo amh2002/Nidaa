@@ -12,6 +12,7 @@
     <string name="remaining_short">Left</string>
     <string name="last_third">Last third</string>
     <string name="official_note">Times follow the official Palestinian timetable.</string>
+    <string name="official_note_jordan">Times follow the Jordanian Ministry of Awqaf calendar.</string>
     <string name="prayer_progress_desc">Time elapsed between the two prayers</string>
 
     <string name="prayer_fajr">Fajr</string>

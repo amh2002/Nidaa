@@ -148,6 +148,10 @@ class CalibrationTest {
                 longitude = item.getDouble("lon")
             )
         }
+            // beta23: the twelve Jordanian cities do not use the original
+            // MWL-shaped tables this calibration is about; they have their own
+            // generated ministry tables, validated by JordanValidationTest.
+            .filter { it.country != "JO" }
     }
 
     private fun writeReport(cities: List<City>, deviations: List<Deviation>) {
