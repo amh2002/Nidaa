@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- beta27: transparent clock widget metadata. updatePeriodMillis is 0: the
+     TextClock refreshes itself and the day name follows the system date
+     broadcasts, so there is no periodic wake-up at all. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/clock_widget_description"
+    android:initialLayout="@layout/widget_clock"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="80dp"
+    android:maxResizeWidth="400dp"
+    android:maxResizeHeight="220dp"
+    android:previewLayout="@layout/widget_clock"
+    android:previewImage="@drawable/clock_widget_preview_png"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- beta27: the clock widget's tap opens the device Clock app through
+         AlarmClock.ACTION_SHOW_ALARMS. AOSP DeskClock guards that entry point
+         with SET_ALARM, a normal (install-time) permission. -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
     <!-- beta 7.95: the ONLY network permission set in the app, used solely by
          the updater package. No other feature reaches the network. -->
@@ -24,6 +28,15 @@
     <uses-feature
         android:name="android.hardware.touchscreen"
         android:required="false" />
+
+    <!-- beta27: the clock widget resolves the standard alarm-clock intent to
+         decide between opening the Clock app directly and explaining that the
+         device has none. Package visibility (API 30+) needs this declaration. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SHOW_ALARMS" />
+        </intent>
+    </queries>
 
     <!-- beta21: the phone activity is portrait-locked, which would otherwise
          imply a required portrait screen and hide the app from Android TV.
@@ -118,6 +131,30 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_next_info" />
         </receiver>
+
+        <!-- beta27: transparent clock widget. It shares nothing with the prayer
+             widgets above - no layout, no update cycle - and refreshes itself
+             through TextClock plus the system date/time broadcasts below. -->
+        <receiver
+            android:name=".notify.ClockWidgetProvider"
+            android:exported="false"
+            android:label="@string/clock_widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/clock_widget_info" />
+        </receiver>
+
+        <!-- beta27: tap fallback when the device has no Clock app. -->
+        <receiver
+            android:name=".notify.ClockWidgetLaunchReceiver"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"

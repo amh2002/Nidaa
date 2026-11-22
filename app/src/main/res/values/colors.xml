@@ -14,4 +14,9 @@
     <color name="widget_text_muted">#AEB7D6</color>
     <color name="widget_glass">#1FFFFFFF</color>
     <color name="widget_glass_border">#33FFFFFF</color>
+
+    <!-- beta27: soft drop shadow under the transparent clock widget's text.
+         Not a palette entry but a value derived from the existing night
+         background (black at 40%), used only by shadowColor. -->
+    <color name="widget_clock_shadow">#66000000</color>
 </resources>

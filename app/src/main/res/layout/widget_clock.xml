@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  beta27: the transparent clock widget.
+
+  No background of any kind: the wallpaper shows through, exactly like the
+  reference. The time digits are huge and bold with a soft shadow (a vertical
+  gradient on the digits is not possible in RemoteViews, so the shadow carries
+  the depth), and the Arabic day name is drawn in front of them. The 128 dp
+  block is centred in whatever cell the launcher reports, and the day name
+  starts 56 dp into it, so its body sits across the digits' lower edge while
+  most of the word still lands on the wallpaper - gold on white would lose its
+  contrast if the two overlapped any deeper.
+
+  The day name is filled by ClockWidgetProvider rather than being a TextClock:
+  TextClock always formats with the system locale, and this widget always shows
+  Arabic. The time side IS a TextClock, so it updates itself once a minute with
+  no alarm of any kind.
+
+  `android:fontFamily="@font/amiri_bold"` needs API 26+. On API 24/25 the
+  attribute is ignored and the platform Arabic font is used instead (the widget
+  stays fully functional, only the calligraphic face is missing).
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/clock_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="128dp"
+        android:layout_gravity="center">
+
+        <TextClock
+            android:id="@+id/clock_widget_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:fontFamily="sans-serif-black"
+            android:format12Hour="hh:mm"
+            android:format24Hour="HH:mm"
+            android:gravity="center_horizontal|top"
+            android:includeFontPadding="false"
+            android:shadowColor="@color/widget_clock_shadow"
+            android:shadowDx="0"
+            android:shadowDy="4"
+            android:shadowRadius="8"
+            android:textColor="@color/widget_text"
+            android:textSize="62sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/clock_widget_day"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="56dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/amiri_bold"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:shadowColor="@color/widget_clock_shadow"
+            android:shadowDx="0"
+            android:shadowDy="3"
+            android:shadowRadius="8"
+            android:textColor="@color/widget_gold"
+            android:textSize="58sp" />
+    </FrameLayout>
+</FrameLayout>

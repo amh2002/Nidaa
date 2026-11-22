@@ -315,4 +315,14 @@
     <string name="moon_phase_last_quarter">التربيع الأخير</string>
     <string name="moon_phase_waning_crescent">هلال متناقص</string>
     <string name="moon_phase_old">هلال آخر الشهر</string>
+    <!-- beta27: Settings verse. The Quranic text is user-provided and must not be
+         edited, paraphrased or re-vocalized. The ornate brackets ﴿ ﴾ are part of
+         the resource so no Kotlin literal carries the verse. -->
+    <string name="settings_verse_an_nisa_103">﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا﴾</string>
+    <string name="settings_verse_an_nisa_103_reference">النساء: ١٠٣</string>
+
+    <!-- beta27: clock widget -->
+    <string name="clock_widget_label">الساعة</string>
+    <string name="clock_widget_description">ساعة كبيرة مع اسم اليوم بخط عربي، بخلفية شفافة</string>
+    <string name="clock_widget_no_clock_app">لا يوجد تطبيق ساعة على الجهاز</string>
 </resources>

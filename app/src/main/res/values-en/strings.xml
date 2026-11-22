@@ -266,4 +266,11 @@
     <string name="moon_phase_last_quarter">Last quarter</string>
     <string name="moon_phase_waning_crescent">Waning crescent</string>
     <string name="moon_phase_old">Old crescent</string>
+    <!-- beta27: Settings verse. The Quranic text stays in Arabic in every locale. -->
+    <string name="settings_verse_an_nisa_103">﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا﴾</string>
+    <string name="settings_verse_an_nisa_103_reference">An-Nisa: 103</string>
+
+    <!-- beta27: the clock widget is Arabic-only by design (its day name is
+         always Arabic), so it deliberately keeps the default label, the
+         Arabic explanation and the Arabic description in every locale. -->
 </resources>

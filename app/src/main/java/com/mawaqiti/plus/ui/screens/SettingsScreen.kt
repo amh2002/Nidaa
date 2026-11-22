@@ -53,6 +53,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
@@ -99,6 +102,7 @@ import com.mawaqiti.plus.ui.components.PillOption
 import com.mawaqiti.plus.ui.components.SegmentedPillRow
 import com.mawaqiti.plus.ui.components.SettingsCard
 import com.mawaqiti.plus.ui.components.SettingsSkyAmbient
+import com.mawaqiti.plus.ui.components.SettingsVerse
 import com.mawaqiti.plus.ui.components.SettingRow
 import com.mawaqiti.plus.ui.components.SettingsSmallButton
 import com.mawaqiti.plus.ui.components.SettingsToggleRow
@@ -226,13 +230,29 @@ fun SettingsScreen(
     // it, so it is painted behind every card and can never take a touch.
     // `sectionsCollapsed` mirrors the accordion state reported by [SettingsList].
     var sectionsCollapsed by remember { mutableStateOf(true) }
+    // beta27: the two bands the ambient layer needs from the real layout - the
+    // bottom of the collapsed header stack and the top of the verse block (both
+    // in root pixels, 0 while unknown).
+    var headerStackBottom by remember { mutableFloatStateOf(0f) }
+    var verseTop by remember { mutableFloatStateOf(0f) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (sectionsCollapsed) {
             SettingsSkyAmbient(
                 modifier = Modifier
                     .fillMaxSize()
-                    .testTag("settings_ambient")
+                    .testTag("settings_ambient"),
+                contentTopPx = headerStackBottom,
+                contentBottomPx = verseTop
+            )
+        }
+        if (sectionsCollapsed) {
+            SettingsVerse(
+                headerBottomPx = headerStackBottom,
+                onTopChange = { verseTop = it },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("settings_verse")
             )
         }
 
@@ -278,7 +298,8 @@ fun SettingsScreen(
             onSelectHomeDhikr = onSelectHomeDhikr,
             onSelectHomeCountdown = onSelectHomeCountdown,
             onSelectHomeMoonPhase = onSelectHomeMoonPhase,
-            onSectionsCollapsedChange = { sectionsCollapsed = it }
+            onSectionsCollapsedChange = { sectionsCollapsed = it },
+            onLastHeaderBottomChange = { headerStackBottom = it }
         )
     }
 
@@ -358,6 +379,8 @@ fun SettingsList(
     onSelectHomeMoonPhase: (Boolean) -> Unit = {},
     /** beta26: true while every accordion section is closed. */
     onSectionsCollapsedChange: (Boolean) -> Unit = {},
+    /** beta27: bottom edge of the collapsed header stack, in root pixels. */
+    onLastHeaderBottomChange: (Float) -> Unit = {},
     /**
      * Test/deep-link hatch: open every section on the first composition.
      * The app always passes the default, so a real entry starts collapsed.
@@ -413,7 +436,19 @@ fun SettingsList(
                 section = section,
                 expanded = expanded[section] == true,
                 onToggle = { expanded[section] = expanded[section] != true },
-                modifier = Modifier.testTag("settings_section_${section.name.lowercase()}")
+                modifier = Modifier
+                    .testTag("settings_section_${section.name.lowercase()}")
+                    // beta27: the ABOUT block is the last of the stack, so its
+                    // bottom edge is the top of the Settings open sky.
+                    .then(
+                        if (section == SettingsSection.ABOUT) {
+                            Modifier.onGloballyPositioned {
+                                onLastHeaderBottomChange(it.boundsInRoot().bottom)
+                            }
+                        } else {
+                            Modifier
+                        }
+                    )
             ) {
                 when (section) {
                     SettingsSection.TIMES -> {

@@ -114,15 +114,62 @@ object NidaaDimens {
     val homeMoonLabelGap = 4.dp
 
     /**
-     * beta26: how far an adhan wave travels before it has fully faded. 120 dp
-     * keeps the three arcs inside the empty band above the Settings scene on a
-     * 400 dp-wide phone, so a wave reads as a soft ring rather than a line that
-     * runs off the screen edge.
+     * beta27: upper bound of an adhan wave's radius.
+     *
+     * The waves now leave the central dome finial instead of a side minaret, so
+     * the ring is symmetric and centred. The radius is still additionally
+     * clamped to `halfWidth - [adhanWaveEdgeMargin]`, which is what keeps the
+     * outermost arc clear of both screen edges on a 411 dp-wide phone (the
+     * beta26 clipping the owner reported).
      */
-    val adhanWaveMaxRadius = 120.dp
+    val adhanWaveMaxRadius = 160.dp
 
-    /** beta26: the wave's hairline weight - slow rings, never a solid disc. */
-    val adhanWaveStroke = 2.dp
+    /** beta27: clear space the outermost arc keeps from a screen edge. */
+    val adhanWaveEdgeMargin = 24.dp
+
+    /** beta27: core weight of a wave - three dp reads at a glance. */
+    val adhanWaveStroke = 3.dp
+
+    /** beta27: the soft underlay that gives the core its glow. */
+    val adhanWaveGlowStroke = 6.dp
+
+    /** beta27: how far a wave's centre rises over its life (rising, not just growing). */
+    val adhanWaveRise = 60.dp
+
+    /** beta27: Settings verse (An-Nisa 103) type ramp. */
+    val settingsVerseSize = 17.sp
+    val settingsVerseSmallSize = 15.sp
+    val settingsVerseTinySize = 13.sp
+    val settingsVerseLineHeightFactor = 1.55f
+    val settingsVerseReferenceSize = 12.sp
+    val settingsVerseReferenceGap = 6.dp
+
+    /** beta27: side inset of the verse block, as a fraction of the screen width. */
+    val settingsVerseSideInsetFraction = 0.075f
+
+    /** beta27: the verse hides when its band is shorter than this. */
+    val settingsVerseMinSpace = 84.dp
+
+    /** beta27: band height at which the verse keeps its full size. */
+    val settingsVerseFullSpace = 140.dp
+
+    /** beta27: band height at which the verse drops one step. */
+    val settingsVerseSmallSpace = 112.dp
+
+    /** beta27: gap between the verse block and the top of the silhouette. */
+    val settingsVerseClearance = 12.dp
+
+    /** beta27: meteor head, halo and tail. */
+    val meteorHeadRadius = 2.dp
+    val meteorGlowRadius = 7.dp
+    val meteorTailLength = 80.dp
+    val meteorStroke = 1.5.dp
+
+    /** beta27: gap between the meteor band and the header stack / verse block. */
+    val meteorBandGap = 8.dp
+
+    /** beta27: extra clearance the meteor keeps above the verse's own 24 dp margin. */
+    val meteorVerseClearance = 30.dp
 }
 
 /**
