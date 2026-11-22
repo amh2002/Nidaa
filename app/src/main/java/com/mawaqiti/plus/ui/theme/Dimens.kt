@@ -112,6 +112,17 @@ object NidaaDimens {
 
     /** beta25: label gap under the moon drawing. */
     val homeMoonLabelGap = 4.dp
+
+    /**
+     * beta26: how far an adhan wave travels before it has fully faded. 120 dp
+     * keeps the three arcs inside the empty band above the Settings scene on a
+     * 400 dp-wide phone, so a wave reads as a soft ring rather than a line that
+     * runs off the screen edge.
+     */
+    val adhanWaveMaxRadius = 120.dp
+
+    /** beta26: the wave's hairline weight - slow rings, never a solid disc. */
+    val adhanWaveStroke = 2.dp
 }
 
 /**

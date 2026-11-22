@@ -49,7 +49,7 @@ fun GoldenSkyBackground(modifier: Modifier = Modifier) {
         animationSpec = tween(PHASE_FADE_MS),
         label = "goldenClouds"
     )
-    val stars = remember { starField(count = 46, seed = 20260915L) }
+    val stars = remember { starField(count = SKY_STAR_COUNT, seed = SKY_STAR_SEED) }
     // beta24 (Task 3): the boxes no star may enter. They arrive already
     // inflated by [StarTextClearance] and in root coordinates, so this canvas
     // only records its own origin and rejects a star whose centre lands inside
@@ -181,6 +181,30 @@ fun GoldenHeroDecor(modifier: Modifier = Modifier) {
 internal const val PHASE_FADE_MS = 500
 
 /**
+ * beta26: the sky field's identity, shared with the Settings ambient layer.
+ *
+ * The twinkling stars of the Settings screen are a *subset of these exact
+ * stars*, so they must be generated from the same count and seed - otherwise
+ * they would be new stars in new places rather than a pulse on the existing
+ * ones. [SKY_STAR_MAX_Y] and the two radius factors are the remaining parts of
+ * the contract (see [drawStarField]).
+ */
+internal const val SKY_STAR_COUNT = 46
+internal const val SKY_STAR_SEED = 20260915L
+
+/** Vertical band the field occupies, as a fraction of the sky. */
+internal const val SKY_STAR_MAX_Y = 0.55f
+
+/** Smallest y the field reaches, so the top edge is never perfectly empty. */
+internal const val SKY_STAR_TOP_PAD = 0.015f
+
+/** Core radius of a unit star, as a fraction of the sky's short side. */
+internal const val STAR_RADIUS_FACTOR = 0.0035f
+
+/** The soft halo around a star, as a multiple of its core radius. */
+internal const val STAR_GLOW_FACTOR = 2.6f
+
+/**
  * beta24 (Task 1): how much of its beta23 weight a *daylight* decoration keeps.
  *
  * The owner approved the current shapes but not their weight against a lit sky:
@@ -223,10 +247,10 @@ internal fun skylineAlphaFor(phase: GoldenPhase): Float = when (phase) {
     GoldenPhase.SUNSET -> 0.90f * DAY_DECOR_WEIGHT
 }
 
-private data class Star(val x: Float, val y: Float, val radius: Float, val alpha: Float)
+internal data class Star(val x: Float, val y: Float, val radius: Float, val alpha: Float)
 
 /** Deterministic star field: same sky on every launch, no per-frame work. */
-private fun starField(count: Int, seed: Long): List<Star> {
+internal fun starField(count: Int, seed: Long): List<Star> {
     val random = Random(seed)
     return List(count) {
         Star(
@@ -250,11 +274,11 @@ private fun DrawScope.drawStarField(
     val unit = size.minDimension
     for (star in stars) {
         val x = minX + star.x * (1f - minX)
-        val center = Offset(size.width * x, size.height * (star.y * maxY + 0.015f))
+        val center = Offset(size.width * x, size.height * (star.y * maxY + SKY_STAR_TOP_PAD))
         // beta24 (Task 3): a star inside a text box (plus its 24 dp margin) is
         // dropped, never nudged - a moved star could land beside another word.
         if (isStarBlocked(center + origin, exclusions)) continue
-        val r = unit * 0.0035f * star.radius
+        val r = unit * STAR_RADIUS_FACTOR * star.radius
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
@@ -262,9 +286,9 @@ private fun DrawScope.drawStarField(
                     color.copy(alpha = 0f)
                 ),
                 center = center,
-                radius = r * 2.6f
+                radius = r * STAR_GLOW_FACTOR
             ),
-            radius = r * 2.6f,
+            radius = r * STAR_GLOW_FACTOR,
             center = center
         )
         drawCircle(color = color.copy(alpha = star.alpha * alpha), radius = r, center = center)

@@ -98,6 +98,7 @@ import com.mawaqiti.plus.ui.components.InfoChip
 import com.mawaqiti.plus.ui.components.PillOption
 import com.mawaqiti.plus.ui.components.SegmentedPillRow
 import com.mawaqiti.plus.ui.components.SettingsCard
+import com.mawaqiti.plus.ui.components.SettingsSkyAmbient
 import com.mawaqiti.plus.ui.components.SettingRow
 import com.mawaqiti.plus.ui.components.SettingsSmallButton
 import com.mawaqiti.plus.ui.components.SettingsToggleRow
@@ -221,49 +222,65 @@ fun SettingsScreen(
         }
     }
 
-    SettingsList(
-        settings = settings,
-        city = city,
-        day = day,
-        isArabic = isArabic,
-        canScheduleExact = canExact,
-        notificationsGranted = notificationsGranted,
-        batteryOptimized = batteryOptimized,
-        onBack = onBack,
-        onOpenCityPicker = onOpenCityPicker,
-        onSelectLanguage = onSelectLanguage,
-        onSelectClockFormat = onSelectClockFormat,
-        onSelectFontScale = onSelectFontScale,
-        onSelectWidgetLanguage = onSelectWidgetLanguage,
-        onSummerTimeChange = onSummerTimeChange,
-        onNotificationsEnabled = onNotificationsEnabled,
-        onSelectAdhanSound = onSelectAdhanSound,
-        onEventEnabled = onEventEnabled,
-        onEventMode = onEventMode,
-        onApplyModeToEnabled = onApplyModeToEnabled,
-        onAdhanVolumeChange = onAdhanVolumeChange,
-        previewingAdhan = previewingAdhan,
-        onToggleAdhanPreview = onToggleAdhanPreview,
-        onStopAdhanPreview = onStopAdhanPreview,
-        onOpenExactAlarmSettings = { NotificationScheduler.openExactAlarmSettings(context) },
-        onOpenNotificationSettings = { openNotificationSettings(context) },
-        onOpenBatterySettings = { openBatterySettings(context) },
-        updatesEnabled = updatesEnabled,
-        updateState = updateState,
-        onUpdatesEnabled = onUpdatesEnabled,
-        onCheckForUpdates = onCheckForUpdates,
-        onDownloadUpdate = onDownloadUpdate,
-        onInstallUpdate = onInstallUpdate,
-        onOpenReleasesPage = onOpenReleasesPage,
-        lastInstallAttempt = lastInstallAttempt,
-        onOpenInstallSettings = onOpenInstallSettings,
-        onSelectTheme = onSelectTheme,
-        onSelectLayout = onSelectLayout,
-        onSelectPreAlert = onSelectPreAlert,
-        onSelectHomeDhikr = onSelectHomeDhikr,
-        onSelectHomeCountdown = onSelectHomeCountdown,
-        onSelectHomeMoonPhase = onSelectHomeMoonPhase
-    )
+    // beta26: the ambient layer is a sibling of the list, never a child of
+    // it, so it is painted behind every card and can never take a touch.
+    // `sectionsCollapsed` mirrors the accordion state reported by [SettingsList].
+    var sectionsCollapsed by remember { mutableStateOf(true) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (sectionsCollapsed) {
+            SettingsSkyAmbient(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("settings_ambient")
+            )
+        }
+
+        SettingsList(
+            settings = settings,
+            city = city,
+            day = day,
+            isArabic = isArabic,
+            canScheduleExact = canExact,
+            notificationsGranted = notificationsGranted,
+            batteryOptimized = batteryOptimized,
+            onBack = onBack,
+            onOpenCityPicker = onOpenCityPicker,
+            onSelectLanguage = onSelectLanguage,
+            onSelectClockFormat = onSelectClockFormat,
+            onSelectFontScale = onSelectFontScale,
+            onSelectWidgetLanguage = onSelectWidgetLanguage,
+            onSummerTimeChange = onSummerTimeChange,
+            onNotificationsEnabled = onNotificationsEnabled,
+            onSelectAdhanSound = onSelectAdhanSound,
+            onEventEnabled = onEventEnabled,
+            onEventMode = onEventMode,
+            onApplyModeToEnabled = onApplyModeToEnabled,
+            onAdhanVolumeChange = onAdhanVolumeChange,
+            previewingAdhan = previewingAdhan,
+            onToggleAdhanPreview = onToggleAdhanPreview,
+            onStopAdhanPreview = onStopAdhanPreview,
+            onOpenExactAlarmSettings = { NotificationScheduler.openExactAlarmSettings(context) },
+            onOpenNotificationSettings = { openNotificationSettings(context) },
+            onOpenBatterySettings = { openBatterySettings(context) },
+            updatesEnabled = updatesEnabled,
+            updateState = updateState,
+            onUpdatesEnabled = onUpdatesEnabled,
+            onCheckForUpdates = onCheckForUpdates,
+            onDownloadUpdate = onDownloadUpdate,
+            onInstallUpdate = onInstallUpdate,
+            onOpenReleasesPage = onOpenReleasesPage,
+            lastInstallAttempt = lastInstallAttempt,
+            onOpenInstallSettings = onOpenInstallSettings,
+            onSelectTheme = onSelectTheme,
+            onSelectLayout = onSelectLayout,
+            onSelectPreAlert = onSelectPreAlert,
+            onSelectHomeDhikr = onSelectHomeDhikr,
+            onSelectHomeCountdown = onSelectHomeCountdown,
+            onSelectHomeMoonPhase = onSelectHomeMoonPhase,
+            onSectionsCollapsedChange = { sectionsCollapsed = it }
+        )
+    }
 
     if (showRationale) {
         AlertDialog(
@@ -339,6 +356,8 @@ fun SettingsList(
     onSelectHomeDhikr: (Boolean) -> Unit = {},
     onSelectHomeCountdown: (Boolean) -> Unit = {},
     onSelectHomeMoonPhase: (Boolean) -> Unit = {},
+    /** beta26: true while every accordion section is closed. */
+    onSectionsCollapsedChange: (Boolean) -> Unit = {},
     /**
      * Test/deep-link hatch: open every section on the first composition.
      * The app always passes the default, so a real entry starts collapsed.
@@ -370,6 +389,15 @@ fun SettingsList(
             }
         }
     }
+
+    // beta26: the collapsed state drives the ambient layer of the screen. One
+    // frame after a header is tapped this reports `false`, so the layer (and
+    // both of its animations) leaves the composition; collapsing the last
+    // section brings it straight back.
+    // `none`, not `isEmpty`: the toggle above stores `false` for a closed
+    // section, so the map keeps its keys and never empties again.
+    val allCollapsed = expanded.values.none { it }
+    LaunchedEffect(allCollapsed) { onSectionsCollapsedChange(allCollapsed) }
 
     Column(
         modifier = Modifier
