@@ -115,7 +115,16 @@ data class AppSettings(
      * "never chosen": the widget then follows [language], which is exactly the
      * spec's "default = the app's current language at first render".
      */
-    val widgetLanguage: AppLanguage? = null
+    val widgetLanguage: AppLanguage? = null,
+    /**
+     * beta25: the three optional home-screen widgets. Dhikr is on by default;
+     * the countdown and the moon phase are opt-in. All three are hints only:
+     * the slot hides any widget that does not fit the leftover height, so a
+     * small screen never clips the home column to show one.
+     */
+    val homeDhikr: Boolean = true,
+    val homeCountdown: Boolean = false,
+    val homeMoonPhase: Boolean = false
 ) {
     /** The language the widget must render with right now. */
     val effectiveWidgetLanguage: AppLanguage

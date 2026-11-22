@@ -85,6 +85,7 @@ class SettingsFrameworkTest {
                         canScheduleExact = true,
                         notificationsGranted = true,
                         batteryOptimized = false,
+                        initiallyExpanded = true,
                         onBack = {},
                         onOpenCityPicker = {},
                         onSelectLanguage = {},

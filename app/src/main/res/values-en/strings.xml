@@ -207,4 +207,63 @@
     <string name="update_notification_body">Version %1$s is ready to download inside the app.</string>
     <string name="update_channel_name">App updates</string>
     <string name="update_channel_desc">One notification when a new Nidaa release is available.</string>
+
+    <!-- beta25: Settings accordion section titles. -->
+    <string name="settings_section_times">Prayer times</string>
+    <string name="settings_section_alerts">Alerts</string>
+    <string name="settings_section_home_content">Home screen content</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_about">About</string>
+
+    <!-- beta25: home content slot -->
+    <string name="home_content_desc">Choose what appears below the home screen. Widgets hide automatically when there is not enough room, in this order: dhikr, countdown, moon phase.</string>
+    <string name="home_widget_dhikr">Dhikr of the day</string>
+    <string name="home_widget_dhikr_desc">One dhikr that stays all day and changes each Hijri day.</string>
+    <string name="home_widget_countdown">Events countdown</string>
+    <string name="home_widget_countdown_desc">Days remaining until the nearest Islamic occasion.</string>
+    <string name="home_widget_moon">Moon phase</string>
+    <string name="home_widget_moon_desc">The moon phase for today\'s Hijri date.</string>
+
+    <!-- beta25: the rotating dhikr list (Arabic formulas, as recited). -->
+    <string-array name="daily_dhikr_list">
+        <item>سبحان الله وبحمده، سبحان الله العظيم</item>
+        <item>لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير</item>
+        <item>أستغفر الله العظيم وأتوب إليه</item>
+        <item>اللهم صلِّ وسلّم على نبينا محمد</item>
+        <item>لا حول ولا قوة إلا بالله</item>
+        <item>سبحان الله والحمد لله ولا إله إلا الله والله أكبر</item>
+        <item>سبحان الله وبحمده</item>
+        <item>الحمد لله رب العالمين</item>
+        <item>لا إله إلا الله</item>
+        <item>أستغفر الله</item>
+        <item>الله أكبر</item>
+        <item>سبحان الله</item>
+        <item>الحمد لله</item>
+        <item>لا إله إلا أنت سبحانك إني كنت من الظالمين</item>
+        <item>حسبي الله ونعم الوكيل</item>
+        <item>اللهم إني أسألك العفو والعافية</item>
+    </string-array>
+
+    <!-- beta25: Islamic events countdown -->
+    <string name="event_ramadan">Ramadan</string>
+    <string name="event_eid_fitr">Eid al-Fitr</string>
+    <string name="event_eid_adha">Eid al-Adha</string>
+    <string name="event_new_year">Hijri New Year</string>
+    <string name="event_today">Today: %1$s</string>
+    <plurals name="event_days_left">
+        <item quantity="one">%1$d day left until %2$s</item>
+        <item quantity="other">%1$d days left until %2$s</item>
+    </plurals>
+
+    <!-- beta25: moon phase names -->
+    <string name="moon_label">Tonight: %1$s</string>
+    <string name="moon_phase_new">New crescent</string>
+    <string name="moon_phase_waxing_crescent">Waxing crescent</string>
+    <string name="moon_phase_first_quarter">First quarter</string>
+    <string name="moon_phase_waxing_gibbous">Waxing gibbous</string>
+    <string name="moon_phase_full">Full moon</string>
+    <string name="moon_phase_waning_gibbous">Waning gibbous</string>
+    <string name="moon_phase_last_quarter">Last quarter</string>
+    <string name="moon_phase_waning_crescent">Waning crescent</string>
+    <string name="moon_phase_old">Old crescent</string>
 </resources>

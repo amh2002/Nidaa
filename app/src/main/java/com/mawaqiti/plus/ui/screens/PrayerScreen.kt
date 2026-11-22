@@ -54,6 +54,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -63,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -76,6 +78,7 @@ import com.mawaqiti.plus.format.ClockFormat
 import com.mawaqiti.plus.format.HijriDateFormatter
 import com.mawaqiti.plus.format.TimeFormatter
 import com.mawaqiti.plus.ui.components.GlassCard
+import com.mawaqiti.plus.ui.components.HomeContentSlot
 import com.mawaqiti.plus.ui.components.PrayerIcons
 import com.mawaqiti.plus.ui.components.dashedOutline
 import com.mawaqiti.plus.ui.theme.AmiriBold
@@ -107,7 +110,11 @@ fun PrayerScreen(
     onChooseCity: () -> Unit,
     onOpenAbout: () -> Unit = {},
     updateRelease: ReleaseInfo? = null,
-    onOpenUpdate: () -> Unit = {}
+    onOpenUpdate: () -> Unit = {},
+    /** beta25: home content slot visibility, from Settings → «محتوى الشاشة الرئيسية». */
+    homeDhikr: Boolean = true,
+    homeCountdown: Boolean = false,
+    homeMoonPhase: Boolean = false
 ) {
     val palette = skyPalette
     val now = rememberForegroundClock()
@@ -131,58 +138,99 @@ fun PrayerScreen(
     )
     val scroll = rememberScrollState()
 
-    Column(
+    // beta25: the home is one region of two children - the unchanged scrollable
+    // list and the adaptive content slot under it.
+    //
+    // A weighted split cannot express this: `weight` divides the height before
+    // measuring, so two weighted children would each take half and the list
+    // would be clipped at the halfway line. This layout measures the list FIRST
+    // with the full window height; `verticalScroll` then reports
+    // min(contentHeight, windowHeight), which is exactly what is needed:
+    //   - content shorter than the window -> it keeps its natural height and the
+    //     slot is handed the remainder;
+    //   - content as tall as the window   -> the remainder is 0, the slot is
+    //     measured at 0 dp and composes nothing, and the list scrolls as before.
+    // The slot can therefore never push, clip or overlap the home content.
+    Layout(
+        content = {
+            Column(modifier = Modifier.verticalScroll(scroll)) {
+                Header(
+                    city = city,
+                    date = date,
+                    isArabic = isArabic,
+                    palette = palette,
+                    onChooseCity = onChooseCity,
+                    onOpenAbout = onOpenAbout
+                )
+
+                if (updateRelease != null) {
+                    Spacer(Modifier.height(8.dp))
+                    UpdateBanner(release = updateRelease, onOpen = onOpenUpdate)
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                HeroCard(
+                    hero = hero,
+                    progress = progress,
+                    isArabic = isArabic,
+                    clockFormat = clockFormat,
+                    palette = palette,
+                    nowText = nowText,
+                    celestial = celestial
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                PrayerGrid(
+                    day = day,
+                    next = hero.event,
+                    isArabic = isArabic,
+                    clockFormat = clockFormat,
+                    palette = palette
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                LastThirdRow(
+                    minutes = day.lastThird,
+                    isArabic = isArabic,
+                    clockFormat = clockFormat,
+                    palette = palette
+                )
+
+                Spacer(Modifier.height(10.dp))
+            }
+
+            HomeContentSlot(
+                date = date,
+                dhikrEnabled = homeDhikr,
+                countdownEnabled = homeCountdown,
+                moonEnabled = homeMoonPhase,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scroll)
             .padding(horizontal = 18.dp)
-    ) {
-        Header(
-            city = city,
-            date = date,
-            isArabic = isArabic,
-            palette = palette,
-            onChooseCity = onChooseCity,
-            onOpenAbout = onOpenAbout
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val content = measurables.first().measure(
+            Constraints(maxWidth = width, maxHeight = constraints.maxHeight)
         )
-
-        if (updateRelease != null) {
-            Spacer(Modifier.height(8.dp))
-            UpdateBanner(release = updateRelease, onOpen = onOpenUpdate)
+        val leftover = (constraints.maxHeight - content.height).coerceAtLeast(0)
+        val slot = measurables.getOrNull(1)?.measure(
+            Constraints(
+                minWidth = width,
+                maxWidth = width,
+                minHeight = leftover,
+                maxHeight = leftover
+            )
+        )
+        layout(width, constraints.maxHeight) {
+            content.place(0, 0)
+            slot?.place(0, content.height)
         }
-
-        Spacer(Modifier.height(12.dp))
-
-        HeroCard(
-            hero = hero,
-            progress = progress,
-            isArabic = isArabic,
-            clockFormat = clockFormat,
-            palette = palette,
-            nowText = nowText,
-            celestial = celestial
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        PrayerGrid(
-            day = day,
-            next = hero.event,
-            isArabic = isArabic,
-            clockFormat = clockFormat,
-            palette = palette
-        )
-
-        Spacer(Modifier.height(10.dp))
-
-        LastThirdRow(
-            minutes = day.lastThird,
-            isArabic = isArabic,
-            clockFormat = clockFormat,
-            palette = palette
-        )
-
-        Spacer(Modifier.height(10.dp))
     }
 }
 

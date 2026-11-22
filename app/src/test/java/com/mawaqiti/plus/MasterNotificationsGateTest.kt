@@ -99,6 +99,7 @@ class MasterNotificationsGateTest {
                         canScheduleExact = true,
                         notificationsGranted = true,
                         batteryOptimized = false,
+                        initiallyExpanded = true,
                         onBack = {},
                         onOpenCityPicker = {},
                         onSelectLanguage = {},

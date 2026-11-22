@@ -9,6 +9,14 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +33,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,12 +54,15 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
@@ -76,6 +93,7 @@ import com.mawaqiti.plus.notify.NotifyMode
 import com.mawaqiti.plus.notify.AdhanSound
 import com.mawaqiti.plus.notify.AdhanVolume
 import com.mawaqiti.plus.ui.components.AdhanSoundDropdown
+import com.mawaqiti.plus.ui.components.GlassCard
 import com.mawaqiti.plus.ui.components.InfoChip
 import com.mawaqiti.plus.ui.components.PillOption
 import com.mawaqiti.plus.ui.components.SegmentedPillRow
@@ -91,6 +109,25 @@ import com.nidaa.prayer.update.UpdateState
 import java.time.LocalTime
 import java.util.Locale
 import kotlin.math.roundToInt
+
+/**
+ * beta25: the five collapsible Settings sections.
+ *
+ * Declaration order is the on-screen order. Every existing setting lives in
+ * exactly one of them (see the beta25 report for the item-by-item mapping);
+ * each header is a plain [GlassCard] row so the accordion inherits the same
+ * glass surface, border and corner tokens as every other card in the list.
+ */
+enum class SettingsSection(
+    @StringRes val titleRes: Int,
+    val icon: ImageVector
+) {
+    TIMES(R.string.settings_section_times, Icons.Filled.Schedule),
+    ALERTS(R.string.settings_section_alerts, Icons.Filled.Notifications),
+    HOME_CONTENT(R.string.settings_section_home_content, Icons.Filled.Widgets),
+    APPEARANCE(R.string.settings_section_appearance, Icons.Filled.Palette),
+    ABOUT(R.string.settings_section_about, Icons.Filled.Info)
+}
 
 /**
  * Settings entry point.
@@ -139,7 +176,11 @@ fun SettingsScreen(
     /** beta21: persisted display layout; MOBILE is the default. */
     onSelectLayout: (LayoutMode) -> Unit = {},
     /** beta22: persisted pre-prayer lead time in minutes; 0 disables it. */
-    onSelectPreAlert: (Int) -> Unit = {}
+    onSelectPreAlert: (Int) -> Unit = {},
+    /** beta25: the three home content widgets; dhikr defaults to ON. */
+    onSelectHomeDhikr: (Boolean) -> Unit = {},
+    onSelectHomeCountdown: (Boolean) -> Unit = {},
+    onSelectHomeMoonPhase: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     var statusTick by remember { mutableIntStateOf(0) }
@@ -218,7 +259,10 @@ fun SettingsScreen(
         onOpenInstallSettings = onOpenInstallSettings,
         onSelectTheme = onSelectTheme,
         onSelectLayout = onSelectLayout,
-        onSelectPreAlert = onSelectPreAlert
+        onSelectPreAlert = onSelectPreAlert,
+        onSelectHomeDhikr = onSelectHomeDhikr,
+        onSelectHomeCountdown = onSelectHomeCountdown,
+        onSelectHomeMoonPhase = onSelectHomeMoonPhase
     )
 
     if (showRationale) {
@@ -290,7 +334,16 @@ fun SettingsList(
     /** beta21: display layout choice (see [SettingsScreen]). */
     onSelectLayout: (LayoutMode) -> Unit = {},
     /** beta22: pre-prayer lead time in minutes (see [SettingsScreen]). */
-    onSelectPreAlert: (Int) -> Unit = {}
+    onSelectPreAlert: (Int) -> Unit = {},
+    /** beta25: home content widgets (see [SettingsScreen]). */
+    onSelectHomeDhikr: (Boolean) -> Unit = {},
+    onSelectHomeCountdown: (Boolean) -> Unit = {},
+    onSelectHomeMoonPhase: (Boolean) -> Unit = {},
+    /**
+     * Test/deep-link hatch: open every section on the first composition.
+     * The app always passes the default, so a real entry starts collapsed.
+     */
+    initiallyExpanded: Boolean = false
 ) {
     val palette = skyPalette
     val previewMinutes = nextPreviewMinutes(day)
@@ -306,6 +359,18 @@ fun SettingsList(
     var applyMode by remember { mutableStateOf(NotifyMode.ADHAN) }
     val widgetLanguage = settings.effectiveWidgetLanguage
 
+    // beta25: accordion state. `remember` (not rememberSaveable) is deliberate:
+    // every entry into Settings creates a fresh state, so all sections start
+    // collapsed as the specification requires. Several sections may be open at
+    // the same time - the map holds one flag per header.
+    val expanded = remember {
+        mutableStateMapOf<SettingsSection, Boolean>().apply {
+            if (initiallyExpanded) {
+                SettingsSection.entries.forEach { put(it, true) }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -315,566 +380,663 @@ fun SettingsList(
     ) {
         ScreenTopBar(title = stringResource(R.string.settings_title), palette = palette, onBack = onBack)
 
-        // 1. City
-        SettingsCard(
-            contentPadding = PaddingValues(0.dp),
-            onClick = onOpenCityPicker
+        SettingsSection.entries.forEach { section ->
+            SettingsSectionBlock(
+                section = section,
+                expanded = expanded[section] == true,
+                onToggle = { expanded[section] = expanded[section] != true },
+                modifier = Modifier.testTag("settings_section_${section.name.lowercase()}")
+            ) {
+                when (section) {
+                    SettingsSection.TIMES -> {
+                        // 1. City
+                        SettingsCard(
+                            contentPadding = PaddingValues(0.dp),
+                            onClick = onOpenCityPicker
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Place,
+                                    contentDescription = null,
+                                    tint = palette.accent,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.settings_city_title),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = palette.textMuted
+                                    )
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(
+                                        text = city.label(isArabic),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = palette.text
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.settings_city_change),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = palette.accent
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    tint = palette.accent
+                                )
+                            }
+                        }
+
+                        ItemGap()
+
+                        // 2. Clock format (the live preview is built from the
+                        //    same day the home uses).
+                        SettingsCard {
+                            SettingRowBlock(
+                                title = stringResource(R.string.settings_clock_title),
+                                description = stringResource(R.string.clock_preview) + ": " + preview
+                            ) {
+                                SegmentedPillRow(
+                                    options = listOf(
+                                        PillOption(
+                                            stringResource(R.string.clock_24),
+                                            settings.clockFormat == ClockFormat.H24
+                                        ),
+                                        PillOption(
+                                            stringResource(R.string.clock_12),
+                                            settings.clockFormat == ClockFormat.H12
+                                        )
+                                    ),
+                                    onSelect = { index ->
+                                        onSelectClockFormat(
+                                            if (index == 0) ClockFormat.H24 else ClockFormat.H12
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        // 3. Summer time: Palestine only.
+                        if (city.country == Country.PS) {
+                            ItemGap()
+                            SettingsCard {
+                                SettingsToggleRow(
+                                    title = stringResource(R.string.settings_summer_time),
+                                    description = stringResource(R.string.summer_time_desc),
+                                    checked = settings.summerTime,
+                                    onCheckedChange = onSummerTimeChange
+                                )
+                            }
+                        }
+                    }
+
+                    SettingsSection.ALERTS -> {
+                        // 5b. Notifications master switch (beta18: first item of
+                        //     the group so the on/off control is seen first).
+                        SettingsCard(
+                            title = stringResource(R.string.settings_notifications),
+                            description = stringResource(R.string.settings_notifications_desc),
+                            modifier = Modifier.testTag("settings_notifications_master_card")
+                        ) {
+                            SettingsToggleRow(
+                                title = stringResource(R.string.notifications_master),
+                                description = stringResource(R.string.notifications_master_desc),
+                                checked = notifications.masterEnabled,
+                                onCheckedChange = onNotificationsEnabled,
+                                modifier = Modifier.testTag("notifications_master_toggle"),
+                                toggleTestTag = "notifications_master_switch"
+                            )
+                            if (!masterEnabled) {
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = stringResource(R.string.notifications_off_caption),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = palette.accent,
+                                    modifier = Modifier.testTag("notifications_off_caption")
+                                )
+                            }
+                        }
+
+                        ItemGap()
+
+                        // 5c. Adhan sound (beta14) + beta17 volume.
+                        SettingsCard(
+                            title = stringResource(R.string.settings_adhan_sound_title),
+                            description = stringResource(R.string.settings_adhan_sound_desc),
+                            modifier = Modifier.testTag("settings_adhan_sound")
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(NidaaDimens.adhanPickerGap),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier.weight(1f),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    AdhanSoundDropdown(
+                                        selected = settings.adhanSound,
+                                        onSelect = {
+                                            // A stale preview would contradict the new pick.
+                                            onStopAdhanPreview()
+                                            onSelectAdhanSound(it)
+                                        }
+                                    )
+                                }
+                                SettingsSmallButton(
+                                    label = stringResource(
+                                        if (previewingAdhan) R.string.settings_adhan_test_stop
+                                        else R.string.settings_adhan_test
+                                    ),
+                                    onClick = onToggleAdhanPreview,
+                                    modifier = Modifier.testTag("settings_adhan_test_button")
+                                )
+                            }
+
+                            Spacer(Modifier.height(NidaaDimens.adhanVolumeGap))
+
+                            AdhanVolumeRow(
+                                volume = settings.adhanVolume,
+                                onChange = onAdhanVolumeChange,
+                                onCommit = {
+                                    // Restarting the preview is the caller's business;
+                                    // stopping it here keeps the audible track in step.
+                                    if (previewingAdhan) onStopAdhanPreview()
+                                }
+                            )
+                        }
+
+                        ItemGap()
+
+                        // 6b. Apply one mode to every enabled event.
+                        SettingsCard(
+                            title = stringResource(R.string.notify_apply_all),
+                            description = stringResource(R.string.notify_apply_all_desc),
+                            modifier = Modifier.testTag("notify_apply_all")
+                        ) {
+                            SegmentedPillRow(
+                                options = modes.map { mode -> PillOption(modeLabel(mode), mode == applyMode) },
+                                onSelect = { index -> applyMode = modes[index] },
+                                fillWidth = true
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                SettingsSmallButton(
+                                    label = stringResource(R.string.notify_apply),
+                                    onClick = { onApplyModeToEnabled(applyMode) }
+                                )
+                            }
+                        }
+
+                        // 7. One card per event, each with its own switch and mode.
+                        for (event in NotifyEvent.entries) {
+                            ItemGap()
+                            val current = notifications.forEvent(event)
+                            SettingsCard(
+                                enabled = masterEnabled,
+                                modifier = Modifier.testTag("event_card_${event.storageKey}")
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = eventLabel(event),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = palette.text,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Switch(
+                                        checked = current.enabled,
+                                        onCheckedChange = { onEventEnabled(event, it) },
+                                        enabled = masterEnabled,
+                                        modifier = Modifier.testTag("event_toggle_${event.storageKey}"),
+                                        colors = mawaqitiSwitchColors()
+                                    )
+                                }
+                                Spacer(Modifier.height(10.dp))
+                                SegmentedPillRow(
+                                    options = modes.map { mode ->
+                                        PillOption(
+                                            modeLabel(mode),
+                                            mode == current.mode,
+                                            testTag = "event_mode_${event.storageKey}_${mode.storageKey}"
+                                        )
+                                    },
+                                    onSelect = { index -> onEventMode(event, modes[index]) },
+                                    fillWidth = true,
+                                    enabled = masterEnabled,
+                                    modifier = Modifier.testTag("event_modes_${event.storageKey}")
+                                )
+                            }
+                        }
+
+                        // 8. Pre-prayer alert (beta22).
+                        ItemGap()
+                        SettingsCard(
+                            title = stringResource(R.string.settings_pre_alert_title),
+                            description = stringResource(R.string.settings_pre_alert_desc),
+                            modifier = Modifier.testTag("settings_pre_alert_card")
+                        ) {
+                            val preAlertLabels = listOf(
+                                R.string.pre_alert_off,
+                                R.string.pre_alert_5,
+                                R.string.pre_alert_10,
+                                R.string.pre_alert_15,
+                                R.string.pre_alert_30
+                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                SegmentedPillRow(
+                                    options = PreAlertMinutes.OPTIONS.take(3).mapIndexed { index, minutes ->
+                                        PillOption(
+                                            stringResource(preAlertLabels[index]),
+                                            settings.preAlertMinutes == minutes,
+                                            testTag = "pre_alert_option_$minutes"
+                                        )
+                                    },
+                                    onSelect = { index -> onSelectPreAlert(PreAlertMinutes.OPTIONS[index]) },
+                                    selectedColor = palette.accent,
+                                    selectedTextColor = palette.sheet,
+                                    fillWidth = true
+                                )
+                                SegmentedPillRow(
+                                    options = PreAlertMinutes.OPTIONS.drop(3).mapIndexed { index, minutes ->
+                                        PillOption(
+                                            stringResource(preAlertLabels[3 + index]),
+                                            settings.preAlertMinutes == minutes,
+                                            testTag = "pre_alert_option_$minutes"
+                                        )
+                                    },
+                                    onSelect = { index ->
+                                        onSelectPreAlert(PreAlertMinutes.OPTIONS[3 + index])
+                                    },
+                                    selectedColor = palette.accent,
+                                    selectedTextColor = palette.sheet,
+                                    fillWidth = true
+                                )
+                            }
+                        }
+
+                        // 9. System status rows, only when they need attention.
+                        var anyStatusCard = false
+                        if (!canScheduleExact) {
+                            ItemGap()
+                            StatusCard(
+                                title = stringResource(R.string.notify_exact_title),
+                                description = stringResource(R.string.notify_exact_desc),
+                                onClick = onOpenExactAlarmSettings,
+                                testTag = "status_exact_card"
+                            )
+                            anyStatusCard = true
+                        }
+                        if (!notificationsGranted) {
+                            ItemGap()
+                            StatusCard(
+                                title = stringResource(R.string.notify_permission_title),
+                                description = stringResource(R.string.notify_permission_desc),
+                                onClick = onOpenNotificationSettings,
+                                testTag = "status_permission_card"
+                            )
+                            anyStatusCard = true
+                        }
+                        if (batteryOptimized) {
+                            ItemGap()
+                            StatusCard(
+                                title = stringResource(R.string.notify_battery_title),
+                                description = stringResource(R.string.notify_battery_desc),
+                                onClick = onOpenBatterySettings,
+                                testTag = "status_battery_card"
+                            )
+                            anyStatusCard = true
+                        }
+                        if (anyStatusCard) {
+                            ItemGap()
+                        }
+                    }
+
+                    SettingsSection.HOME_CONTENT -> {
+                        // beta25 (Task 5): three switches over the existing
+                        // DataStore keys; the home observes the same flow, so a
+                        // change applies on return without a restart.
+                        SettingsCard(
+                            description = stringResource(R.string.home_content_desc),
+                            modifier = Modifier.testTag("settings_home_content_card")
+                        ) {
+                            SettingsToggleRow(
+                                title = stringResource(R.string.home_widget_dhikr),
+                                description = stringResource(R.string.home_widget_dhikr_desc),
+                                checked = settings.homeDhikr,
+                                onCheckedChange = onSelectHomeDhikr,
+                                modifier = Modifier.testTag("home_dhikr_toggle"),
+                                toggleTestTag = "home_dhikr_switch"
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            SettingsToggleRow(
+                                title = stringResource(R.string.home_widget_countdown),
+                                description = stringResource(R.string.home_widget_countdown_desc),
+                                checked = settings.homeCountdown,
+                                onCheckedChange = onSelectHomeCountdown,
+                                modifier = Modifier.testTag("home_countdown_toggle"),
+                                toggleTestTag = "home_countdown_switch"
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            SettingsToggleRow(
+                                title = stringResource(R.string.home_widget_moon),
+                                description = stringResource(R.string.home_widget_moon_desc),
+                                checked = settings.homeMoonPhase,
+                                onCheckedChange = onSelectHomeMoonPhase,
+                                modifier = Modifier.testTag("home_moon_toggle"),
+                                toggleTestTag = "home_moon_switch"
+                            )
+                        }
+                    }
+
+                    SettingsSection.APPEARANCE -> {
+                        // 2. Language
+                        SettingsCard {
+                            SettingRowBlock(
+                                title = stringResource(R.string.settings_language),
+                                description = stringResource(R.string.language_desc)
+                            ) {
+                                SegmentedPillRow(
+                                    options = listOf(
+                                        PillOption(stringResource(R.string.language_arabic), isArabic),
+                                        PillOption(stringResource(R.string.language_english), !isArabic)
+                                    ),
+                                    onSelect = { index ->
+                                        onSelectLanguage(
+                                            if (index == 0) AppLanguage.ARABIC else AppLanguage.ENGLISH
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        ItemGap()
+
+                        // 3a. Appearance (beta10).
+                        SettingsCard {
+                            SettingRowBlock(
+                                title = stringResource(R.string.settings_theme_title),
+                                description = stringResource(R.string.settings_theme_desc)
+                            ) {
+                                SegmentedPillRow(
+                                    options = listOf(
+                                        PillOption(
+                                            stringResource(R.string.theme_auto),
+                                            settings.theme == AppTheme.AUTO
+                                        ),
+                                        PillOption(
+                                            stringResource(R.string.theme_night),
+                                            settings.theme == AppTheme.NIGHT
+                                        )
+                                    ),
+                                    onSelect = { index ->
+                                        onSelectTheme(if (index == 0) AppTheme.AUTO else AppTheme.NIGHT)
+                                    },
+                                    selectedColor = palette.accent,
+                                    selectedTextColor = palette.sheet
+                                )
+                            }
+                        }
+
+                        ItemGap()
+
+                        // 3a-2. Display layout (beta21).
+                        SettingsCard(
+                            title = stringResource(R.string.settings_layout_title),
+                            description = stringResource(R.string.settings_layout_desc),
+                            modifier = Modifier.testTag("settings_layout_card")
+                        ) {
+                            SegmentedPillRow(
+                                options = listOf(
+                                    PillOption(
+                                        stringResource(R.string.layout_mobile),
+                                        settings.layoutMode == LayoutMode.MOBILE,
+                                        testTag = "layout_option_mobile"
+                                    ),
+                                    PillOption(
+                                        stringResource(R.string.layout_tv),
+                                        settings.layoutMode == LayoutMode.TV,
+                                        testTag = "layout_option_tv"
+                                    )
+                                ),
+                                onSelect = { index ->
+                                    onSelectLayout(if (index == 0) LayoutMode.MOBILE else LayoutMode.TV)
+                                },
+                                selectedColor = palette.accent,
+                                selectedTextColor = palette.sheet,
+                                fillWidth = true
+                            )
+                        }
+
+                        ItemGap()
+
+                        // 3b. Font size (beta 7.9): five steps, split 3 + 2.
+                        SettingsCard {
+                            SettingRowBlock(
+                                title = stringResource(R.string.settings_font_title),
+                                description = stringResource(R.string.settings_font_desc)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    SegmentedPillRow(
+                                        options = FontScale.STEPS.take(3).map { step ->
+                                            PillOption(FontScale.label(step), settings.fontScale == step)
+                                        },
+                                        onSelect = { index -> onSelectFontScale(FontScale.STEPS[index]) },
+                                        fillWidth = true
+                                    )
+                                    SegmentedPillRow(
+                                        options = FontScale.STEPS.drop(3).map { step ->
+                                            PillOption(FontScale.label(step), settings.fontScale == step)
+                                        },
+                                        onSelect = { index ->
+                                            onSelectFontScale(FontScale.STEPS[3 + index])
+                                        },
+                                        fillWidth = true
+                                    )
+                                }
+                            }
+                        }
+
+                        ItemGap()
+
+                        // 4. Widget language: independent of the UI language.
+                        SettingsCard {
+                            SettingRowBlock(
+                                title = stringResource(R.string.settings_widget_title),
+                                description = stringResource(R.string.settings_widget_desc)
+                            ) {
+                                SegmentedPillRow(
+                                    options = listOf(
+                                        PillOption(
+                                            stringResource(R.string.language_arabic),
+                                            widgetLanguage == AppLanguage.ARABIC
+                                        ),
+                                        PillOption(
+                                            stringResource(R.string.language_english),
+                                            widgetLanguage == AppLanguage.ENGLISH
+                                        )
+                                    ),
+                                    onSelect = { index ->
+                                        onSelectWidgetLanguage(
+                                            if (index == 0) AppLanguage.ARABIC else AppLanguage.ENGLISH
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    SettingsSection.ABOUT -> {
+                        // 4b. Updates (beta 7.95): the only network feature.
+                        UpdatesSettingsCard(
+                            enabled = updatesEnabled,
+                            state = updateState,
+                            onEnabledChange = onUpdatesEnabled,
+                            onCheckNow = onCheckForUpdates,
+                            onDownload = onDownloadUpdate,
+                            onInstall = onInstallUpdate,
+                            onOpenReleases = onOpenReleasesPage,
+                            lastInstall = lastInstallAttempt,
+                            onOpenInstallSettings = onOpenInstallSettings
+                        )
+
+                        ItemGap()
+
+                        // 10. About - the LAST item of the list.
+                        SettingsCard(
+                            title = stringResource(R.string.settings_about_title),
+                            modifier = Modifier.testTag("settings_about")
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_about_brand),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = palette.text
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = palette.accent
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            // Single source of truth for the timetable claim.
+                            Text(
+                                text = stringResource(R.string.settings_about_timetable),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = palette.text,
+                                modifier = Modifier.testTag("settings_about_claim")
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                InfoChip(
+                                    text = stringResource(R.string.settings_about_offline),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                InfoChip(
+                                    text = stringResource(R.string.settings_about_no_data),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                text = stringResource(R.string.settings_about_network),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = palette.textMuted,
+                                modifier = Modifier.testTag("settings_about_network")
+                            )
+                            Spacer(Modifier.height(14.dp))
+                            // Credit is visually separated and always the last line.
+                            HorizontalDivider(color = palette.text.copy(alpha = 0.12f))
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                text = stringResource(R.string.settings_about_credit),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = palette.textMuted,
+                                modifier = Modifier.testTag("settings_about_credit")
+                            )
+                        }
+                    }
+                }
+            }
+            ItemGap()
+        }
+
+        // Framework bottom padding: the About card is the last item.
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+/**
+ * One accordion entry: a tappable header (icon, Arabic title, chevron) and the
+ * section body, revealed with the framework's own expand/shrink animation.
+ *
+ * The header is a [GlassCard] so it shares the list's surface, border and
+ * radius tokens; the chevron rotates 180° while open. Headers are always
+ * visible; only the body animates, so collapsing never shifts the header of
+ * the next section.
+ */
+@Composable
+private fun SettingsSectionBlock(
+    section: SettingsSection,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val palette = skyPalette
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 220),
+        label = "settingsSectionChevron"
+    )
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        GlassCard(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            onClick = onToggle
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Place,
+                    imageVector = section.icon,
                     contentDescription = null,
                     tint = palette.accent,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(20.dp)
                 )
                 Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.settings_city_title),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = palette.textMuted
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = city.label(isArabic),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = palette.text
-                    )
-                }
                 Text(
-                    text = stringResource(R.string.settings_city_change),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = palette.accent
+                    text = stringResource(section.titleRes),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = palette.text,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("settings_section_title_${section.name.lowercase()}")
                 )
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    imageVector = Icons.Filled.ExpandMore,
                     contentDescription = null,
-                    tint = palette.accent
+                    tint = palette.accent,
+                    modifier = Modifier
+                        .size(22.dp)
+                        .rotate(rotation)
                 )
             }
         }
 
-        ItemGap()
-
-        // 2. Language
-        SettingsCard {
-            SettingRowBlock(
-                title = stringResource(R.string.settings_language),
-                description = stringResource(R.string.language_desc)
-            ) {
-                SegmentedPillRow(
-                    options = listOf(
-                        PillOption(stringResource(R.string.language_arabic), isArabic),
-                        PillOption(stringResource(R.string.language_english), !isArabic)
-                    ),
-                    onSelect = { index ->
-                        onSelectLanguage(
-                            if (index == 0) AppLanguage.ARABIC else AppLanguage.ENGLISH
-                        )
-                    }
-                )
-            }
-        }
-
-        ItemGap()
-
-        // 3. Clock format
-        SettingsCard {
-            SettingRowBlock(
-                title = stringResource(R.string.settings_clock_title),
-                description = stringResource(R.string.clock_preview) + ": " + preview
-            ) {
-                SegmentedPillRow(
-                    options = listOf(
-                        PillOption(
-                            stringResource(R.string.clock_24),
-                            settings.clockFormat == ClockFormat.H24
-                        ),
-                        PillOption(
-                            stringResource(R.string.clock_12),
-                            settings.clockFormat == ClockFormat.H12
-                        )
-                    ),
-                    onSelect = { index ->
-                        onSelectClockFormat(if (index == 0) ClockFormat.H24 else ClockFormat.H12)
-                    }
-                )
-            }
-        }
-
-        ItemGap()
-
-        // 3a. Appearance (beta10). "Auto" follows the five golden phases of the
-        //     day; "Night (gold)" pins the deep-night look. Persisted in DataStore
-        //     and applied immediately, without restarting the app.
-        SettingsCard {
-            SettingRowBlock(
-                title = stringResource(R.string.settings_theme_title),
-                description = stringResource(R.string.settings_theme_desc)
-            ) {
-                SegmentedPillRow(
-                    options = listOf(
-                        PillOption(
-                            stringResource(R.string.theme_auto),
-                            settings.theme == AppTheme.AUTO
-                        ),
-                        PillOption(
-                            stringResource(R.string.theme_night),
-                            settings.theme == AppTheme.NIGHT
-                        )
-                    ),
-                    onSelect = { index ->
-                        onSelectTheme(if (index == 0) AppTheme.AUTO else AppTheme.NIGHT)
-                    },
-                    // Golden selection, styled like the beta 9 cards: gold pill
-                    // with the sheet's dark ink on top (contrast > 10:1).
-                    selectedColor = palette.accent,
-                    selectedTextColor = palette.sheet
-                )
-            }
-        }
-
-        ItemGap()
-
-        // 3a-2. Display layout (beta21). «جوال» keeps the post-beta20 phone
-        //       layout; «تلفاز» switches the whole app to the landscape
-        //       dashboard. Persisted in the same DataStore and observed at the
-        //       root, so the switch is live in both directions.
-        SettingsCard(
-            title = stringResource(R.string.settings_layout_title),
-            description = stringResource(R.string.settings_layout_desc),
-            modifier = Modifier.testTag("settings_layout_card")
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(animationSpec = tween(220)) + fadeIn(tween(180)),
+            exit = shrinkVertically(animationSpec = tween(180)) + fadeOut(tween(120))
         ) {
-            SegmentedPillRow(
-                options = listOf(
-                    PillOption(
-                        stringResource(R.string.layout_mobile),
-                        settings.layoutMode == LayoutMode.MOBILE,
-                        testTag = "layout_option_mobile"
-                    ),
-                    PillOption(
-                        stringResource(R.string.layout_tv),
-                        settings.layoutMode == LayoutMode.TV,
-                        testTag = "layout_option_tv"
-                    )
-                ),
-                onSelect = { index ->
-                    onSelectLayout(if (index == 0) LayoutMode.MOBILE else LayoutMode.TV)
-                },
-                // Same golden selection token as the appearance picker.
-                selectedColor = palette.accent,
-                selectedTextColor = palette.sheet,
-                fillWidth = true
-            )
-        }
-
-        ItemGap()
-
-        // 3b. Font size (beta 7.9): five steps, applied as a multiplier on the
-        //     system font scale at the app root. Split into 3 + 2 pills so the
-        //     row never overflows, even at 120 % on top of a large system scale.
-        SettingsCard {
-            SettingRowBlock(
-                title = stringResource(R.string.settings_font_title),
-                description = stringResource(R.string.settings_font_desc)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = NidaaDimens.cardGap)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SegmentedPillRow(
-                        options = FontScale.STEPS.take(3).map { step ->
-                            PillOption(FontScale.label(step), settings.fontScale == step)
-                        },
-                        onSelect = { index -> onSelectFontScale(FontScale.STEPS[index]) },
-                        fillWidth = true
-                    )
-                    SegmentedPillRow(
-                        options = FontScale.STEPS.drop(3).map { step ->
-                            PillOption(FontScale.label(step), settings.fontScale == step)
-                        },
-                        onSelect = { index ->
-                            onSelectFontScale(FontScale.STEPS[3 + index])
-                        },
-                        fillWidth = true
-                    )
-                }
+                content()
             }
         }
-
-        ItemGap()
-
-        // 4. Widget language: exactly two choices, independent of the UI language.
-        //    Changing it re-renders the widget immediately.
-        SettingsCard {
-            SettingRowBlock(
-                title = stringResource(R.string.settings_widget_title),
-                description = stringResource(R.string.settings_widget_desc)
-            ) {
-                SegmentedPillRow(
-                    options = listOf(
-                        PillOption(
-                            stringResource(R.string.language_arabic),
-                            widgetLanguage == AppLanguage.ARABIC
-                        ),
-                        PillOption(
-                            stringResource(R.string.language_english),
-                            widgetLanguage == AppLanguage.ENGLISH
-                        )
-                    ),
-                    onSelect = { index ->
-                        onSelectWidgetLanguage(
-                            if (index == 0) AppLanguage.ARABIC else AppLanguage.ENGLISH
-                        )
-                    }
-                )
-            }
-        }
-
-        ItemGap()
-
-        // 4b. Updates (beta 7.95): the only network feature, opt-out, with a
-        //     manual check that still works when the automatic check is off.
-        UpdatesSettingsCard(
-            enabled = updatesEnabled,
-            state = updateState,
-            onEnabledChange = onUpdatesEnabled,
-            onCheckNow = onCheckForUpdates,
-            onDownload = onDownloadUpdate,
-            onInstall = onInstallUpdate,
-            onOpenReleases = onOpenReleasesPage,
-            lastInstall = lastInstallAttempt,
-            onOpenInstallSettings = onOpenInstallSettings
-        )
-
-        // 5. Summer time: Palestine only.
-        if (city.country == Country.PS) {
-            ItemGap()
-            SettingsCard {
-                SettingsToggleRow(
-                    title = stringResource(R.string.settings_summer_time),
-                    description = stringResource(R.string.summer_time_desc),
-                    checked = settings.summerTime,
-                    onCheckedChange = onSummerTimeChange
-                )
-            }
-        }
-
-        ItemGap()
-
-        // 5b. Notifications master switch (beta18: moved to the TOP of this
-        //     group so the on/off control is the first thing seen). Behaviour,
-        //     wiring, strings and styling are untouched - only the position
-        //     changed.
-        SettingsCard(
-            title = stringResource(R.string.settings_notifications),
-            description = stringResource(R.string.settings_notifications_desc),
-            modifier = Modifier.testTag("settings_notifications_master_card")
-        ) {
-            SettingsToggleRow(
-                title = stringResource(R.string.notifications_master),
-                description = stringResource(R.string.notifications_master_desc),
-                checked = notifications.masterEnabled,
-                onCheckedChange = onNotificationsEnabled,
-                modifier = Modifier.testTag("notifications_master_toggle"),
-                toggleTestTag = "notifications_master_switch"
-            )
-            if (!masterEnabled) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = stringResource(R.string.notifications_off_caption),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = palette.accent,
-                    modifier = Modifier.testTag("notifications_off_caption")
-                )
-            }
-        }
-
-        ItemGap()
-
-        // 5c. Adhan sound (beta14) + beta17 volume.
-        //
-        //     ONE persisted sound and ONE persisted loudness, both read at fire
-        //     time by AlarmReceiver and by the sound-only preview. The picker
-        //     and the preview button share a single horizontally aligned row so
-        //     the test always proves the current choice; the volume slider sits
-        //     directly under them inside the same card.
-        SettingsCard(
-            title = stringResource(R.string.settings_adhan_sound_title),
-            description = stringResource(R.string.settings_adhan_sound_desc),
-            modifier = Modifier.testTag("settings_adhan_sound")
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(NidaaDimens.adhanPickerGap),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    AdhanSoundDropdown(
-                        selected = settings.adhanSound,
-                        onSelect = {
-                            // A stale preview would contradict the new pick.
-                            onStopAdhanPreview()
-                            onSelectAdhanSound(it)
-                        }
-                    )
-                }
-                SettingsSmallButton(
-                    label = stringResource(
-                        if (previewingAdhan) R.string.settings_adhan_test_stop
-                        else R.string.settings_adhan_test
-                    ),
-                    onClick = onToggleAdhanPreview,
-                    modifier = Modifier.testTag("settings_adhan_test_button")
-                )
-            }
-
-            Spacer(Modifier.height(NidaaDimens.adhanVolumeGap))
-
-            AdhanVolumeRow(
-                volume = settings.adhanVolume,
-                onChange = onAdhanVolumeChange,
-                onCommit = {
-                    // Restarting the preview is the caller's business; stopping
-                    // it here keeps the audible track in step with the slider.
-                    if (previewingAdhan) onStopAdhanPreview()
-                }
-            )
-        }
-
-        // 6b. Apply one mode to every enabled event (beta17: moved to the TOP of
-        //     the prayer-notifications section, directly before Fajr). Behaviour,
-        //     styling and strings are untouched - only the position changed, so
-        //     "set everything at once" no longer requires scrolling past six
-        //     event cards.
-        ItemGap()
-        SettingsCard(
-            title = stringResource(R.string.notify_apply_all),
-            description = stringResource(R.string.notify_apply_all_desc),
-            modifier = Modifier.testTag("notify_apply_all")
-        ) {
-            SegmentedPillRow(
-                options = modes.map { mode -> PillOption(modeLabel(mode), mode == applyMode) },
-                onSelect = { index -> applyMode = modes[index] },
-                fillWidth = true
-            )
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                SettingsSmallButton(
-                    label = stringResource(R.string.notify_apply),
-                    onClick = { onApplyModeToEnabled(applyMode) }
-                )
-            }
-        }
-
-        // 7. One card per event, each with its own switch and mode.
-        for (event in NotifyEvent.entries) {
-            ItemGap()
-            val current = notifications.forEvent(event)
-            SettingsCard(
-                enabled = masterEnabled,
-                modifier = Modifier.testTag("event_card_${event.storageKey}")
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = eventLabel(event),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = palette.text,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Switch(
-                        checked = current.enabled,
-                        onCheckedChange = { onEventEnabled(event, it) },
-                        enabled = masterEnabled,
-                        modifier = Modifier.testTag("event_toggle_${event.storageKey}"),
-                        colors = mawaqitiSwitchColors()
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                SegmentedPillRow(
-                    options = modes.map { mode ->
-                        PillOption(
-                            modeLabel(mode),
-                            mode == current.mode,
-                            testTag = "event_mode_${event.storageKey}_${mode.storageKey}"
-                        )
-                    },
-                    onSelect = { index -> onEventMode(event, modes[index]) },
-                    fillWidth = true,
-                    enabled = masterEnabled,
-                    modifier = Modifier.testTag("event_modes_${event.storageKey}")
-                )
-            }
-        }
-
-        // 8. Pre-prayer alert (beta22): one silent, vibration-only reminder per
-        //    prayer, N minutes before the adhan. Same SettingsCard +
-        //    SegmentedPillRow tokens as «وضع العرض», split 3 + 2 like the
-        //    font-size picker so five options never clip at 360 dp. It closes
-        //    the notifications group, so the beta18 master → sound → apply →
-        //    Fajr order stays exactly as that regression test asserts.
-        ItemGap()
-        SettingsCard(
-            title = stringResource(R.string.settings_pre_alert_title),
-            description = stringResource(R.string.settings_pre_alert_desc),
-            modifier = Modifier.testTag("settings_pre_alert_card")
-        ) {
-            val preAlertLabels = listOf(
-                R.string.pre_alert_off,
-                R.string.pre_alert_5,
-                R.string.pre_alert_10,
-                R.string.pre_alert_15,
-                R.string.pre_alert_30
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SegmentedPillRow(
-                    options = PreAlertMinutes.OPTIONS.take(3).mapIndexed { index, minutes ->
-                        PillOption(
-                            stringResource(preAlertLabels[index]),
-                            settings.preAlertMinutes == minutes,
-                            testTag = "pre_alert_option_$minutes"
-                        )
-                    },
-                    onSelect = { index -> onSelectPreAlert(PreAlertMinutes.OPTIONS[index]) },
-                    selectedColor = palette.accent,
-                    selectedTextColor = palette.sheet,
-                    fillWidth = true
-                )
-                SegmentedPillRow(
-                    options = PreAlertMinutes.OPTIONS.drop(3).mapIndexed { index, minutes ->
-                        PillOption(
-                            stringResource(preAlertLabels[3 + index]),
-                            settings.preAlertMinutes == minutes,
-                            testTag = "pre_alert_option_$minutes"
-                        )
-                    },
-                    onSelect = { index ->
-                        onSelectPreAlert(PreAlertMinutes.OPTIONS[3 + index])
-                    },
-                    selectedColor = palette.accent,
-                    selectedTextColor = palette.sheet,
-                    fillWidth = true
-                )
-            }
-        }
-
-        // 9. System status rows, only when they need attention.
-        //
-        //    beta18: a visible status row is followed by the same card gap used
-        //    between every other Settings card, so the last one (typically the
-        //    battery row) can never sit flush against the About card. Each row
-        //    also carries the shared `statusCardPadding` and never truncates
-        //    its description.
-        var anyStatusCard = false
-        if (!canScheduleExact) {
-            ItemGap()
-            StatusCard(
-                title = stringResource(R.string.notify_exact_title),
-                description = stringResource(R.string.notify_exact_desc),
-                onClick = onOpenExactAlarmSettings,
-                testTag = "status_exact_card"
-            )
-            anyStatusCard = true
-        }
-        if (!notificationsGranted) {
-            ItemGap()
-            StatusCard(
-                title = stringResource(R.string.notify_permission_title),
-                description = stringResource(R.string.notify_permission_desc),
-                onClick = onOpenNotificationSettings,
-                testTag = "status_permission_card"
-            )
-            anyStatusCard = true
-        }
-        if (batteryOptimized) {
-            ItemGap()
-            StatusCard(
-                title = stringResource(R.string.notify_battery_title),
-                description = stringResource(R.string.notify_battery_desc),
-                onClick = onOpenBatterySettings,
-                testTag = "status_battery_card"
-            )
-            anyStatusCard = true
-        }
-        if (anyStatusCard) {
-            ItemGap()
-        }
-
-        // 10. About — the LAST item of the list. The claims live here exactly
-        //     once; the old standalone footer card is gone.
-        SettingsCard(
-            title = stringResource(R.string.settings_about_title),
-            modifier = Modifier.testTag("settings_about")
-        ) {
-            Text(
-                text = stringResource(R.string.settings_about_brand),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = palette.text
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
-                style = MaterialTheme.typography.labelMedium,
-                color = palette.accent
-            )
-            Spacer(Modifier.height(12.dp))
-            // Single source of truth for the timetable claim (both countries).
-            Text(
-                text = stringResource(R.string.settings_about_timetable),
-                style = MaterialTheme.typography.bodyMedium,
-                color = palette.text,
-                modifier = Modifier.testTag("settings_about_claim")
-            )
-            Spacer(Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                InfoChip(
-                    text = stringResource(R.string.settings_about_offline),
-                    modifier = Modifier.weight(1f)
-                )
-                InfoChip(
-                    text = stringResource(R.string.settings_about_no_data),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = stringResource(R.string.settings_about_network),
-                style = MaterialTheme.typography.bodySmall,
-                color = palette.textMuted,
-                modifier = Modifier.testTag("settings_about_network")
-            )
-            Spacer(Modifier.height(14.dp))
-            // Credit is visually separated and always the very last line.
-            HorizontalDivider(color = palette.text.copy(alpha = 0.12f))
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = stringResource(R.string.settings_about_credit),
-                style = MaterialTheme.typography.bodySmall,
-                color = palette.textMuted,
-                modifier = Modifier.testTag("settings_about_credit")
-            )
-        }
-
-        // Framework bottom padding: About is the last item.
-        Spacer(Modifier.height(32.dp))
     }
 }
 
@@ -921,9 +1083,7 @@ private fun AdhanVolumeRow(
             Text(
                 text = stringResource(
                     R.string.settings_adhan_volume_value,
-                    // Latin digits, like every time and date in the app: the
-                    // Arabic default locale would otherwise render ١٠٠٪ here
-                    // and read differently from the rest of the screen.
+                    // Latin digits, like every time and date in the app.
                     remember(local) { String.format(Locale.US, "%d", local) }
                 ),
                 style = MaterialTheme.typography.labelLarge,
@@ -962,8 +1122,6 @@ private fun AdhanVolumeRow(
  * on every side, and the description is allowed unlimited lines with visible
  * overflow. The description can therefore never be clipped at the card's bottom
  * edge, whatever the font scale or text length.
- *
- * The whole card stays clickable through the untouched [SettingsCard] `onClick`.
  */
 @Composable
 private fun StatusCard(

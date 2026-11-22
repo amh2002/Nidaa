@@ -45,6 +45,10 @@ class SettingsRepository(private val context: Context) {
         val adhanSound = stringPreferencesKey("adhan_sound")
         /** beta17: adhan loudness percent 0..100; absent means 100. */
         val adhanVolume = intPreferencesKey("adhan_volume")
+        /** beta25: home content slot widgets; absent means the documented default. */
+        val homeDhikr = booleanPreferencesKey("home_dhikr")
+        val homeCountdown = booleanPreferencesKey("home_countdown")
+        val homeMoonPhase = booleanPreferencesKey("home_moon_phase")
         val notifyMaster = booleanPreferencesKey("notify_master")
         fun eventEnabled(event: NotifyEvent) =
             booleanPreferencesKey("notify_${event.storageKey}_enabled")
@@ -86,7 +90,10 @@ class SettingsRepository(private val context: Context) {
                 adhanVolume = AdhanVolume.normalize(
                     prefs[Keys.adhanVolume] ?: AdhanVolume.DEFAULT
                 ),
-                widgetLanguage = AppLanguage.fromTagOrNull(prefs[Keys.widgetLanguage])
+                widgetLanguage = AppLanguage.fromTagOrNull(prefs[Keys.widgetLanguage]),
+                homeDhikr = prefs[Keys.homeDhikr] ?: true,
+                homeCountdown = prefs[Keys.homeCountdown] ?: false,
+                homeMoonPhase = prefs[Keys.homeMoonPhase] ?: false
             )
         }
 
@@ -170,6 +177,13 @@ class SettingsRepository(private val context: Context) {
             if (enabled) prefs[Keys.eventMode(event)] = mode.storageKey
         }
     }
+
+    /** beta25: the three home content widgets, each persisted on its own key. */
+    suspend fun setHomeDhikr(enabled: Boolean) = edit { it[Keys.homeDhikr] = enabled }
+
+    suspend fun setHomeCountdown(enabled: Boolean) = edit { it[Keys.homeCountdown] = enabled }
+
+    suspend fun setHomeMoonPhase(enabled: Boolean) = edit { it[Keys.homeMoonPhase] = enabled }
 
     /** Widget-only language. Does not touch the app UI language. */
     suspend fun setWidgetLanguage(language: AppLanguage) = edit {

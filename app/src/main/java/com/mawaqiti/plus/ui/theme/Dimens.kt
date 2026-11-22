@@ -100,6 +100,18 @@ object NidaaDimens {
 
     /** beta24: the Qibla card's inner padding, tightened with the dial. */
     val qiblaCardPadding = 8.dp
+
+    /** beta25: vertical gap between two widgets in the home content slot. */
+    val homeSlotGap = 10.dp
+
+    /**
+     * beta25: the moon widget's base diameter. It is drawn, not an image, and
+     * stays at this size so the slot's fit calculation is deterministic.
+     */
+    val homeMoonSize = 44.dp
+
+    /** beta25: label gap under the moon drawing. */
+    val homeMoonLabelGap = 4.dp
 }
 
 /**

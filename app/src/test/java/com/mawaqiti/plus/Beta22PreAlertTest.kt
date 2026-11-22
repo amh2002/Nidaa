@@ -169,6 +169,7 @@ class Beta22PreAlertTest {
                     canScheduleExact = true,
                     notificationsGranted = true,
                     batteryOptimized = false,
+                    initiallyExpanded = true,
                     onBack = {},
                     onOpenCityPicker = {},
                     onSelectLanguage = {},

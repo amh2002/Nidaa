@@ -251,4 +251,68 @@
     <string name="update_permission_open_settings">فتح الإعدادات</string>
     <string name="update_permission_open_releases">فتح صفحة الإصدارات</string>
     <string name="update_permission_later">لاحقًا</string>
+
+    <!-- beta25: Settings accordion. Each header is one collapsible section; the
+         five titles below are the only place they are named. -->
+    <string name="settings_section_times">المواقيت</string>
+    <string name="settings_section_alerts">التنبيهات</string>
+    <string name="settings_section_home_content">محتوى الشاشة الرئيسية</string>
+    <string name="settings_section_appearance">التخصيص</string>
+    <string name="settings_section_about">عن التطبيق</string>
+
+    <!-- beta25: home content slot -->
+    <string name="home_content_desc">اختر ما يظهر أسفل الشاشة الرئيسية. تختفي الودجات تلقائيًا إذا لم يتوفر مكان كافٍ، بالترتيب: ذكر اليوم ثم العدّاد ثم طور القمر.</string>
+    <string name="home_widget_dhikr">ذكر اليوم</string>
+    <string name="home_widget_dhikr_desc">عبارة ذكر ثابتة طوال اليوم وتتغير كل يوم هجري.</string>
+    <string name="home_widget_countdown">عدّاد المناسبات</string>
+    <string name="home_widget_countdown_desc">الأيام المتبقية على أقرب مناسبة هجرية.</string>
+    <string name="home_widget_moon">طور القمر</string>
+    <string name="home_widget_moon_desc">طور القمر وفق اليوم الهجري.</string>
+
+    <!-- beta25: the rotating dhikr list. Only authentic, widely known formulas. -->
+    <string-array name="daily_dhikr_list">
+        <item>سبحان الله وبحمده، سبحان الله العظيم</item>
+        <item>لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير</item>
+        <item>أستغفر الله العظيم وأتوب إليه</item>
+        <item>اللهم صلِّ وسلّم على نبينا محمد</item>
+        <item>لا حول ولا قوة إلا بالله</item>
+        <item>سبحان الله والحمد لله ولا إله إلا الله والله أكبر</item>
+        <item>سبحان الله وبحمده</item>
+        <item>الحمد لله رب العالمين</item>
+        <item>لا إله إلا الله</item>
+        <item>أستغفر الله</item>
+        <item>الله أكبر</item>
+        <item>سبحان الله</item>
+        <item>الحمد لله</item>
+        <item>لا إله إلا أنت سبحانك إني كنت من الظالمين</item>
+        <item>حسبي الله ونعم الوكيل</item>
+        <item>اللهم إني أسألك العفو والعافية</item>
+    </string-array>
+
+    <!-- beta25: Islamic events countdown -->
+    <string name="event_ramadan">رمضان</string>
+    <string name="event_eid_fitr">عيد الفطر</string>
+    <string name="event_eid_adha">عيد الأضحى</string>
+    <string name="event_new_year">رأس السنة الهجرية</string>
+    <string name="event_today">اليوم: %1$s</string>
+    <plurals name="event_days_left">
+        <item quantity="zero">باقي %1$d يوم على %2$s</item>
+        <item quantity="one">باقي يوم واحد على %2$s</item>
+        <item quantity="two">باقي يومان على %2$s</item>
+        <item quantity="few">باقي %1$d أيام على %2$s</item>
+        <item quantity="many">باقي %1$d يوماً على %2$s</item>
+        <item quantity="other">باقي %1$d يوم على %2$s</item>
+    </plurals>
+
+    <!-- beta25: moon phase names, one per Hijri day-of-month band -->
+    <string name="moon_label">الليلة: %1$s</string>
+    <string name="moon_phase_new">هلال بداية الشهر</string>
+    <string name="moon_phase_waxing_crescent">هلال متزايد</string>
+    <string name="moon_phase_first_quarter">التربيع الأول</string>
+    <string name="moon_phase_waxing_gibbous">أحدب متزايد</string>
+    <string name="moon_phase_full">بدر تام</string>
+    <string name="moon_phase_waning_gibbous">أحدب متناقص</string>
+    <string name="moon_phase_last_quarter">التربيع الأخير</string>
+    <string name="moon_phase_waning_crescent">هلال متناقص</string>
+    <string name="moon_phase_old">هلال آخر الشهر</string>
 </resources>

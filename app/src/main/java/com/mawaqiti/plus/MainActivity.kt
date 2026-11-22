@@ -321,7 +321,10 @@ fun MawaqitiApp(
                         },
                         onSelectTheme = viewModel::setTheme,
                         onSelectLayout = viewModel::setLayoutMode,
-                        onSelectPreAlert = viewModel::setPreAlertMinutes
+                        onSelectPreAlert = viewModel::setPreAlertMinutes,
+                        onSelectHomeDhikr = viewModel::setHomeDhikr,
+                        onSelectHomeCountdown = viewModel::setHomeCountdown,
+                        onSelectHomeMoonPhase = viewModel::setHomeMoonPhase
                     )
 
                     DockDestination.HOME, null -> {
@@ -340,7 +343,12 @@ fun MawaqitiApp(
                                 onChooseCity = { showCityPicker = true },
                                 onOpenAbout = { showAbout = true },
                                 updateRelease = updateRelease,
-                                onOpenUpdate = { selectedTab = DockDestination.SETTINGS.tab }
+                                onOpenUpdate = { selectedTab = DockDestination.SETTINGS.tab },
+                                // beta25: the adaptive content slot reads the same
+                                // settings flow as the rest of the app.
+                                homeDhikr = settings.homeDhikr,
+                                homeCountdown = settings.homeCountdown,
+                                homeMoonPhase = settings.homeMoonPhase
                             )
                         }
                         if (settings.layoutMode == LayoutMode.TV) {

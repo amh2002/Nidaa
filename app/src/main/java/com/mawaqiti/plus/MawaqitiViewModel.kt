@@ -259,6 +259,22 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     }
 
     /**
+     * beta25: home content widgets. The home observes the same settings flow,
+     * so a toggle applies on return to the home tab - no restart.
+     */
+    fun setHomeDhikr(enabled: Boolean) = viewModelScope.launch {
+        settingsRepository.setHomeDhikr(enabled)
+    }
+
+    fun setHomeCountdown(enabled: Boolean) = viewModelScope.launch {
+        settingsRepository.setHomeCountdown(enabled)
+    }
+
+    fun setHomeMoonPhase(enabled: Boolean) = viewModelScope.launch {
+        settingsRepository.setHomeMoonPhase(enabled)
+    }
+
+    /**
      * beta17: the sound-only preview shown beside the picker.
      *
      * It reads the persisted sound and volume, hands them to [AdhanPreview] -

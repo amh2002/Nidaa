@@ -40,7 +40,7 @@ import org.robolectric.annotation.Config
  *     directly above the "صوت الأذان" card, and exists exactly once;
  *  2. the group order below it stays master -> sound -> apply-to-all -> Fajr;
  *  3. the battery status card wraps its content, never clips its description,
- *     and is separated from the About card by the shared 12 dp card gap.
+ *     and never collides with the About card below it.
  */
 @RunWith(RobolectricTestRunner::class)
 class Beta18SettingsLayoutTest {
@@ -89,6 +89,7 @@ class Beta18SettingsLayoutTest {
                         canScheduleExact = true,
                         notificationsGranted = true,
                         batteryOptimized = true,
+                        initiallyExpanded = true,
                         onBack = {},
                         onOpenCityPicker = {},
                         onSelectLanguage = {},
@@ -185,8 +186,9 @@ class Beta18SettingsLayoutTest {
             batteryDesc.top >= battery.top + dpToPx(16f) - 0.5f
         )
 
-        // The missing gap that caused the reported collision: exactly one card
-        // gap, the same token every other pair uses.
+        // beta25: the battery row is the last item of the «التنبيهات» section and
+        // the About card now sits under its own section header, so the contract
+        // is "at least one card gap, never a collision".
         assertTrue("About must sit below the battery card", battery.bottom <= about.top)
         println(
             "beta18-battery card=${battery.height}px desc=${batteryDesc.height}px " +
@@ -194,11 +196,9 @@ class Beta18SettingsLayoutTest {
                 "gap=${about.top - battery.bottom}px cardGap=${dpToPx(12f)}px " +
                 "descLines=${layout("status_battery_card_description").lineCount}"
         )
-        assertEquals(
-            "battery -> about gap",
-            dpToPx(12f),
-            about.top - battery.bottom,
-            1f
+        assertTrue(
+            "battery -> about gap must be at least one card gap",
+            about.top - battery.bottom >= dpToPx(12f)
         )
     }
 
