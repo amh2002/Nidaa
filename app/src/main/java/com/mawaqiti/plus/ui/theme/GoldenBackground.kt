@@ -6,9 +6,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -16,6 +19,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import java.util.Random
 
 /**
@@ -45,8 +50,26 @@ fun GoldenSkyBackground(modifier: Modifier = Modifier) {
         label = "goldenClouds"
     )
     val stars = remember { starField(count = 46, seed = 20260915L) }
+    // beta24 (Task 3): the boxes no star may enter. They arrive already
+    // inflated by [StarTextClearance] and in root coordinates, so this canvas
+    // only records its own origin and rejects a star whose centre lands inside
+    // one of them.
+    val exclusions = LocalStarExclusions.current.rects
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    val skyline by animateFloatAsState(
+        targetValue = skylineAlphaFor(phase),
+        animationSpec = tween(PHASE_FADE_MS),
+        label = "goldenSkyline"
+    )
 
-    Canvas(modifier = modifier.fillMaxSize()) {
+    Canvas(
+        modifier = modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coordinates ->
+                val topLeft = coordinates.boundsInRoot().topLeft
+                if (topLeft != origin) origin = topLeft
+            }
+    ) {
         drawRect(Brush.verticalGradient(palette.gradient))
 
         palette.horizonTint?.let { tint ->
@@ -74,7 +97,14 @@ fun GoldenSkyBackground(modifier: Modifier = Modifier) {
         }
 
         if (starAlpha > 0.01f) {
-            drawStarField(stars, alpha = starAlpha, color = palette.text, maxY = 0.55f)
+            drawStarField(
+                stars,
+                alpha = starAlpha,
+                color = palette.text,
+                maxY = 0.55f,
+                exclusions = exclusions,
+                origin = origin
+            )
         }
         if (clouds > 0.01f) {
             drawClouds(palette.text, clouds)
@@ -85,8 +115,11 @@ fun GoldenSkyBackground(modifier: Modifier = Modifier) {
         // symmetric scene: a mosque with a dome and two minarets, flanking
         // palms and a low arcade, in the same near-black silhouette value so
         // the cards, the note and the dock keep their contrast.
+        // beta24 (Task 1): the silhouette's own weight now follows the phase.
+        // NIGHT keeps 1.0, i.e. exactly the 0.55 alpha of beta23; the daylight
+        // phases scale it with their (halved) skyline weight.
         drawIslamicScene(
-            color = Color(0xFF010208).copy(alpha = 0.55f),
+            color = Color(0xFF010208).copy(alpha = 0.55f * skyline),
             // The floating dock covers roughly the bottom fifth of the phone
             // screen, so the skyline is based a little higher than the edge:
             // the dome, both minarets and the palms then read ABOVE the dock
@@ -119,12 +152,20 @@ fun GoldenHeroDecor(modifier: Modifier = Modifier) {
         label = "heroSkyline"
     )
     val field = remember { starField(count = 9, seed = 4242L) }
+    val exclusions = LocalStarExclusions.current.rects
+    var origin by remember { mutableStateOf(Offset.Zero) }
 
-    Canvas(modifier = modifier) {
+    Canvas(
+        modifier = modifier.onGloballyPositioned { coordinates ->
+            val topLeft = coordinates.boundsInRoot().topLeft
+            if (topLeft != origin) origin = topLeft
+        }
+    ) {
         if (stars > 0.01f) {
-            // Keep stars off the centred label/name/time column.
+            // Keep stars off the centred label/name/time column, and off every
+            // text box registered inside the card (Task 3, beta24).
             drawStarField(field, alpha = stars * 0.85f, color = palette.text, maxY = 0.34f,
-                minX = 0.62f)
+                minX = 0.62f, exclusions = exclusions, origin = origin)
         }
         if (skyline > 0.01f) {
             drawIslamicScene(
@@ -139,28 +180,47 @@ fun GoldenHeroDecor(modifier: Modifier = Modifier) {
 /** Cross-fade length for decorations; the palette itself uses 500 ms. */
 internal const val PHASE_FADE_MS = 500
 
+/**
+ * beta24 (Task 1): how much of its beta23 weight a *daylight* decoration keeps.
+ *
+ * The owner approved the current shapes but not their weight against a lit sky:
+ * a 0.70-0.90 opacity silhouette and 0.60-0.85 clouds compete with the cards.
+ * Halving them lands inside the requested 0.4-0.6 band, and because the night
+ * values are multiplied by 1.0 the night scene is bit-identical to beta23.
+ */
+internal const val DAY_DECOR_WEIGHT = 0.5f
+
+/**
+ * beta24 (Task 2): the star field is a NIGHT decoration only.
+ *
+ * beta23 faded the same 46 (screen) / 9 (hero card) stars in with a phase
+ * dependent alpha, so a few still showed over the daylight sky - and next to
+ * the «نداء» wordmark a small star reads as a dot of the word. Every daylight
+ * phase now returns exactly 0, so the `> 0.01f` guards skip the field entirely
+ * and the day state has zero stars by construction, not by a faint opacity.
+ */
 internal fun starAlphaFor(phase: GoldenPhase): Float = when (phase) {
     GoldenPhase.NIGHT -> 1f
-    GoldenPhase.DAWN -> 0.45f
-    GoldenPhase.MORNING -> 0.22f
-    GoldenPhase.AFTERNOON -> 0.10f
-    GoldenPhase.SUNSET -> 0.10f
+    GoldenPhase.DAWN,
+    GoldenPhase.MORNING,
+    GoldenPhase.AFTERNOON,
+    GoldenPhase.SUNSET -> 0f
 }
 
 internal fun cloudAlphaFor(phase: GoldenPhase): Float = when (phase) {
     GoldenPhase.NIGHT -> 0.55f
-    GoldenPhase.DAWN -> 0.85f
-    GoldenPhase.MORNING -> 0.70f
-    GoldenPhase.AFTERNOON -> 0.60f
-    GoldenPhase.SUNSET -> 0.80f
+    GoldenPhase.DAWN -> 0.85f * DAY_DECOR_WEIGHT
+    GoldenPhase.MORNING -> 0.70f * DAY_DECOR_WEIGHT
+    GoldenPhase.AFTERNOON -> 0.60f * DAY_DECOR_WEIGHT
+    GoldenPhase.SUNSET -> 0.80f * DAY_DECOR_WEIGHT
 }
 
 internal fun skylineAlphaFor(phase: GoldenPhase): Float = when (phase) {
     GoldenPhase.NIGHT -> 1f
-    GoldenPhase.DAWN -> 0.85f
-    GoldenPhase.MORNING -> 0.70f
-    GoldenPhase.AFTERNOON -> 0.75f
-    GoldenPhase.SUNSET -> 0.90f
+    GoldenPhase.DAWN -> 0.85f * DAY_DECOR_WEIGHT
+    GoldenPhase.MORNING -> 0.70f * DAY_DECOR_WEIGHT
+    GoldenPhase.AFTERNOON -> 0.75f * DAY_DECOR_WEIGHT
+    GoldenPhase.SUNSET -> 0.90f * DAY_DECOR_WEIGHT
 }
 
 private data class Star(val x: Float, val y: Float, val radius: Float, val alpha: Float)
@@ -183,12 +243,17 @@ private fun DrawScope.drawStarField(
     alpha: Float,
     color: Color,
     maxY: Float,
-    minX: Float = 0f
+    minX: Float = 0f,
+    exclusions: List<Rect> = emptyList(),
+    origin: Offset = Offset.Zero
 ) {
     val unit = size.minDimension
     for (star in stars) {
         val x = minX + star.x * (1f - minX)
         val center = Offset(size.width * x, size.height * (star.y * maxY + 0.015f))
+        // beta24 (Task 3): a star inside a text box (plus its 24 dp margin) is
+        // dropped, never nudged - a moved star could land beside another word.
+        if (isStarBlocked(center + origin, exclusions)) continue
         val r = unit * 0.0035f * star.radius
         drawCircle(
             brush = Brush.radialGradient(

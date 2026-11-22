@@ -70,7 +70,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.mawaqiti.plus.R
 import com.mawaqiti.plus.data.City
-import com.mawaqiti.plus.data.Country
 import com.mawaqiti.plus.engine.table.TableDay
 import com.mawaqiti.plus.engine.table.TableEvent
 import com.mawaqiti.plus.format.ClockFormat
@@ -85,6 +84,7 @@ import com.mawaqiti.plus.ui.theme.CelestialPhase
 import com.mawaqiti.plus.ui.theme.GoldenHeroDecor
 import com.mawaqiti.plus.ui.theme.NidaaDimens
 import com.mawaqiti.plus.ui.theme.PhaseBounds
+import com.mawaqiti.plus.ui.theme.starTextExclusion
 import com.mawaqiti.plus.ui.theme.SkyPalette
 import com.mawaqiti.plus.ui.theme.celestialPhase
 import com.mawaqiti.plus.ui.theme.Tajawal
@@ -182,25 +182,6 @@ fun PrayerScreen(
             palette = palette
         )
 
-        Spacer(Modifier.height(12.dp))
-
-        // beta11: the two footer buttons moved into the themed bottom bar in
-        // MawaqitiApp; only the official-timetable note stays at the end of the
-        // scrolling content, and the Scaffold's bar padding keeps it clear of
-        // the navigation bar.
-        Text(
-            // beta23: Jordan follows the Ministry of Awqaf calendar, not the
-            // Palestinian timetable, so the footer must follow the city.
-            text = stringResource(
-                if (city.country == Country.JO) R.string.official_note_jordan
-                else R.string.official_note
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = palette.textMuted,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
-
         Spacer(Modifier.height(10.dp))
     }
 }
@@ -231,6 +212,7 @@ private fun Header(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
                 .clickable(onClick = onOpenAbout)
+                .starTextExclusion("home_brand")
                 .padding(horizontal = 4.dp, vertical = 2.dp)
         )
         CityChip(city = city, isArabic = isArabic, palette = palette, onClick = onChooseCity)
@@ -259,7 +241,9 @@ private fun Header(
                 minFontSize = 8.sp,
                 maxFontSize = MaterialTheme.typography.bodySmall.fontSize
             ),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .starTextExclusion("home_hijri_date")
         )
         Text(
             text = date.format(dateFormatter(isArabic)),
@@ -272,7 +256,9 @@ private fun Header(
                 minFontSize = 8.sp,
                 maxFontSize = MaterialTheme.typography.bodyMedium.fontSize
             ),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .starTextExclusion("home_gregorian_date")
         )
     }
 
@@ -487,7 +473,9 @@ private fun NowTimeRow(text: String, palette: SkyPalette) {
         softWrap = false,
         overflow = TextOverflow.Ellipsis,
         textAlign = TextAlign.Center,
-        modifier = Modifier.testTag("now_time_row")
+        modifier = Modifier
+            .starTextExclusion("hero_now_row")
+            .testTag("now_time_row")
     )
 }
 
@@ -552,6 +540,7 @@ internal fun HeroCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .starTextExclusion("hero_next_label")
                     .testTag("next_prayer_label")
             )
             Spacer(Modifier.height(HeroMetrics.LABEL_TO_NAME))
@@ -570,7 +559,9 @@ internal fun HeroCard(
                 softWrap = false,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.testTag("hero_prayer_name")
+                modifier = Modifier
+                    .starTextExclusion("hero_prayer_name")
+                    .testTag("hero_prayer_name")
             )
             Spacer(Modifier.height(HeroMetrics.NAME_TO_TIME))
             Text(
@@ -579,7 +570,8 @@ internal fun HeroCard(
                 fontSize = 44.sp,
                 lineHeight = 52.sp,
                 fontWeight = FontWeight.Bold,
-                color = palette.accent
+                color = palette.accent,
+                modifier = Modifier.starTextExclusion("hero_prayer_time")
             )
             Spacer(Modifier.height(6.dp))
             CountdownPill(secondsLeft = hero.secondsLeft, palette = palette)
@@ -737,6 +729,7 @@ private fun CountdownPill(secondsLeft: Long, palette: SkyPalette) {
             .background(Color.Black.copy(alpha = 0.20f))
             .border(1.dp, palette.accent.copy(alpha = 0.35f), RoundedCornerShape(50))
             .padding(horizontal = 14.dp, vertical = 6.dp)
+            .starTextExclusion("hero_countdown_pill")
             .testTag("hero_countdown_pill")
     )
 }
@@ -810,6 +803,7 @@ private fun LastThirdRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .starTextExclusion("last_third_row")
             .clip(RoundedCornerShape(14.dp))
             .background(palette.cardFill)
             .dashedOutline(color = palette.accent.copy(alpha = 0.50f), corner = 14.dp)
@@ -848,6 +842,10 @@ private fun GridCard(
 ) {
     val shape = RoundedCornerShape(16.dp)
     val base = modifier
+        // beta24 (Task 3): the whole card, not just its two text lines - no
+        // star behind a prayer card, and therefore none inside the 24 dp
+        // margin of its label or time.
+        .starTextExclusion("prayer_card_${item.labelRes}")
         .clip(shape)
         .background(if (item.highlighted) palette.heroFill else palette.cardFill)
         .border(

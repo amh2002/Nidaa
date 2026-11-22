@@ -51,8 +51,10 @@ import com.mawaqiti.plus.R
 import com.mawaqiti.plus.data.City
 import com.mawaqiti.plus.engine.Qibla
 import com.mawaqiti.plus.ui.components.GlassCard
+import com.mawaqiti.plus.ui.theme.NidaaDimens
 import com.mawaqiti.plus.ui.theme.SkyPalette
 import com.mawaqiti.plus.ui.theme.skyPalette
+import com.mawaqiti.plus.ui.theme.starTextExclusion
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.cos
@@ -105,11 +107,13 @@ fun QiblaScreen(city: City, isArabic: Boolean, onBack: () -> Unit) {
             text = stringResource(R.string.qibla_city, city.label(isArabic)),
             style = MaterialTheme.typography.bodyMedium,
             color = palette.textMuted,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .starTextExclusion("qibla_city"),
             textAlign = TextAlign.Center
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(10.dp))
 
         if (!hasSensor) {
             GlassCard(emphasized = true, contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)) {
@@ -125,24 +129,32 @@ fun QiblaScreen(city: City, isArabic: Boolean, onBack: () -> Unit) {
             GlassCard(
                 emphasized = true,
                 corner = 22.dp,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(10.dp)
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    NidaaDimens.qiblaCardPadding
+                )
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .size(320.dp),
+                        .size(NidaaDimens.qiblaDialSize),
                     contentAlignment = Alignment.Center
                 ) {
                     QiblaDial(
                         azimuth = azimuth,
                         qibla = bearing,
                         palette = palette,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            // beta24 (Task 3): the dial carries the N/E/S/W
+                            // letters, drawn on the canvas rather than as Text
+                            // nodes. Excluding the dial's box therefore covers
+                            // the letters, their 24 dp margin and the ticks.
+                            .starTextExclusion("qibla_dial")
                     )
                 }
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = when {
                     aligned -> stringResource(R.string.qibla_aligned)
@@ -153,7 +165,9 @@ fun QiblaScreen(city: City, isArabic: Boolean, onBack: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 color = if (aligned) palette.accent else palette.text,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .starTextExclusion("qibla_heading")
             )
             Spacer(Modifier.height(2.dp))
             Text(
@@ -162,11 +176,13 @@ fun QiblaScreen(city: City, isArabic: Boolean, onBack: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 color = palette.accent,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .starTextExclusion("qibla_degrees")
             )
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -175,33 +191,41 @@ fun QiblaScreen(city: City, isArabic: Boolean, onBack: () -> Unit) {
                 title = stringResource(R.string.qibla_bearing),
                 value = String.format(Locale.US, stringResource(R.string.degrees_format), bearing),
                 palette = palette,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .starTextExclusion("qibla_metric_bearing")
             )
             MetricCard(
                 title = stringResource(R.string.qibla_distance),
                 value = String.format(Locale.US, stringResource(R.string.km_format), distance),
                 palette = palette,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .starTextExclusion("qibla_metric_distance")
             )
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         MetricCard(
             title = stringResource(R.string.qibla_current_heading),
             value = String.format(Locale.US, stringResource(R.string.degrees_format), azimuth),
             palette = palette,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .starTextExclusion("qibla_metric_heading")
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(10.dp))
         Text(
             text = stringResource(R.string.qibla_calibrate),
             style = MaterialTheme.typography.bodySmall,
             color = palette.textMuted,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .starTextExclusion("qibla_calibrate")
         )
-        Spacer(Modifier.height(22.dp))
+        Spacer(Modifier.height(12.dp))
     }
 }
 
@@ -363,7 +387,9 @@ private fun MetricCard(
         corner = 18.dp,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
             horizontal = 12.dp,
-            vertical = 12.dp
+            // beta24 (Task 6): 10 dp instead of 12 dp - two metric rows save
+            // 4 dp, which is part of the fit on the small profile.
+            vertical = 10.dp
         )
     ) {
         Column(

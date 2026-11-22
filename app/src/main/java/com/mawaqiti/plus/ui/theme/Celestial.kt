@@ -71,6 +71,16 @@ fun celestialOf(phase: GoldenPhase): CelestialPhase = when (phase) {
 }
 
 /**
+ * beta24 (Task 1): the daylight suns keep 55 % of their beta23 ink strength.
+ *
+ * The geometry, the rays and the state resolver are untouched - the owner
+ * approved every shape. Only the ink is softened, so on a lit sky the sun reads
+ * as part of the scene instead of competing with the card's prayer name. The
+ * night moon is deliberately excluded: `MOON` stays at full strength.
+ */
+const val CELESTIAL_DAY_WEIGHT = 0.55f
+
+/**
  * Draws the indicator for [phase] in the current phase's tokens.
  *
  * The canvas is square in both call sites (the phone hero's decor slot and the
@@ -87,12 +97,14 @@ fun CelestialIcon(
         val unit = size.minDimension
         val center = Offset(size.width / 2f, size.height / 2f)
         val ink = palette.accent
+        // beta24: day-state softening, see [CELESTIAL_DAY_WEIGHT].
+        val weight = if (phase.isDaylight) CELESTIAL_DAY_WEIGHT else 1f
         when (phase) {
             CelestialPhase.MOON -> drawCrescentAndStars(center, unit, ink)
-            CelestialPhase.RISING_SUN -> drawRisingSun(unit, ink)
-            CelestialPhase.FULL_SUN -> drawFullSun(center, unit, ink)
-            CelestialPhase.LOW_SUN -> drawLowSun(unit, ink)
-            CelestialPhase.SETTING_SUN -> drawSettingSun(unit, ink)
+            CelestialPhase.RISING_SUN -> drawRisingSun(unit, ink, weight)
+            CelestialPhase.FULL_SUN -> drawFullSun(center, unit, ink, weight)
+            CelestialPhase.LOW_SUN -> drawLowSun(unit, ink, weight)
+            CelestialPhase.SETTING_SUN -> drawSettingSun(unit, ink, weight)
         }
     }
 }
@@ -125,25 +137,25 @@ private fun DrawScope.drawCrescentAndStars(center: Offset, unit: Float, ink: Col
     )
 }
 
-private fun DrawScope.drawRisingSun(unit: Float, ink: Color) {
+private fun DrawScope.drawRisingSun(unit: Float, ink: Color, weight: Float) {
     val horizonY = size.height * 0.70f
     val r = unit * 0.21f
     val cx = size.width / 2f
     drawArc(
-        color = ink.copy(alpha = 0.92f),
+        color = ink.copy(alpha = 0.92f * weight),
         startAngle = 180f,
         sweepAngle = 180f,
         useCenter = true,
         topLeft = Offset(cx - r, horizonY - r),
         size = Size(r * 2f, r * 2f)
     )
-    drawHorizon(horizonY, unit, ink)
+    drawHorizon(horizonY, unit, ink, weight)
     repeat(5) { index ->
         val angle = (-150.0 + index * 30.0) * PI / 180.0
         val inner = r * 1.22f
         val outer = r * 1.62f
         drawLine(
-            color = ink.copy(alpha = 0.80f),
+            color = ink.copy(alpha = 0.80f * weight),
             start = Offset(cx + (cos(angle) * inner).toFloat(), horizonY + (sin(angle) * inner).toFloat()),
             end = Offset(cx + (cos(angle) * outer).toFloat(), horizonY + (sin(angle) * outer).toFloat()),
             strokeWidth = unit * 0.022f,
@@ -152,24 +164,24 @@ private fun DrawScope.drawRisingSun(unit: Float, ink: Color) {
     }
 }
 
-private fun DrawScope.drawFullSun(center: Offset, unit: Float, ink: Color) {
+private fun DrawScope.drawFullSun(center: Offset, unit: Float, ink: Color, weight: Float) {
     val r = unit * 0.20f
     drawCircle(
         brush = Brush.radialGradient(
-            colors = listOf(ink.copy(alpha = 0.26f), ink.copy(alpha = 0f)),
+            colors = listOf(ink.copy(alpha = 0.26f * weight), ink.copy(alpha = 0f)),
             center = center,
             radius = r * 2.2f
         ),
         radius = r * 2.2f,
         center = center
     )
-    drawCircle(color = ink.copy(alpha = 0.95f), radius = r, center = center)
+    drawCircle(color = ink.copy(alpha = 0.95f * weight), radius = r, center = center)
     repeat(8) { index ->
         val angle = (index * 45.0) * PI / 180.0
         val inner = r * 1.28f
         val outer = r * 1.72f
         drawLine(
-            color = ink.copy(alpha = 0.78f),
+            color = ink.copy(alpha = 0.78f * weight),
             start = Offset(center.x + (cos(angle) * inner).toFloat(), center.y + (sin(angle) * inner).toFloat()),
             end = Offset(center.x + (cos(angle) * outer).toFloat(), center.y + (sin(angle) * outer).toFloat()),
             strokeWidth = unit * 0.022f,
@@ -179,25 +191,25 @@ private fun DrawScope.drawFullSun(center: Offset, unit: Float, ink: Color) {
 }
 
 /** Afternoon: the same disc, lower in the frame and with only four short rays. */
-private fun DrawScope.drawLowSun(unit: Float, ink: Color) {
+private fun DrawScope.drawLowSun(unit: Float, ink: Color, weight: Float) {
     val center = Offset(size.width / 2f, size.height * 0.60f)
     val r = unit * 0.21f
     drawCircle(
         brush = Brush.radialGradient(
-            colors = listOf(ink.copy(alpha = 0.26f), ink.copy(alpha = 0f)),
+            colors = listOf(ink.copy(alpha = 0.26f * weight), ink.copy(alpha = 0f)),
             center = center,
             radius = r * 2.3f
         ),
         radius = r * 2.3f,
         center = center
     )
-    drawCircle(color = ink.copy(alpha = 0.95f), radius = r, center = center)
+    drawCircle(color = ink.copy(alpha = 0.95f * weight), radius = r, center = center)
     repeat(4) { index ->
         val angle = (20.0 + index * 140.0 / 3.0 + 20.0) * PI / 180.0
         val inner = r * 1.30f
         val outer = r * 1.58f
         drawLine(
-            color = ink.copy(alpha = 0.72f),
+            color = ink.copy(alpha = 0.72f * weight),
             start = Offset(center.x + (cos(angle) * inner).toFloat(), center.y + (sin(angle) * inner).toFloat()),
             end = Offset(center.x + (cos(angle) * outer).toFloat(), center.y + (sin(angle) * outer).toFloat()),
             strokeWidth = unit * 0.020f,
@@ -207,21 +219,21 @@ private fun DrawScope.drawLowSun(unit: Float, ink: Color) {
 }
 
 /** Maghrib: the disc is already sinking - only its top part stays above the line. */
-private fun DrawScope.drawSettingSun(unit: Float, ink: Color) {
+private fun DrawScope.drawSettingSun(unit: Float, ink: Color, weight: Float) {
     val horizonY = size.height * 0.68f
     val r = unit * 0.22f
     val cx = size.width / 2f
     drawArc(
-        color = ink.copy(alpha = 0.92f),
+        color = ink.copy(alpha = 0.92f * weight),
         startAngle = 180f,
         sweepAngle = 180f,
         useCenter = true,
         topLeft = Offset(cx - r, horizonY - r * 0.52f),
         size = Size(r * 2f, r * 2f)
     )
-    drawHorizon(horizonY, unit, ink)
+    drawHorizon(horizonY, unit, ink, weight)
     drawLine(
-        color = ink.copy(alpha = 0.35f),
+        color = ink.copy(alpha = 0.35f * weight),
         start = Offset(cx - r * 1.5f, horizonY + unit * 0.055f),
         end = Offset(cx + r * 1.5f, horizonY + unit * 0.055f),
         strokeWidth = unit * 0.016f,
@@ -229,9 +241,9 @@ private fun DrawScope.drawSettingSun(unit: Float, ink: Color) {
     )
 }
 
-private fun DrawScope.drawHorizon(horizonY: Float, unit: Float, ink: Color) {
+private fun DrawScope.drawHorizon(horizonY: Float, unit: Float, ink: Color, weight: Float) {
     drawLine(
-        color = ink.copy(alpha = 0.60f),
+        color = ink.copy(alpha = 0.60f * weight),
         start = Offset(size.width * 0.08f, horizonY),
         end = Offset(size.width * 0.92f, horizonY),
         strokeWidth = unit * 0.020f,

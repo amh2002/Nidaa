@@ -109,6 +109,12 @@
     <string name="settings_about_no_data">لا يجمع أي بيانات</string>
     <string name="settings_about_credit">تطوير: عبد الرحمن حسين — Abdulrahman Hussein</string>
     <string name="settings_version">الإصدار %1$s</string>
+    <!-- beta24: the three actions of the About dialog, opened by «نداء». -->
+    <string name="about_contact_developer">مراسلة المطور بالبريد</string>
+    <string name="about_github">مستودع GitHub</string>
+    <string name="about_website">الموقع الرسمي</string>
+    <string name="about_email_subject">Nidaa Feedback</string>
+    <string name="about_no_email_app">لا يوجد تطبيق بريد لفتح الرسالة.</string>
 
     <!-- beta5: widget language (independent of the app UI language) -->
     <string name="settings_widget_title">الويدجت</string>

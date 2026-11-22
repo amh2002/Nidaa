@@ -48,7 +48,7 @@ import com.mawaqiti.plus.ui.components.DockDestination
 import com.mawaqiti.plus.ui.components.NidaaDock
 import com.mawaqiti.plus.ui.components.NidaaSplash
 import com.mawaqiti.plus.ui.components.isArabicLocale
-import com.mawaqiti.plus.ui.screens.AboutScreen
+import com.mawaqiti.plus.ui.screens.AboutDialog
 import com.mawaqiti.plus.ui.screens.CityPickerSheet
 import com.mawaqiti.plus.ui.screens.PrayerScreen
 import com.mawaqiti.plus.ui.screens.QiblaScreen
@@ -58,8 +58,10 @@ import com.mawaqiti.plus.ui.theme.GoldenPalettes
 import com.mawaqiti.plus.ui.theme.GoldenPhase
 import com.mawaqiti.plus.ui.theme.GoldenSkyBackground
 import com.mawaqiti.plus.ui.theme.LocalGoldenPhase
+import com.mawaqiti.plus.ui.theme.LocalStarExclusions
 import com.mawaqiti.plus.ui.theme.MawaqitiTheme
 import com.mawaqiti.plus.ui.theme.NidaaDimens
+import com.mawaqiti.plus.ui.theme.StarExclusions
 import com.nidaa.prayer.update.ReleaseInfo
 import com.nidaa.prayer.update.UpdateManager
 import com.nidaa.prayer.update.UpdateState
@@ -85,8 +87,14 @@ class MainActivity : AppCompatActivity() {
             // lookup all run while it is visible. rememberSaveable keeps it from
             // replaying on a configuration change.
             var showSplash by rememberSaveable { mutableStateOf(true) }
+            // beta24: one registry shared by the star field and every screen, so
+            // no night star can land inside the 24 dp margin of a text box.
+            val starExclusions = remember { StarExclusions() }
             MawaqitiTheme(paletteOverride = GoldenPalettes.of(golden)) {
-                CompositionLocalProvider(LocalGoldenPhase provides golden) {
+                CompositionLocalProvider(
+                    LocalGoldenPhase provides golden,
+                    LocalStarExclusions provides starExclusions
+                ) {
                     Box(Modifier.fillMaxSize()) {
                         MawaqitiApp(
                             viewModel = vm,
@@ -162,15 +170,6 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-/**
- * beta12: the only tab that is not a dock destination.
- *
- * Home (0), Qibla (1) and Settings (2) are owned by [DockDestination], which is
- * the single registry for the dock. About is a Home sub-screen parked far above
- * that range so it can never collide with a future dock entry.
- */
-private const val TAB_ABOUT = 99
-
 @Composable
 fun MawaqitiApp(
     viewModel: MawaqitiViewModel = viewModel(),
@@ -213,6 +212,8 @@ fun MawaqitiApp(
 
     var selectedTab by rememberSaveable { mutableIntStateOf(DockDestination.HOME.tab) }
     var showCityPicker by rememberSaveable { mutableStateOf(false) }
+    // beta24: the About dialog replaces the beta10 About screen.
+    var showAbout by rememberSaveable { mutableStateOf(false) }
 
     // Notification / banner deep link: land on Settings, where «التحديثات» lives.
     LaunchedEffect(openUpdatesSignal) {
@@ -260,13 +261,12 @@ fun MawaqitiApp(
             // padding: nothing can ever hide behind the dock, including the
             // official-timetable note at the end of the home column.
             bottomBar = {
-                // About is a Home sub-screen and keeps the full height (no dock).
-                if (selectedTab != TAB_ABOUT) {
-                    NidaaDock(
-                        selectedTab = selectedTab,
-                        onSelect = { destination -> selectedTab = destination.tab }
-                    )
-                }
+                // beta24: About is a dialog over the home screen now, so the
+                // dock is present on every tab and no screen loses its height.
+                NidaaDock(
+                    selectedTab = selectedTab,
+                    onSelect = { destination -> selectedTab = destination.tab }
+                )
             }
         ) { padding ->
             Box(
@@ -274,13 +274,11 @@ fun MawaqitiApp(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // beta12: one lookup drives the whole content switch. About is
-                // the only screen outside the dock; unknown tabs fall back to
-                // Home, so a corrupted saved state can never leave a blank
-                // screen or steal a future dock slot.
-                if (selectedTab == TAB_ABOUT) {
-                    AboutScreen(onBack = { selectedTab = DockDestination.HOME.tab })
-                } else when (DockDestination.forTab(selectedTab)) {
+                // beta12: one lookup drives the whole content switch; unknown
+                // tabs fall back to Home, so a corrupted saved state can never
+                // leave a blank screen or steal a future dock slot. beta24 took
+                // About out of this switch - it is a dialog now.
+                when (DockDestination.forTab(selectedTab)) {
                     DockDestination.QIBLA -> QiblaScreen(
                         city = city,
                         isArabic = isArabic,
@@ -340,7 +338,7 @@ fun MawaqitiApp(
                                 isArabic = isArabic,
                                 clockFormat = settings.clockFormat,
                                 onChooseCity = { showCityPicker = true },
-                                onOpenAbout = { selectedTab = TAB_ABOUT },
+                                onOpenAbout = { showAbout = true },
                                 updateRelease = updateRelease,
                                 onOpenUpdate = { selectedTab = DockDestination.SETTINGS.tab }
                             )
@@ -355,7 +353,7 @@ fun MawaqitiApp(
                                         isArabic = isArabic,
                                         clockFormat = settings.clockFormat,
                                         onChooseCity = { showCityPicker = true },
-                                        onOpenAbout = { selectedTab = TAB_ABOUT },
+                                        onOpenAbout = { showAbout = true },
                                         updateRelease = updateRelease,
                                         onOpenUpdate = {
                                             selectedTab = DockDestination.SETTINGS.tab
@@ -382,6 +380,10 @@ fun MawaqitiApp(
             onDismiss = { showCityPicker = false },
             onSelect = viewModel::selectCity
         )
+    }
+
+    if (showAbout) {
+        AboutDialog(onDismiss = { showAbout = false })
     }
 
     if (permissionDialogFor > 0) {

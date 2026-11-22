@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mawaqiti.plus.R
 import com.mawaqiti.plus.ui.theme.skyPalette
+import com.mawaqiti.plus.ui.theme.starTextExclusion
 
 /**
  * beta13: the ONE registry of dock destinations.
@@ -334,6 +335,9 @@ private fun DockSlot(
             ),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                // beta24 (Task 3): the dock labels are text too - no night star
+                // inside their 24 dp margin.
+                .starTextExclusion("dock_label_${destination.labelRes}")
                 .padding(start = 2.dp, end = 2.dp, bottom = 4.dp)
                 .graphicsLayer { alpha = labelAlpha * contentAlpha }
         )

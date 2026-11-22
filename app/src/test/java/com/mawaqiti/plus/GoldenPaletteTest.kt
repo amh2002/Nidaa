@@ -182,18 +182,31 @@ class GoldenPaletteTest {
     @Test
     fun decorationsFadeOutAwayFromNight() {
         assertEquals(1f, starAlphaFor(GoldenPhase.NIGHT))
-        assertTrue(starAlphaFor(GoldenPhase.DAWN) > 0f)
-        assertTrue(starAlphaFor(GoldenPhase.DAWN) < starAlphaFor(GoldenPhase.NIGHT))
+        // beta24: the star field is NIGHT-only. Every daylight phase must be
+        // exactly 0 - at a faint alpha a single star read as a dot of «نداء».
+        for (phase in GoldenPhase.entries - GoldenPhase.NIGHT) {
+            assertEquals("${phase.name} must have no stars", 0f, starAlphaFor(phase))
+        }
         // beta23: the fixed crescent (and its alpha ramp) is gone. The celestial
         // indicator is a discrete phase now, and only NIGHT may be a moon.
         assertEquals(CelestialPhase.MOON, celestialOf(GoldenPhase.NIGHT))
         assertNotEquals(CelestialPhase.MOON, celestialOf(GoldenPhase.DAWN))
         assertNotEquals(CelestialPhase.MOON, celestialOf(GoldenPhase.MORNING))
         // The silhouette stays visible in every phase, it is what grounds the
-        // layout; clouds never disappear either.
+        // layout; clouds never disappear either. beta24 softened only the
+        // daylight weight (the owner's 0.4-0.6 band of the beta23 values), so
+        // night keeps 1.0 and every phase stays inside 0..1.
+        assertEquals(1f, skylineAlphaFor(GoldenPhase.NIGHT))
         for (phase in GoldenPhase.entries) {
-            assertTrue(skylineAlphaFor(phase) > 0.5f)
+            assertTrue(skylineAlphaFor(phase) > 0f)
+            assertTrue(skylineAlphaFor(phase) <= 1f)
             assertTrue(cloudAlphaFor(phase) > 0f)
+        }
+        for (phase in GoldenPhase.entries - GoldenPhase.NIGHT) {
+            assertTrue(
+                "${phase.name} skyline must stay in the softened band",
+                skylineAlphaFor(phase) in 0.3f..0.5f
+            )
         }
     }
 }

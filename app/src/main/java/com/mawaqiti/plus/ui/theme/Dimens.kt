@@ -86,6 +86,20 @@ object NidaaDimens {
      * [TvCompactDimens] so font scale 1.3 still fits without scrolling.
      */
     val tvCompactHeight = 600.dp
+
+    /**
+     * beta24 (Task 6): the Qibla dial's square box.
+     *
+     * beta23 used a literal 320 dp dial inside 10 dp of card padding, i.e. a
+     * 340 dp tall card. On a 4.7" 720 x 1520 profile that pushed the closing
+     * «حرّك الهاتف…» line under the floating dock. 232 dp shortens the card to
+     * 248 dp (-27 %), which keeps the 24 ticks, the four cardinal letters and
+     * the needle legible at arm's length.
+     */
+    val qiblaDialSize = 232.dp
+
+    /** beta24: the Qibla card's inner padding, tightened with the dial. */
+    val qiblaCardPadding = 8.dp
 }
 
 /**
