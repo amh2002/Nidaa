@@ -30,14 +30,15 @@ import java.util.Locale
  * Every size is derived from the bitmap's own W/H, so the same code produces the
  * same composition at the 4x2 default and at every resized shape:
  *
- *   digits     cap-height 54% of H, ink top at 1.5% of H, horizontally centred,
+ *   digits     cap-height 48% of H, ink top at 2% of H, horizontally centred,
  *              white fading to 15% alpha over the cap (the fade is what keeps
  *              the white day name readable where it crosses them)
  *   separator  two stacked squares drawn as rects (never the font's round
- *              colon), sized 13% of the cap height
- *   day name   ink height 60% of H (width follows the face), ink centre at 54%
- *              of H, solid white, drawn after the digits
- *   Hijri      one small line under the day name, centred at 92.5% of H
+ *              colon), sized 13% of the cap height and centred on the digit
+ *              cap, where the eye expects a time colon
+ *   day name   ink height 72% of H (width follows the face), ink centre at
+ *              54.5% of H, solid white, drawn after the digits
+ *   Hijri      one small line under the day name, centred at 95.5% of H
  *
  * Measurement is done by *rendering* the text into a scratch bitmap and scanning
  * its alpha channel (`measureInk`). Paint.getTextBounds under-reports shaped
@@ -52,10 +53,14 @@ import java.util.Locale
 internal object ClockWidgetRenderer {
 
     /** Digit ink top, as a fraction of the bitmap height. */
-    private const val DIGIT_TOP_FRACTION = 0.015f
+    private const val DIGIT_TOP_FRACTION = 0.02f
 
-    /** Digit cap-height, as a fraction of the bitmap height. */
-    private const val DIGIT_CAP_FRACTION = 0.54f
+    /**
+     * Digit cap-height, as a fraction of the bitmap height. 48 %, down from 54 %,
+     * to hand the day name back the height it lost in beta29 without deepening
+     * the crossing.
+     */
+    private const val DIGIT_CAP_FRACTION = 0.48f
 
     /** Alpha the digit gradient reaches at the bottom of the cap. */
     private const val DIGIT_END_ALPHA = 40
@@ -67,28 +72,41 @@ internal object ClockWidgetRenderer {
     private const val SEP_SIDE_FRACTION = 0.13f
     private const val SEP_GAP_FRACTION = 0.10f
     private const val SEP_PAD_FRACTION = 0.13f
-    private const val SEP_TOP_FRACTION = 0.03f
+
+    /**
+     * Top square's ink top, as a fraction of the cap below the digits' ink top.
+     * The two squares plus their gap are 36 % of the cap, so 0.32 centres the
+     * pair on the cap: it reads as "12:05", not as two ticks near the top.
+     */
+    private const val SEP_TOP_FRACTION = 0.32f
 
     /** Day-name ink width cap, as a fraction of the bitmap width (safety only). */
-    private const val DAY_WIDTH_FRACTION = 0.94f
+    private const val DAY_WIDTH_FRACTION = 0.98f
 
-    /** Day-name ink height, as a fraction of the bitmap height. */
-    private const val DAY_HEIGHT_FRACTION = 0.62f
+    /**
+     * Day-name ink height, as a fraction of the bitmap height: beta28's 72 %, so
+     * the word sweeps again instead of sitting as a caption between the time and
+     * the date.
+     */
+    private const val DAY_HEIGHT_FRACTION = 0.72f
 
-    /** Day-name ink centre, as a fraction of the bitmap height. */
-    private const val DAY_CENTER_FRACTION = 0.54f
+    /**
+     * Day-name ink centre, as a fraction of the bitmap height. Low enough that the
+     * 72 %-tall word stops just above the Hijri line at 95.5 %.
+     */
+    private const val DAY_CENTER_FRACTION = 0.545f
 
     /** Day-name alpha (solid, a touch under pure white as in the reference). */
     private const val DAY_ALPHA = 245
 
     /** Hijri line ink height cap, as a fraction of the bitmap height. */
-    private const val HIJRI_HEIGHT_FRACTION = 0.085f
+    private const val HIJRI_HEIGHT_FRACTION = 0.078f
 
     /** Hijri line ink width cap, as a fraction of the bitmap width. */
     private const val HIJRI_WIDTH_FRACTION = 0.66f
 
     /** Hijri line ink centre, as a fraction of the bitmap height. */
-    private const val HIJRI_CENTER_FRACTION = 0.925f
+    private const val HIJRI_CENTER_FRACTION = 0.955f
 
     /** Hijri line alpha: a quiet subtitle under the day name. */
     private const val HIJRI_ALPHA = 205
