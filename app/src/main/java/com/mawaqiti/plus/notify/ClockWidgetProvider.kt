@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /**
- * beta28: the transparent clock widget ("الساعة"), drawn as a bitmap.
+ * The transparent clock widget ("الساعة"), drawn as a bitmap.
  *
  * beta27 used a TextClock plus a TextView, which cannot express the reference:
  * a vertical gradient on the digits, a calligraphic day name and real z-order
@@ -24,9 +24,14 @@ import kotlin.math.sqrt
  * one bitmap, placed in a single ImageView (see res/layout/widget_clock.xml),
  * and re-rendered on every update, resize and time/date change.
  *
+ * beta29: the render also carries the Hijri date, and the minute tick below is
+ * what advances it. Every tick re-renders the bitmap from the current date, so
+ * the Hijri line changes at local midnight without any separate midnight alarm -
+ * and [Intent.ACTION_DATE_CHANGED] makes a manual date change immediate.
+ *
  * Refreshing is explicit: a single chained minute alarm (setAndAllowWhileIdle,
  * no setExact and therefore no exact-alarm permission) re-arms itself after each
- * fire. It exists only while at least one instance of this widget is placed -
+ * fire, which also covers the Hijri date's midnight roll-over. It exists only while at least one instance of this widget is placed -
  * onUpdate/onDeleted/onDisabled re-check the instance list and cancel it when it
  * is empty. System broadcasts (time/date/timezone/locale/boot) refresh the
  * bitmap immediately and re-align the chain, so a manual clock change never
