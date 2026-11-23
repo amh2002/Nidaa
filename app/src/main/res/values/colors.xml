@@ -15,8 +15,13 @@
     <color name="widget_glass">#1FFFFFFF</color>
     <color name="widget_glass_border">#33FFFFFF</color>
 
-    <!-- beta27: soft drop shadow under the transparent clock widget's text.
-         Not a palette entry but a value derived from the existing night
-         background (black at 40%), used only by shadowColor. -->
-    <color name="widget_clock_shadow">#66000000</color>
+    <!-- beta28: the clock widget's text colour, taken from the reference: pure
+         white for both the digits and the calligraphic day name. The widget has
+         no gold accent any more. -->
+    <color name="widget_clock_text">#FFFFFFFF</color>
+
+    <!-- beta28: barely-visible separation glow behind the clock widget's white
+         text so it survives a bright wallpaper. Black at 20% - the only shadow
+         value this widget uses. -->
+    <color name="widget_clock_shadow">#33000000</color>
 </resources>
