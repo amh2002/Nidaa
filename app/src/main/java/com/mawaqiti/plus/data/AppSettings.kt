@@ -124,7 +124,14 @@ data class AppSettings(
      */
     val homeDhikr: Boolean = true,
     val homeCountdown: Boolean = false,
-    val homeMoonPhase: Boolean = false
+    val homeMoonPhase: Boolean = false,
+    /**
+     * beta30: «الأرقام الهندية» on the home surfaces only. Default OFF, so the
+     * accepted beta29 rendering is what every existing install keeps until the
+     * toggle is switched on. It never reaches the widget or a notification:
+     * those do not read this value at all.
+     */
+    val arabicIndicNumerals: Boolean = false
 ) {
     /** The language the widget must render with right now. */
     val effectiveWidgetLanguage: AppLanguage

@@ -275,6 +275,15 @@ class MawaqitiViewModel(application: Application) : AndroidViewModel(application
     }
 
     /**
+     * beta30: home-only numeral style. The home observes the same settings
+     * flow, so the change is visible on return without a restart. Nothing else
+     * reacts: the widget has its own renderer and notifications never read it.
+     */
+    fun setArabicIndicNumerals(enabled: Boolean) = viewModelScope.launch {
+        settingsRepository.setArabicIndicNumerals(enabled)
+    }
+
+    /**
      * beta17: the sound-only preview shown beside the picker.
      *
      * It reads the persisted sound and volume, hands them to [AdhanPreview] -

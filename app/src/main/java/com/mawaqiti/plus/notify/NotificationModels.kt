@@ -32,11 +32,18 @@ enum class NotifyEvent(val storageKey: String, val requestCodeBase: Int) {
 
     companion object {
         /**
+         * beta30: the five prayers, in order. Sunrise is not a prayer and the
+         * last third is a derived night time, so neither carries the
+         * after-adhan supplication.
+         */
+        val PRAYER_EVENTS = listOf(FAJR, DHUHR, ASR, MAGHRIB, ISHA)
+
+        /**
          * beta22: the five prayers that get a pre-alert. Sunrise must never be
          * announced ahead of time and the last third is a derived night time,
          * not a prayer, so both stay out of the pre-alert plan.
          */
-        val PRE_ALERT_EVENTS = listOf(FAJR, DHUHR, ASR, MAGHRIB, ISHA)
+        val PRE_ALERT_EVENTS = PRAYER_EVENTS
 
         fun fromKey(key: String?): NotifyEvent? =
             entries.firstOrNull { it.storageKey == key }

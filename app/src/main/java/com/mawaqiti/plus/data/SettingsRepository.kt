@@ -49,6 +49,8 @@ class SettingsRepository(private val context: Context) {
         val homeDhikr = booleanPreferencesKey("home_dhikr")
         val homeCountdown = booleanPreferencesKey("home_countdown")
         val homeMoonPhase = booleanPreferencesKey("home_moon_phase")
+        /** beta30: home-only Arabic-Indic digits; absent means Western digits. */
+        val arabicIndicNumerals = booleanPreferencesKey("use_arabic_indic_numerals")
         val notifyMaster = booleanPreferencesKey("notify_master")
         fun eventEnabled(event: NotifyEvent) =
             booleanPreferencesKey("notify_${event.storageKey}_enabled")
@@ -93,7 +95,8 @@ class SettingsRepository(private val context: Context) {
                 widgetLanguage = AppLanguage.fromTagOrNull(prefs[Keys.widgetLanguage]),
                 homeDhikr = prefs[Keys.homeDhikr] ?: true,
                 homeCountdown = prefs[Keys.homeCountdown] ?: false,
-                homeMoonPhase = prefs[Keys.homeMoonPhase] ?: false
+                homeMoonPhase = prefs[Keys.homeMoonPhase] ?: false,
+                arabicIndicNumerals = prefs[Keys.arabicIndicNumerals] ?: false
             )
         }
 
@@ -184,6 +187,15 @@ class SettingsRepository(private val context: Context) {
     suspend fun setHomeCountdown(enabled: Boolean) = edit { it[Keys.homeCountdown] = enabled }
 
     suspend fun setHomeMoonPhase(enabled: Boolean) = edit { it[Keys.homeMoonPhase] = enabled }
+
+    /**
+     * beta30: home-only numeral style. Persisted next to every other display
+     * choice, read by the home screens only; the widget and the notification
+     * path never touch this key.
+     */
+    suspend fun setArabicIndicNumerals(enabled: Boolean) = edit {
+        it[Keys.arabicIndicNumerals] = enabled
+    }
 
     /** Widget-only language. Does not touch the app UI language. */
     suspend fun setWidgetLanguage(language: AppLanguage) = edit {

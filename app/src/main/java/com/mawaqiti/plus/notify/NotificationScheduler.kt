@@ -120,6 +120,17 @@ object NotificationScheduler {
         runCatching { context.startActivity(intent) }
     }
 
+    /**
+     * beta30 (Task 1): exact, idle-safe scheduling is the real path.
+     *
+     * `setExactAndAllowWhileIdle` is used for every prayer, pre-alert and the
+     * midnight rollover, so a prayer never lands in an inexact batch window.
+     * `setWindow` remains ONLY as the API 31/32 last resort for a grant the
+     * user has actively revoked (the exact call then throws): a late alarm is
+     * still better than none while the themed dialog asks for the grant back.
+     * On API 33+ the manifest's USE_EXACT_ALARM makes the exact call legal, so
+     * the fallback is unreachable there.
+     */
     private fun setExactOrWindow(manager: AlarmManager, triggerAt: Long, pending: PendingIntent) {
         val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
         if (exact) {

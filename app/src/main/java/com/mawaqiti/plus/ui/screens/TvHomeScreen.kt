@@ -97,7 +97,9 @@ fun TvHomeScreen(
     onChooseCity: () -> Unit,
     onOpenAbout: () -> Unit = {},
     updateRelease: ReleaseInfo? = null,
-    onOpenUpdate: () -> Unit = {}
+    onOpenUpdate: () -> Unit = {},
+    /** beta30: «الأرقام الهندية» - the TV dashboard is a home surface too. */
+    arabicIndic: Boolean = false
 ) {
     val palette = skyPalette
     // The same foreground-only ticker as the phone home: the countdown and the
@@ -110,8 +112,8 @@ fun TvHomeScreen(
     val celestial = remember(day, nowMinute) {
         celestialPhase(nowMinute, PhaseBounds.fromDay(day))
     }
-    val nowText = remember(nowMinute, clockFormat, isArabic) {
-        TimeFormatter.format(nowMinute, clockFormat, isArabic)
+    val nowText = remember(nowMinute, clockFormat, isArabic, arabicIndic) {
+        TimeFormatter.format(nowMinute, clockFormat, isArabic, arabicIndic)
     }
     val progress by animateFloatAsState(
         targetValue = hero.progress,
@@ -161,6 +163,7 @@ fun TvHomeScreen(
                 celestial = celestial,
                 isArabic = isArabic,
                 clockFormat = clockFormat,
+                arabicIndic = arabicIndic,
                 metrics = metrics,
                 palette = palette,
                 modifier = Modifier
@@ -175,6 +178,7 @@ fun TvHomeScreen(
                 next = hero.event,
                 isArabic = isArabic,
                 clockFormat = clockFormat,
+                arabicIndic = arabicIndic,
                 metrics = metrics,
                 palette = palette,
                 modifier = Modifier
@@ -188,6 +192,7 @@ fun TvHomeScreen(
                 day = day,
                 isArabic = isArabic,
                 clockFormat = clockFormat,
+                arabicIndic = arabicIndic,
                 metrics = metrics,
                 palette = palette
             )
@@ -304,6 +309,7 @@ private fun TvHeroPanel(
     celestial: CelestialPhase,
     isArabic: Boolean,
     clockFormat: ClockFormat,
+    arabicIndic: Boolean = false,
     metrics: TvMetrics,
     palette: SkyPalette,
     modifier: Modifier = Modifier
@@ -366,7 +372,7 @@ private fun TvHeroPanel(
 
                 // The loudest element: the next prayer time, readable at distance.
                 Text(
-                    text = TimeFormatter.format(hero.minutes, clockFormat, isArabic),
+                    text = TimeFormatter.format(hero.minutes, clockFormat, isArabic, arabicIndic),
                     fontFamily = Tajawal,
                     fontSize = metrics.heroTimeSize,
                     lineHeight = metrics.heroTimeSize * 1.15f,
@@ -420,7 +426,7 @@ private fun TvHeroPanel(
                         )
                         Spacer(Modifier.width(NidaaDimens.countdownWordGap))
                         Text(
-                            text = TimeFormatter.formatCountdown(hero.secondsLeft),
+                            text = TimeFormatter.formatCountdown(hero.secondsLeft, arabicIndic),
                             fontFamily = Tajawal,
                             fontSize = metrics.countdownSize,
                             fontWeight = FontWeight.Medium,
@@ -490,6 +496,7 @@ private fun TvPrayerRow(
     next: TableEvent,
     isArabic: Boolean,
     clockFormat: ClockFormat,
+    arabicIndic: Boolean = false,
     metrics: TvMetrics,
     palette: SkyPalette,
     modifier: Modifier = Modifier
@@ -513,6 +520,7 @@ private fun TvPrayerRow(
                 highlighted = prayer.event == next,
                 isArabic = isArabic,
                 clockFormat = clockFormat,
+                arabicIndic = arabicIndic,
                 metrics = metrics,
                 palette = palette,
                 modifier = Modifier
@@ -530,6 +538,7 @@ private fun TvPrayerCard(
     highlighted: Boolean,
     isArabic: Boolean,
     clockFormat: ClockFormat,
+    arabicIndic: Boolean = false,
     metrics: TvMetrics,
     palette: SkyPalette,
     modifier: Modifier = Modifier
@@ -569,7 +578,7 @@ private fun TvPrayerCard(
             )
             Spacer(Modifier.height(metrics.cardTextGap))
             Text(
-                text = TimeFormatter.format(prayer.minutes, clockFormat, isArabic),
+                text = TimeFormatter.format(prayer.minutes, clockFormat, isArabic, arabicIndic),
                 fontFamily = Tajawal,
                 fontSize = metrics.prayerTimeSize,
                 lineHeight = metrics.prayerTimeSize * 1.2f,
@@ -607,6 +616,7 @@ private fun TvFooter(
     day: TableDay,
     isArabic: Boolean,
     clockFormat: ClockFormat,
+    arabicIndic: Boolean = false,
     metrics: TvMetrics,
     palette: SkyPalette
 ) {
@@ -624,6 +634,7 @@ private fun TvFooter(
             minutes = day.sunrise,
             isArabic = isArabic,
             clockFormat = clockFormat,
+            arabicIndic = arabicIndic,
             metrics = metrics,
             palette = palette,
             modifier = Modifier.weight(1f)
@@ -634,6 +645,7 @@ private fun TvFooter(
             minutes = day.lastThird,
             isArabic = isArabic,
             clockFormat = clockFormat,
+            arabicIndic = arabicIndic,
             metrics = metrics,
             palette = palette,
             modifier = Modifier.weight(1f)
@@ -659,6 +671,7 @@ private fun TvFooterItem(
     minutes: Int,
     isArabic: Boolean,
     clockFormat: ClockFormat,
+    arabicIndic: Boolean = false,
     metrics: TvMetrics,
     palette: SkyPalette,
     modifier: Modifier = Modifier
@@ -685,7 +698,7 @@ private fun TvFooterItem(
         )
         Spacer(Modifier.width(metrics.cardTextGap))
         Text(
-            text = TimeFormatter.format(minutes, clockFormat, isArabic),
+            text = TimeFormatter.format(minutes, clockFormat, isArabic, arabicIndic),
             fontFamily = Tajawal,
             fontSize = metrics.footerTimeSize,
             fontWeight = FontWeight.Bold,

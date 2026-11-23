@@ -114,7 +114,14 @@ fun PrayerScreen(
     /** beta25: home content slot visibility, from Settings → «محتوى الشاشة الرئيسية». */
     homeDhikr: Boolean = true,
     homeCountdown: Boolean = false,
-    homeMoonPhase: Boolean = false
+    homeMoonPhase: Boolean = false,
+    /**
+     * beta30: «الأرقام الهندية» for the home surface only. Every time on this
+     * screen - the hero, the grid, the last third, the current-time row and the
+     * «متبقي» pill - flows through this one flag, so the whole home switches
+     * together. The widget and notifications never read it.
+     */
+    arabicIndic: Boolean = false
 ) {
     val palette = skyPalette
     val now = rememberForegroundClock()
@@ -122,8 +129,8 @@ fun PrayerScreen(
     // beta10: "now" line in the hero card. It is derived from the same ticker,
     // but keyed on the minute, so the text is rebuilt once per minute at most.
     val nowMinute = now.hour * 60 + now.minute
-    val nowText = remember(nowMinute, clockFormat, isArabic) {
-        TimeFormatter.format(nowMinute, clockFormat, isArabic)
+    val nowText = remember(nowMinute, clockFormat, isArabic, arabicIndic) {
+        TimeFormatter.format(nowMinute, clockFormat, isArabic, arabicIndic)
     }
     // beta23: the card's celestial indicator. It reads only the engine's own
     // times, and it is keyed on the same minute tick the countdown uses, so the
@@ -177,7 +184,8 @@ fun PrayerScreen(
                     clockFormat = clockFormat,
                     palette = palette,
                     nowText = nowText,
-                    celestial = celestial
+                    celestial = celestial,
+                    arabicIndic = arabicIndic
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -187,7 +195,8 @@ fun PrayerScreen(
                     next = hero.event,
                     isArabic = isArabic,
                     clockFormat = clockFormat,
-                    palette = palette
+                    palette = palette,
+                    arabicIndic = arabicIndic
                 )
 
                 Spacer(Modifier.height(10.dp))
@@ -196,7 +205,8 @@ fun PrayerScreen(
                     minutes = day.lastThird,
                     isArabic = isArabic,
                     clockFormat = clockFormat,
-                    palette = palette
+                    palette = palette,
+                    arabicIndic = arabicIndic
                 )
 
                 Spacer(Modifier.height(10.dp))
@@ -535,7 +545,8 @@ internal fun HeroCard(
     clockFormat: ClockFormat,
     palette: SkyPalette,
     nowText: String,
-    celestial: CelestialPhase
+    celestial: CelestialPhase,
+    arabicIndic: Boolean = false
 ) {
     GlassCard(
         modifier = Modifier.testTag("hero_card"),
@@ -613,7 +624,7 @@ internal fun HeroCard(
             )
             Spacer(Modifier.height(HeroMetrics.NAME_TO_TIME))
             Text(
-                text = TimeFormatter.format(hero.minutes, clockFormat, isArabic),
+                text = TimeFormatter.format(hero.minutes, clockFormat, isArabic, arabicIndic),
                 fontFamily = Tajawal,
                 fontSize = 44.sp,
                 lineHeight = 52.sp,
@@ -622,7 +633,11 @@ internal fun HeroCard(
                 modifier = Modifier.starTextExclusion("hero_prayer_time")
             )
             Spacer(Modifier.height(6.dp))
-            CountdownPill(secondsLeft = hero.secondsLeft, palette = palette)
+            CountdownPill(
+                secondsLeft = hero.secondsLeft,
+                palette = palette,
+                arabicIndic = arabicIndic
+            )
             Spacer(Modifier.height(8.dp))
             Box(
                 modifier = Modifier
@@ -738,9 +753,9 @@ private data class GridItem(
  * and type family are unchanged from beta23.
  */
 @Composable
-private fun CountdownPill(secondsLeft: Long, palette: SkyPalette) {
+private fun CountdownPill(secondsLeft: Long, palette: SkyPalette, arabicIndic: Boolean = false) {
     val label = stringResource(R.string.remaining_short)
-    val digits = TimeFormatter.formatCountdown(secondsLeft)
+    val digits = TimeFormatter.formatCountdown(secondsLeft, arabicIndic)
     val text = remember(label, digits, palette.accent) {
         buildAnnotatedString {
             // Leading run: the Arabic label (right-most in RTL).
@@ -788,7 +803,8 @@ private fun PrayerGrid(
     next: TableEvent,
     isArabic: Boolean,
     clockFormat: ClockFormat,
-    palette: SkyPalette
+    palette: SkyPalette,
+    arabicIndic: Boolean = false
 ) {
     val prayers = listOf(
         // beta10: Fajr is a rising sun (rays above the horizon) and Maghrib a
@@ -828,6 +844,7 @@ private fun PrayerGrid(
                             isArabic = isArabic,
                             clockFormat = clockFormat,
                             palette = palette,
+                            arabicIndic = arabicIndic,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -846,7 +863,8 @@ private fun LastThirdRow(
     minutes: Int,
     isArabic: Boolean,
     clockFormat: ClockFormat,
-    palette: SkyPalette
+    palette: SkyPalette,
+    arabicIndic: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -872,7 +890,7 @@ private fun LastThirdRow(
             modifier = Modifier.weight(1f)
         )
         Text(
-            text = TimeFormatter.format(minutes, clockFormat, isArabic),
+            text = TimeFormatter.format(minutes, clockFormat, isArabic, arabicIndic),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = palette.text
@@ -886,6 +904,7 @@ private fun GridCard(
     isArabic: Boolean,
     clockFormat: ClockFormat,
     palette: SkyPalette,
+    arabicIndic: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(16.dp)
@@ -932,7 +951,7 @@ private fun GridCard(
         )
         Spacer(Modifier.height(1.dp))
         Text(
-            text = TimeFormatter.format(item.minutes, clockFormat, isArabic),
+            text = TimeFormatter.format(item.minutes, clockFormat, isArabic, arabicIndic),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = palette.text,

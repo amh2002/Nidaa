@@ -11,9 +11,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -115,6 +118,23 @@ fun AboutDialog(onDismiss: () -> Unit) {
                 AboutAction(
                     labelRes = R.string.about_website,
                     onClick = { openUrl(context, WEBSITE_URL) }
+                )
+                // beta30 (Task 4): the credit is the LAST revealed item of the
+                // dialog, after the three actions. It is the same
+                // `settings_about_credit` resource the «حول التطبيق» card in
+                // Settings renders, so the two can never drift apart and no
+                // name is duplicated in code or in a second string.
+                Spacer(Modifier.height(16.dp))
+                HorizontalDivider(color = palette.sheetText.copy(alpha = 0.12f))
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = stringResource(R.string.settings_about_credit),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = palette.sheetMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("about_credit")
                 )
             }
         }

@@ -368,4 +368,37 @@
         <item>نوفمبر</item>
         <item>ديسمبر</item>
     </string-array>
+
+    <!-- beta30 TASK 1: the exact-alarm rationale. Shown only on API 31+ when
+         canScheduleExactAlarms() is false, before the user is sent to the
+         system page through ACTION_REQUEST_SCHEDULE_EXACT_ALARM. -->
+    <string name="exact_alarm_dialog_title">السماح بالتنبيهات الدقيقة</string>
+    <string name="exact_alarm_dialog_body">يحتاج نداء إلى إذن «التنبيهات الدقيقة» ليطلق أذان كل صلاة في وقتها بالثانية. بدون هذا الإذن قد يتأخر التنبيه دقائق. اضغط «فتح الإعدادات» ثم اسمح، وسيُعيد نداء جدولة المواقيت تلقائيًا.</string>
+    <string name="exact_alarm_dialog_allow">فتح الإعدادات</string>
+    <string name="exact_alarm_dialog_later">لاحقًا</string>
+
+    <!-- beta30 TASK 2: Arabic-Indic numerals, home surfaces only. -->
+    <string name="settings_numerals_title">الأرقام الهندية</string>
+    <string name="settings_numerals_desc">عرض أوقات الصلاة وعدّاد الوقت المتبقي بالأرقام العربية (٠١٢٣٤٥٦٧٨٩) على الشاشة الرئيسية فقط. تبقى أرقام الويدجت والإشعارات لاتينية كما هي.</string>
+
+    <!-- beta30 TASK 3: adhkar. The texts are verbatim and must not be edited,
+         shortened or re-vocalized. Nothing in Kotlin carries these literals. -->
+    <string name="adhkar_title">الأذكار</string>
+    <string name="settings_adhkar_title">الأذكار</string>
+    <string name="settings_adhkar_desc">دعاء بعد الأذان، وأذكار بعد الصلاة، والتسبيح بعد كل صلاة.</string>
+    <string name="adhkar_section_after_adhan">بعد الأذان</string>
+    <string name="adhkar_section_after_prayer">بعد الصلاة</string>
+    <string name="adhkar_after_adhan_dua">اللَّهُمَّ رَبَّ هَذِهِ الدَّعْوَةِ التَّامَّةِ، وَالصَّلَاةِ الْقَائِمَةِ، آتِ مُحَمَّدًا الْوَسِيلَةَ وَالْفَضِيلَةَ، وَابْعَثْهُ مَقَامًا مَحْمُودًا الَّذِي وَعَدْتَهُ</string>
+    <string name="adhkar_after_adhan_caption">يُقال بعد الأذان</string>
+    <string name="adhkar_istighfar">أَسْتَغْفِرُ اللَّهَ</string>
+    <string name="adhkar_istighfar_caption">ثلاث مرات</string>
+    <string name="adhkar_after_prayer_salam">اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ</string>
+    <string name="adhkar_after_prayer_tahlil">لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، اللَّهُمَّ لَا مَانِعَ لِمَا أَعْطَيْتَ، وَلَا مُعْطِيَ لِمَا مَنَعْتَ، وَلَا يَنْفَعُ ذَا الْجَدِّ مِنْكَ الْجَدُّ</string>
+    <string name="adhkar_after_prayer_tasbih_dua">اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ</string>
+    <string name="adhkar_tasbih_subhan">سُبْحَانَ اللَّهِ</string>
+    <string name="adhkar_tasbih_hamd">الْحَمْدُ لِلَّهِ</string>
+    <string name="adhkar_tasbih_akbar">اللَّهُ أَكْبَرُ</string>
+    <string name="adhkar_tasbih_caption">ثلاث وثلاثون مرة</string>
+    <string name="adhkar_tasbih_completion">لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ</string>
+    <string name="adhkar_tasbih_completion_caption">عند إتمام التسبيح</string>
 </resources>

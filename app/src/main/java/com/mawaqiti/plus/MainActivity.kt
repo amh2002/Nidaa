@@ -6,6 +6,7 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -31,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -39,7 +42,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mawaqiti.plus.data.AppLanguage
 import com.mawaqiti.plus.data.AppSettings
@@ -48,8 +55,11 @@ import com.mawaqiti.plus.ui.components.DockDestination
 import com.mawaqiti.plus.ui.components.NidaaDock
 import com.mawaqiti.plus.ui.components.NidaaSplash
 import com.mawaqiti.plus.ui.components.isArabicLocale
+import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.ui.screens.AboutDialog
+import com.mawaqiti.plus.ui.screens.AdhkarScreen
 import com.mawaqiti.plus.ui.screens.CityPickerSheet
+import com.mawaqiti.plus.ui.screens.ExactAlarmDialog
 import com.mawaqiti.plus.ui.screens.PrayerScreen
 import com.mawaqiti.plus.ui.screens.QiblaScreen
 import com.mawaqiti.plus.ui.screens.SettingsScreen
@@ -214,6 +224,42 @@ fun MawaqitiApp(
     var showCityPicker by rememberSaveable { mutableStateOf(false) }
     // beta24: the About dialog replaces the beta10 About screen.
     var showAbout by rememberSaveable { mutableStateOf(false) }
+    // beta30 (Task 3): the adhkar screen is a full-window overlay, not a dock
+    // tab, so the navigation and every existing screen stay as they are.
+    var showAdhkar by rememberSaveable { mutableStateOf(false) }
+
+    // beta30 (Task 1): the exact-alarm gate.
+    //
+    // The grant is re-read on every resume, which is exactly when the user
+    // comes back from the system page. While it is missing the themed dialog
+    // explains the need and deep-links there; the moment it is granted the
+    // dialog disappears, the rolling 48-hour plan is rebuilt and no inexact
+    // alarm is left behind. Below API 31 `canScheduleExact` is always true, so
+    // this whole block is inert on the older devices.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var exactAlarmTick by remember { mutableIntStateOf(0) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) exactAlarmTick++
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    val exactAlarmAllowed = remember(exactAlarmTick) {
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            NotificationScheduler.canScheduleExact(appContext)
+    }
+    var exactDialogDismissed by rememberSaveable { mutableStateOf(false) }
+    var showExactAlarmDialog by rememberSaveable { mutableStateOf(false) }
+    var wasExactAllowed by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(exactAlarmAllowed, exactAlarmTick) {
+        val previous = wasExactAllowed
+        wasExactAllowed = exactAlarmAllowed
+        if (previous == false && exactAlarmAllowed) {
+            NotificationScheduler.scheduleAllAsync(appContext)
+        }
+        if (!exactAlarmAllowed && !exactDialogDismissed) showExactAlarmDialog = true
+    }
 
     // Notification / banner deep link: land on Settings, where «التحديثات» lives.
     LaunchedEffect(openUpdatesSignal) {
@@ -226,6 +272,8 @@ fun MawaqitiApp(
     BackHandler(enabled = selectedTab != DockDestination.HOME.tab) {
         selectedTab = DockDestination.HOME.tab
     }
+
+    BackHandler(enabled = showAdhkar) { showAdhkar = false }
 
     // First launch: pin the app to Arabic explicitly, then persist through
     // AppCompat's autoStoreLocales + our DataStore flag. Using the exact
@@ -324,7 +372,9 @@ fun MawaqitiApp(
                         onSelectPreAlert = viewModel::setPreAlertMinutes,
                         onSelectHomeDhikr = viewModel::setHomeDhikr,
                         onSelectHomeCountdown = viewModel::setHomeCountdown,
-                        onSelectHomeMoonPhase = viewModel::setHomeMoonPhase
+                        onSelectHomeMoonPhase = viewModel::setHomeMoonPhase,
+                        onSelectArabicIndic = viewModel::setArabicIndicNumerals,
+                        onOpenAdhkar = { showAdhkar = true }
                     )
 
                     DockDestination.HOME, null -> {
@@ -348,7 +398,10 @@ fun MawaqitiApp(
                                 // settings flow as the rest of the app.
                                 homeDhikr = settings.homeDhikr,
                                 homeCountdown = settings.homeCountdown,
-                                homeMoonPhase = settings.homeMoonPhase
+                                homeMoonPhase = settings.homeMoonPhase,
+                                // beta30: home-only numerals. The widget and the
+                                // notification path never receive this flag.
+                                arabicIndic = settings.arabicIndicNumerals
                             )
                         }
                         if (settings.layoutMode == LayoutMode.TV) {
@@ -365,7 +418,8 @@ fun MawaqitiApp(
                                         updateRelease = updateRelease,
                                         onOpenUpdate = {
                                             selectedTab = DockDestination.SETTINGS.tab
-                                        }
+                                        },
+                                        arabicIndic = settings.arabicIndicNumerals
                                     )
                                 } else {
                                     home()
@@ -392,6 +446,30 @@ fun MawaqitiApp(
 
     if (showAbout) {
         AboutDialog(onDismiss = { showAbout = false })
+    }
+
+    if (showAdhkar) {
+        Dialog(
+            onDismissRequest = { showAdhkar = false },
+            // Full-window sheet: the dialog is only the host, the screen owns
+            // its own palette backdrop, top bar and scrolling.
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            AdhkarScreen(onBack = { showAdhkar = false })
+        }
+    }
+
+    if (showExactAlarmDialog && !exactAlarmAllowed) {
+        ExactAlarmDialog(
+            onAllow = {
+                showExactAlarmDialog = false
+                NotificationScheduler.openExactAlarmSettings(activityContext)
+            },
+            onDismiss = {
+                showExactAlarmDialog = false
+                exactDialogDismissed = true
+            }
+        )
     }
 
     if (permissionDialogFor > 0) {

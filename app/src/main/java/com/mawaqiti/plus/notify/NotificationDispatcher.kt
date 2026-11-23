@@ -45,6 +45,10 @@ object NotificationDispatcher {
                 notificationId = notificationId,
                 title = title,
                 body = body,
+                // beta30 (Task 3): the expanded body also carries the
+                // after-adhan supplication. Only the BIG TEXT changes - title,
+                // sound, channel, timing and the collapsed line are untouched.
+                bigBody = adhanBigText(localized, event, body),
                 stopLabel = localized.getString(R.string.notify_stop),
                 sound = adhanSound,
                 volumePercent = adhanVolume
@@ -52,6 +56,21 @@ object NotificationDispatcher {
         } else {
             postQuiet(context, notificationId, mode, title, body)
         }
+    }
+
+    /**
+     * beta30: the expanded body of a prayer adhan notification.
+     *
+     * The supplication is not translatable content of its own - it is the same
+     * Arabic text on every locale - so it always comes from `strings.xml` and
+     * is appended to the localized line rather than replacing it. Sunrise and
+     * the last third are not prayers, so they keep their plain body.
+     */
+    private fun adhanBigText(localized: Context, event: NotifyEvent, body: String): String {
+        if (event !in NotifyEvent.PRAYER_EVENTS) return body
+        val caption = localized.getString(R.string.adhkar_after_adhan_caption)
+        val dua = localized.getString(R.string.adhkar_after_adhan_dua)
+        return body + "\n\n" + caption + "\n" + dua
     }
 
     /**

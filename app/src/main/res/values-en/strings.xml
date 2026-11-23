@@ -99,6 +99,16 @@
     <string name="settings_about_offline">Fully offline</string>
     <string name="settings_about_no_data">Collects no data</string>
     <string name="settings_about_credit">تطوير: عبد الرحمن حسين — Abdulrahman Hussein</string>
+    <!-- beta30: the About card and the «نداء» reveal consume this one key. -->
+    <string name="settings_numerals_title">Arabic-Indic numerals</string>
+    <string name="settings_numerals_desc">Show prayer times and the remaining-time counter in Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩) on the home screen only. Widget and notification digits stay Western.</string>
+    <string name="exact_alarm_dialog_title">Allow exact alarms</string>
+    <string name="exact_alarm_dialog_body">Nidaa needs the exact-alarm permission to start every prayer adhan to the second. Without it a notification can arrive minutes late. Open the settings, allow it, and Nidaa reschedules the prayer times automatically.</string>
+    <string name="exact_alarm_dialog_allow">Open settings</string>
+    <string name="exact_alarm_dialog_later">Later</string>
+    <string name="settings_adhkar_title">Adhkar</string>
+    <string name="settings_adhkar_desc">The supplication after the adhan, the remembrances after the prayer, and the tasbih.</string>
+    <string name="adhkar_title">Adhkar</string>
     <string name="settings_version">Version %1$s</string>
     <!-- beta24: the three actions of the About dialog, opened by «نداء». -->
     <string name="about_contact_developer">Email the developer</string>

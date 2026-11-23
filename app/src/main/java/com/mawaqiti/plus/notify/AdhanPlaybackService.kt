@@ -50,6 +50,9 @@ class AdhanPlaybackService : Service() {
                 val id = intent.getIntExtra(EXTRA_NOTIFICATION_ID, DEFAULT_ID)
                 val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
                 val body = intent.getStringExtra(EXTRA_BODY).orEmpty()
+                // beta30: the expanded text (city + time + the after-adhan
+                // supplication). Absent means "same as the collapsed body".
+                val bigBody = intent.getStringExtra(EXTRA_BIG_BODY).orEmpty().ifBlank { body }
                 val stopLabel = intent.getStringExtra(EXTRA_STOP_LABEL)
                     ?: getString(R.string.notify_stop)
                 val sound = AdhanSound.fromKey(intent.getStringExtra(EXTRA_ADHAN_KEY))
@@ -57,7 +60,7 @@ class AdhanPlaybackService : Service() {
                 // Channels may have been removed (app data cleared / beta6
                 // migration): make sure they exist before the foreground post.
                 NotificationChannels.ensure(this)
-                startForegroundCompat(id, buildNotification(id, title, body, stopLabel))
+                startForegroundCompat(id, buildNotification(id, title, body, bigBody, stopLabel))
                 play(sound, volume)
             }
         }
@@ -78,7 +81,13 @@ class AdhanPlaybackService : Service() {
         ServiceCompat.startForeground(this, id, notification, type)
     }
 
-    private fun buildNotification(id: Int, title: String, body: String, stopLabel: String): Notification {
+    private fun buildNotification(
+        id: Int,
+        title: String,
+        body: String,
+        bigBody: String,
+        stopLabel: String
+    ): Notification {
         val openApp = PendingIntent.getActivity(
             this,
             REQUEST_OPEN,
@@ -97,7 +106,7 @@ class AdhanPlaybackService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bigBody))
             .setContentIntent(openApp)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -167,6 +176,7 @@ class AdhanPlaybackService : Service() {
         private const val EXTRA_NOTIFICATION_ID = "notification_id"
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_BODY = "body"
+        private const val EXTRA_BIG_BODY = "big_body"
         private const val EXTRA_STOP_LABEL = "stop_label"
         private const val EXTRA_ADHAN_KEY = "adhan_key"
         private const val EXTRA_ADHAN_VOLUME = "adhan_volume"
@@ -179,6 +189,8 @@ class AdhanPlaybackService : Service() {
             notificationId: Int,
             title: String,
             body: String,
+            /** beta30: the expanded body; defaults to [body]. */
+            bigBody: String = body,
             stopLabel: String,
             sound: AdhanSound,
             /** beta17: persisted loudness percentage, passed through verbatim. */
@@ -189,6 +201,7 @@ class AdhanPlaybackService : Service() {
                 putExtra(EXTRA_NOTIFICATION_ID, notificationId)
                 putExtra(EXTRA_TITLE, title)
                 putExtra(EXTRA_BODY, body)
+                putExtra(EXTRA_BIG_BODY, bigBody)
                 putExtra(EXTRA_STOP_LABEL, stopLabel)
                 putExtra(EXTRA_ADHAN_KEY, sound.storageKey)
                 putExtra(EXTRA_ADHAN_VOLUME, AdhanVolume.normalize(volumePercent))
