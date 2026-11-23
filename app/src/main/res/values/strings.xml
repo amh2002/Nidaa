@@ -325,17 +325,28 @@
     <string name="clock_widget_label">الساعة</string>
     <string name="clock_widget_description">ساعة كبيرة مع اسم اليوم بخط عربي، بخلفية شفافة</string>
     <string name="clock_widget_no_clock_app">لا يوجد تطبيق ساعة على الجهاز</string>
-    <!-- beta28: the seven Arabic weekday names the clock widget draws, in
+    <!-- beta28/beta29d: the seven Arabic weekday names the clock widget draws, in
          Calendar.DAY_OF_WEEK order (index = DAY_OF_WEEK - 1). The widget always
-         uses these, never the device locale. Do not re-spell. -->
+         uses these, never the device locale. Do not re-spell.
+
+         beta29d: the day name is stretched only with kashida (tatweel U+0640),
+         never by font size. Each run sits between two letters that join, or
+         before a letter that keeps a final form, so Amiri draws it as one
+         continuous baseline stroke and no tail floats free: the word keeps the
+         beta29b type size and height. Counts are tuned so the beta29b sizing
+         rule fills DAY_WIDTH_FRACTION (84 %) of the 4x2 cell on the phone
+         geometry; a taller cell stays width-bound by design, so the clamp there
+         shrinks the word instead of overflowing it.
+         The sukoon was dropped from these seven names: it is not needed on the
+         day names and it re-spaced the letters when the word was stretched. -->
     <string-array name="day_names_ar">
-        <item>الْأَحَد</item>
-        <item>الْإِثْنَيْنِ</item>
-        <item>الثُّلَاثَاء</item>
-        <item>الْأَرْبِعَاء</item>
-        <item>الْخَمِيس</item>
-        <item>الْجُمُعَة</item>
-        <item>السَّبْت</item>
+        <item>الأَحَـــد</item>
+        <item>الإِثنَــــيـــنِ</item>
+        <item>الثُّــلَـــاثَاء</item>
+        <item>الأَربِعَــــــاء</item>
+        <item>الخَــمِــيس</item>
+        <item>الجُــمُــعَة</item>
+        <item>السَّـــــبت</item>
     </string-array>
 
     <!-- beta29b: the Gregorian date line inside the clock widget. `clock_widget_date`
