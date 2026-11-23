@@ -11,7 +11,6 @@ import android.text.format.DateFormat
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import com.mawaqiti.plus.R
-import com.mawaqiti.plus.format.HijriDateFormatter
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Calendar
@@ -22,7 +21,7 @@ import java.util.Locale
  *
  * The composition is *drawn*, not stacked: huge digits that fade out downwards,
  * with a calligraphic Arabic day name in front of them, crossing their lower
- * part, and a small Hijri date under the word. RemoteViews cannot express a text
+ * part, and a small Gregorian date under the word. RemoteViews cannot express a text
  * gradient, real z-order overlap or calligraphic shaping, so everything is
  * rendered into one ARGB bitmap here and handed to a single ImageView
  * (`ClockWidgetProvider`).
@@ -30,15 +29,16 @@ import java.util.Locale
  * Every size is derived from the bitmap's own W/H, so the same code produces the
  * same composition at the 4x2 default and at every resized shape:
  *
- *   digits     cap-height 48% of H, ink top at 2% of H, horizontally centred,
+ *   digits     cap-height 52% of H, ink top at 2% of H, horizontally centred,
  *              white fading to 15% alpha over the cap (the fade is what keeps
  *              the white day name readable where it crosses them)
  *   separator  two stacked squares drawn as rects (never the font's round
- *              colon), sized 13% of the cap height and centred on the digit
- *              cap, where the eye expects a time colon
- *   day name   ink height 72% of H (width follows the face), ink centre at
- *              54.5% of H, solid white, drawn after the digits
- *   Hijri      one small line under the day name, centred at 95.5% of H
+ *              colon), 8.5% of the cap each with a 6% gap, top edge at 12% of
+ *              the cap - inside the visible digit band, like a normal colon
+ *   day name   ink height 68% of H including the harakat, ink centre at 55% of
+ *              H, widened up to 6% horizontally (Amiri's ink is tall; the
+ *              stretch keeps some of beta28's sweep), solid white, after the digits
+ *   date line  one small Gregorian line under the day name, centred at 93% of H
  *
  * Measurement is done by *rendering* the text into a scratch bitmap and scanning
  * its alpha channel (`measureInk`). Paint.getTextBounds under-reports shaped
@@ -47,20 +47,16 @@ import java.util.Locale
  *
  * beta29: the day name is Amiri Bold (full tashkeel with real OpenType mark
  * anchoring, all hamza forms), the digits are Barlow SemiCondensed ExtraBold,
- * the time separator is two squares, and the Hijri date is computed with the
- * app's own Umm al-Qura converter ([HijriDateFormatter]).
+ * the time separator is two squares, and the date line is Gregorian, built from
+ * [R.array.gregorian_months_ar] with Arabic-Indic digits.
  */
 internal object ClockWidgetRenderer {
 
     /** Digit ink top, as a fraction of the bitmap height. */
     private const val DIGIT_TOP_FRACTION = 0.02f
 
-    /**
-     * Digit cap-height, as a fraction of the bitmap height. 48 %, down from 54 %,
-     * to hand the day name back the height it lost in beta29 without deepening
-     * the crossing.
-     */
-    private const val DIGIT_CAP_FRACTION = 0.48f
+    /** Digit cap-height, as a fraction of the bitmap height (brief: 50-54 %). */
+    private const val DIGIT_CAP_FRACTION = 0.52f
 
     /** Alpha the digit gradient reaches at the bottom of the cap. */
     private const val DIGIT_END_ALPHA = 40
@@ -69,48 +65,60 @@ internal object ClockWidgetRenderer {
     private const val DIGIT_WIDTH_FRACTION = 0.94f
 
     // Time separator: two squares, all fractions of the digit cap-height.
-    private const val SEP_SIDE_FRACTION = 0.13f
-    private const val SEP_GAP_FRACTION = 0.10f
+    private const val SEP_SIDE_FRACTION = 0.085f
+    private const val SEP_GAP_FRACTION = 0.06f
     private const val SEP_PAD_FRACTION = 0.13f
 
     /**
-     * Top square's ink top, as a fraction of the cap below the digits' ink top.
-     * Derived, not chosen: whatever the square size and gap, the pair stays
-     * centred on the cap, so it reads as "12:05" and not as two ticks near the top.
+     * Top square's top edge, as a fraction of the cap below the digits' ink top.
+     * The visible digit band is only ~43 % of the cap (the word covers the rest),
+     * so the pair (23 % of the cap) sits at 12-35 % - never hugging the digit top,
+     * and its lower square still clear of the word's tallest ink at 21 % of H.
      */
-    private const val SEP_TOP_FRACTION =
-        (1f - SEP_SIDE_FRACTION * 2f - SEP_GAP_FRACTION) / 2f
+    private const val SEP_TOP_FRACTION = 0.12f
 
-    /** Day-name ink width cap, as a fraction of the bitmap width (safety only). */
-    private const val DAY_WIDTH_FRACTION = 0.98f
-
-    /**
-     * Day-name ink height, as a fraction of the bitmap height: beta28's 72 %, so
-     * the word sweeps again instead of sitting as a caption between the time and
-     * the date.
-     */
-    private const val DAY_HEIGHT_FRACTION = 0.72f
+    /** Day-name ink width target, as a fraction of the bitmap width (brief: >= 84 %). */
+    private const val DAY_WIDTH_FRACTION = 0.84f
 
     /**
-     * Day-name ink centre, as a fraction of the bitmap height. Low enough that the
-     * 72 %-tall word stops just above the Hijri line at 95.5 %.
+     * Day-name ink height INCLUDING harakat, as a fraction of the bitmap height.
+     * The marks make Amiri's box taller, so this cap is what keeps the word from
+     * swallowing the digits and the date line.
      */
-    private const val DAY_CENTER_FRACTION = 0.545f
+    private const val DAY_HEIGHT_FRACTION = 0.68f
+
+    /**
+     * Day-name ink centre, as a fraction of the bitmap height. Gives the crossing
+     * 28 % of H (digits end at 54 %) and still leaves the date line at 93 % clear.
+     */
+    private const val DAY_CENTER_FRACTION = 0.55f
+
+    /**
+     * Horizontal stretch ceiling for the day name. Amiri's ink is ~2.0 wide per
+     * unit height and its harakat add ~45 % to the box, so a 68 %-of-H word is
+     * only ~70 % of W on a 4:3 cell; widening the canvas (and the marks with it)
+     * recovers some of beta28's sweep without touching the vertical budget. 1.06
+     * is as far as the reference word is flattened before the dots go oval.
+     */
+    private const val DAY_MAX_STRETCH = 1.06f
 
     /** Day-name alpha (solid, a touch under pure white as in the reference). */
     private const val DAY_ALPHA = 245
 
-    /** Hijri line ink height cap, as a fraction of the bitmap height. */
-    private const val HIJRI_HEIGHT_FRACTION = 0.078f
+    /** Date line ink height cap, as a fraction of the bitmap height. */
+    private const val DATE_HEIGHT_FRACTION = 0.066f
 
-    /** Hijri line ink width cap, as a fraction of the bitmap width. */
-    private const val HIJRI_WIDTH_FRACTION = 0.66f
+    /** Date line ink width cap, as a fraction of the bitmap width. */
+    private const val DATE_WIDTH_FRACTION = 0.66f
 
-    /** Hijri line ink centre, as a fraction of the bitmap height. */
-    private const val HIJRI_CENTER_FRACTION = 0.955f
+    /**
+     * Date line ink centre, as a fraction of the bitmap height: its ink bottom
+     * lands at 96.5 %, i.e. > 6 dp from the bitmap bottom at every tested density.
+     */
+    private const val DATE_CENTER_FRACTION = 0.93f
 
-    /** Hijri line alpha: a quiet subtitle under the day name. */
-    private const val HIJRI_ALPHA = 205
+    /** Date line alpha: a quiet subtitle under the day name. */
+    private const val DATE_ALPHA = 205
 
     /** Soft separation glow behind the white text, in dp. */
     private const val GLOW_BLUR_DP = 2.5f
@@ -121,12 +129,12 @@ internal object ClockWidgetRenderer {
     /** Tabular figures, so the time block's width never wobbles between minutes. */
     private const val TABULAR_FIGURES = "tnum"
 
-    /** U+200F RIGHT-TO-LEFT MARK: fixes the Hijri line's base direction. */
+    /** U+200F RIGHT-TO-LEFT MARK: fixes the date line's base direction. */
     private const val RTL_MARK = "\u200F"
 
     private var digitTypeface: Typeface? = null
     private var dayTypeface: Typeface? = null
-    private var hijriTypeface: Typeface? = null
+    private var dateTypeface: Typeface? = null
 
     /** Ink box of a string, normalised by the text size (1.0 == one em). */
     private class Ink(val left: Float, val top: Float, val right: Float, val bottom: Float) {
@@ -161,7 +169,7 @@ internal object ClockWidgetRenderer {
 
         drawTime(context, canvas, width, height, white, glow, density)
         drawDayName(context, canvas, width, height, white, glow, density)
-        drawHijri(context, canvas, width, height, white, glow, density)
+        drawDate(context, canvas, width, height, white, glow, density)
 
         return bitmap
     }
@@ -269,10 +277,14 @@ internal object ClockWidgetRenderer {
         if (text.isEmpty()) return
         val ink = measureInk(text, typeface)
 
-        val size = minOf(
-            width * DAY_WIDTH_FRACTION / ink.width,
-            height * DAY_HEIGHT_FRACTION / ink.height
-        )
+        // Height sets the type size (never the marks' extra box); the width comes
+        // from stretching about the widget's centre line, capped by DAY_MAX_STRETCH
+        // so a narrow word cannot be distorted without limit.
+        var size = height * DAY_HEIGHT_FRACTION / ink.height
+        val targetWidth = width * DAY_WIDTH_FRACTION
+        if (ink.width * size > targetWidth) size = targetWidth / ink.width
+        val stretch = (targetWidth / (ink.width * size)).coerceIn(1f, DAY_MAX_STRETCH)
+
         val baseline = height * DAY_CENTER_FRACTION - ink.centerY * size
         val x = width / 2f - ink.centerX * size
 
@@ -284,11 +296,16 @@ internal object ClockWidgetRenderer {
             textSize = size
             setShadowLayer(GLOW_BLUR_DP * density, 0f, 0f, glow)
         }
+        // The pivot is the ink centre, so the stretched word stays centred and its
+        // ink never crosses DAY_WIDTH_FRACTION of the bitmap.
+        canvas.save()
+        canvas.scale(stretch, 1f, width / 2f, baseline)
         canvas.drawText(text, x, baseline, paint)
+        canvas.restore()
     }
 
-    /** The Hijri date, small, under the day name. */
-    private fun drawHijri(
+    /** The Gregorian date, small, under the day name. */
+    private fun drawDate(
         context: Context,
         canvas: Canvas,
         width: Float,
@@ -297,24 +314,25 @@ internal object ClockWidgetRenderer {
         glow: Int,
         density: Float
     ) {
-        val typeface = hijriTypeface(context)
-        val text = hijriText(context)
+        val typeface = dateTypeface(context)
+        val text = gregorianText(context)
         if (text.isEmpty()) return
+        println("NidaaClock date=\"$text\"")
         val ink = measureInk(text, typeface)
         if (ink.width <= 0f || ink.height <= 0f) return
 
         val size = minOf(
-            width * HIJRI_WIDTH_FRACTION / ink.width,
-            height * HIJRI_HEIGHT_FRACTION / ink.height
+            width * DATE_WIDTH_FRACTION / ink.width,
+            height * DATE_HEIGHT_FRACTION / ink.height
         )
-        val baseline = height * HIJRI_CENTER_FRACTION - ink.centerY * size
+        val baseline = height * DATE_CENTER_FRACTION - ink.centerY * size
         val x = width / 2f - ink.centerX * size
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
             this.typeface = typeface
             textAlign = Paint.Align.LEFT
             color = white
-            alpha = HIJRI_ALPHA
+            alpha = DATE_ALPHA
             textSize = size
             setShadowLayer(GLOW_BLUR_DP * density, 0f, 0f, glow)
         }
@@ -338,27 +356,26 @@ internal object ClockWidgetRenderer {
     }
 
     /**
-     * Today's Hijri date as the widget draws it: `١٤ رمضان ١٤٤٧هـ`.
+     * Today's Gregorian date as the widget draws it: `٢٣ نوفمبر ٢٠٢٦م`.
      *
-     * The conversion is the app's own Umm al-Qura one ([HijriDateFormatter], which
-     * uses java.time.chrono.HijrahDate and core-library desugaring), so the widget
-     * and the app cannot disagree about the date. Only the month names and the
-     * format live in resources; the digits are converted to Arabic-Indic here.
+     * The widget keeps its own month names in resources rather than the device
+     * locale, so the line reads in Arabic even on an English phone; the numbers
+     * are converted to Arabic-Indic here.
      */
-    private fun hijriText(context: Context): String {
-        val hijri = runCatching { HijriDateFormatter.toHijri(LocalDate.now()) }.getOrNull() ?: return ""
-        val months = context.resources.getStringArray(R.array.hijri_months_ar)
-        val month = months.getOrNull(hijri.month - 1)?.trim().orEmpty()
+    private fun gregorianText(context: Context): String {
+        val today = LocalDate.now()
+        val months = context.resources.getStringArray(R.array.gregorian_months_ar)
+        val month = months.getOrNull(today.monthValue - 1)?.trim().orEmpty()
         if (month.isEmpty()) return ""
         // A right-to-left mark first, so the line is laid out as Arabic: the day
         // number on the right, then the month, then the year. Without it the
         // paragraph starts with a digit (a weak direction) and the whole line
         // falls back to left-to-right order, putting the year first.
         return RTL_MARK + context.getString(
-            R.string.clock_widget_hijri,
-            arabicIndic(hijri.day),
+            R.string.clock_widget_date,
+            arabicIndic(today.dayOfMonth),
             month,
-            arabicIndic(hijri.year)
+            arabicIndic(today.year)
         )
     }
 
@@ -457,10 +474,10 @@ internal object ClockWidgetRenderer {
         dayTypeface ?: loadTypeface(context, R.font.amiri_bold, Typeface.DEFAULT_BOLD)
             .also { dayTypeface = it }
 
-    /** The Hijri subtitle uses the app's UI face (Tajawal Medium), not the display face. */
-    private fun hijriTypeface(context: Context): Typeface =
-        hijriTypeface ?: loadTypeface(context, R.font.tajawal_medium, Typeface.DEFAULT_BOLD)
-            .also { hijriTypeface = it }
+    /** The date subtitle uses the app's UI face (Tajawal Medium), not the display face. */
+    private fun dateTypeface(context: Context): Typeface =
+        dateTypeface ?: loadTypeface(context, R.font.tajawal_medium, Typeface.DEFAULT_BOLD)
+            .also { dateTypeface = it }
 
     private fun loadTypeface(context: Context, resId: Int, fallback: Typeface): Typeface =
         runCatching { ResourcesCompat.getFont(context, resId) ?: fallback }.getOrDefault(fallback)

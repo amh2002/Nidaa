@@ -329,32 +329,32 @@
          Calendar.DAY_OF_WEEK order (index = DAY_OF_WEEK - 1). The widget always
          uses these, never the device locale. Do not re-spell. -->
     <string-array name="day_names_ar">
-        <item>الأحد</item>
-        <item>الاثنين</item>
-        <item>الثلاثاء</item>
-        <item>الأربعاء</item>
-        <item>الخميس</item>
-        <item>الجمعة</item>
-        <item>السبت</item>
+        <item>الْأَحَد</item>
+        <item>الْإِثْنَيْنِ</item>
+        <item>الثُّلَاثَاء</item>
+        <item>الْأَرْبِعَاء</item>
+        <item>الْخَمِيس</item>
+        <item>الْجُمُعَة</item>
+        <item>السَّبْت</item>
     </string-array>
 
-    <!-- beta29: the Hijri line inside the clock widget. `clock_widget_hijri`
-         receives the day number, the month name and the year already converted
-         to Arabic-Indic digits, e.g. ١٤ رمضان ١٤٤٧هـ. The month array is in
-         calendar order (index = Hijri month - 1). -->
-    <string name="clock_widget_hijri">%1$s %2$s %3$sهـ</string>
-    <string-array name="hijri_months_ar">
-        <item>محرم</item>
-        <item>صفر</item>
-        <item>ربيع الأول</item>
-        <item>ربيع الآخر</item>
-        <item>جمادى الأولى</item>
-        <item>جمادى الآخرة</item>
-        <item>رجب</item>
-        <item>شعبان</item>
-        <item>رمضان</item>
-        <item>شوال</item>
-        <item>ذو القعدة</item>
-        <item>ذو الحجة</item>
+    <!-- beta29b: the Gregorian date line inside the clock widget. `clock_widget_date`
+         receives the day, the month name and the year already converted to
+         Arabic-Indic digits, e.g. ٢٣ نوفمبر ٢٠٢٦م. The month array is in calendar
+         order (index = monthValue - 1). -->
+    <string name="clock_widget_date">%1$s %2$s %3$sم</string>
+    <string-array name="gregorian_months_ar">
+        <item>يناير</item>
+        <item>فبراير</item>
+        <item>مارس</item>
+        <item>أبريل</item>
+        <item>مايو</item>
+        <item>يونيو</item>
+        <item>يوليو</item>
+        <item>أغسطس</item>
+        <item>سبتمبر</item>
+        <item>أكتوبر</item>
+        <item>نوفمبر</item>
+        <item>ديسمبر</item>
     </string-array>
 </resources>

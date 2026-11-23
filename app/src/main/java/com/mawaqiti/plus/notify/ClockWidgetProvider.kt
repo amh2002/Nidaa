@@ -100,6 +100,7 @@ class ClockWidgetProvider : AppWidgetProvider() {
 
     private fun updateOne(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
         val size = widgetSizePx(context, manager, appWidgetId)
+        val density = context.resources.displayMetrics.density
         val views = RemoteViews(context.packageName, R.layout.widget_clock)
         val bitmap = runCatching {
             ClockWidgetRenderer.render(context, size.first, size.second)
@@ -107,6 +108,9 @@ class ClockWidgetProvider : AppWidgetProvider() {
         views.setImageViewBitmap(R.id.clock_widget_image, bitmap)
         views.setOnClickPendingIntent(R.id.clock_widget_root, launchPendingIntent(context))
         manager.updateAppWidget(appWidgetId, views)
+        // Release-build evidence (Log.* is stripped by R8): the bitmap must equal
+        // the cell's pixel size, or the ImageView is upscaling it again.
+        println("NidaaClock bitmap=${size.first}x${size.second} density=$density")
     }
 
     /**
@@ -114,9 +118,8 @@ class ClockWidgetProvider : AppWidgetProvider() {
      *
      * The launcher reports the current cell footprint in dp (MIN_WIDTH/MIN_HEIGHT
      * for portrait); that is what the bitmap is drawn at, so the composition is
-     * always sized to the real widget. A full-resolution ARGB bitmap of a 4x2
-     * widget on a high-density screen exceeds the RemoteViews Binder budget, so
-     * the pixel count is capped and the ImageView scales the result up.
+     * drawn at native resolution and the ImageView shows it 1:1. MAX_BITMAP_PIXELS
+     * is only a Binder sanity net for absurd footprints, not a downscale budget.
      */
     private fun widgetSizePx(
         context: Context,
@@ -227,6 +230,6 @@ class ClockWidgetProvider : AppWidgetProvider() {
         const val DEFAULT_HEIGHT_DP = 110
         const val MIN_WIDTH_DP = 140
         const val MIN_HEIGHT_DP = 70
-        const val MAX_BITMAP_PIXELS = 192_000L
+        const val MAX_BITMAP_PIXELS = 2_000_000L
     }
 }
