@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.roundToInt
 
 /**
  * The drawing behind the transparent clock widget.
@@ -35,9 +36,10 @@ import java.util.Locale
  *   separator  two stacked squares drawn as rects (never the font's round
  *              colon), 8.5% of the cap each with a 6% gap, top edge at 12% of
  *              the cap - inside the visible digit band, like a normal colon
- *   day name   ink height 68% of H including the harakat, ink centre at 55% of
- *              H, widened up to 6% horizontally (Amiri's ink is tall; the
- *              stretch keeps some of beta28's sweep), solid white, after the digits
+ *   day name   ink 94% of W (beta30's presence) where the cell allows it, never
+ *              taller than 85% of H: the box runs from 1.5% of H down to 86.5%,
+ *              so Amiri's floating harakat ride over the top of the faded digits,
+ *              widened up to 6% horizontally, solid white, after the digits
  *   date line  one small Gregorian line under the day name, centred at 93% of H
  *
  * Measurement is done by *rendering* the text into a scratch bitmap and scanning
@@ -72,33 +74,41 @@ internal object ClockWidgetRenderer {
     /**
      * Top square's top edge, as a fraction of the cap below the digits' ink top.
      * The visible digit band is only ~43 % of the cap (the word covers the rest),
-     * so the pair (23 % of the cap) sits at 12-35 % - never hugging the digit top,
-     * and its lower square still clear of the word's tallest ink at 21 % of H.
+     * so the pair (23 % of the cap) sits at 12-35 % - inside the digit band - which
+     * is also the strip between the floating harakat and the letter tops, where
+     * nothing of the word is drawn.
      */
     private const val SEP_TOP_FRACTION = 0.12f
 
-    /** Day-name ink width target, as a fraction of the bitmap width (brief: >= 84 %). */
-    private const val DAY_WIDTH_FRACTION = 0.84f
-
     /**
-     * Day-name ink height INCLUDING harakat, as a fraction of the bitmap height.
-     * The marks make Amiri's box taller, so this cap is what keeps the word from
-     * swallowing the digits and the date line.
+     * Day-name ink width target, as a fraction of the bitmap width: the size the
+     * plain word reached in beta30 (94.4 %). Width leads the sizing now - the
+     * height is only whatever room the composition has left (see below).
      */
-    private const val DAY_HEIGHT_FRACTION = 0.68f
+    private const val DAY_WIDTH_FRACTION = 0.94f
 
     /**
-     * Day-name ink centre, as a fraction of the bitmap height. Gives the crossing
-     * 28 % of H (digits end at 54 %) and still leaves the date line at 93 % clear.
+     * Day-name ink top floor, as a fraction of the bitmap height. Amiri's harakat
+     * are anchored at the ascender line and float above the letter tops, so the
+     * box's upper band is mark ink: it is allowed to sit over the faded digits,
+     * but the 2.5 dp glow still needs this much room inside the top edge.
      */
-    private const val DAY_CENTER_FRACTION = 0.55f
+    private const val DAY_TOP_FRACTION = 0.015f
 
     /**
-     * Horizontal stretch ceiling for the day name. Amiri's ink is ~2.0 wide per
-     * unit height and its harakat add ~45 % to the box, so a 68 %-of-H word is
-     * only ~70 % of W on a 4:3 cell; widening the canvas (and the marks with it)
-     * recovers some of beta28's sweep without touching the vertical budget. 1.06
-     * is as far as the reference word is flattened before the dots go oval.
+     * Day-name ink bottom ceiling, as a fraction of the bitmap height: keeps the
+     * descenders and their glow clear of the date line, whose own ink starts at
+     * 89.7 % of H (DATE_CENTER 0.93 minus half of DATE_HEIGHT 0.066).
+     */
+    private const val DAY_BOTTOM_FRACTION = 0.865f
+
+    /**
+     * Horizontal stretch ceiling for the day name. The vertical room, not the
+     * width target, is what usually binds: at the full 85 %-of-H box the widest
+     * word still reaches only ~82 % of W on the 4x2 cell, the narrowest ~64 %.
+     * Widening the canvas (and the marks with it) up to 6 % recovers part of
+     * beta30's sweep; 1.06 is as far as the reference word goes before the harakat
+     * dots read as ovals.
      */
     private const val DAY_MAX_STRETCH = 1.06f
 
@@ -277,16 +287,29 @@ internal object ClockWidgetRenderer {
         if (text.isEmpty()) return
         val ink = measureInk(text, typeface)
 
-        // Height sets the type size (never the marks' extra box); the width comes
-        // from stretching about the widget's centre line, capped by DAY_MAX_STRETCH
-        // so a narrow word cannot be distorted without limit.
-        var size = height * DAY_HEIGHT_FRACTION / ink.height
+        // Width sets the type size: beta30's word filled 94 % of the cell, and the
+        // tashkeel should not cost the word its presence again. The height is then
+        // only the hard room the bitmap has - from just inside the top edge (the
+        // floating marks are allowed to cross the faded digits) down to the gap
+        // above the date line - and the width is carried by a capped canvas
+        // stretch, so a narrow word is never distorted without limit.
         val targetWidth = width * DAY_WIDTH_FRACTION
-        if (ink.width * size > targetWidth) size = targetWidth / ink.width
+        var size = targetWidth / ink.width
+        val roomPx = height * (DAY_BOTTOM_FRACTION - DAY_TOP_FRACTION)
+        if (ink.height * size > roomPx) size = roomPx / ink.height
         val stretch = (targetWidth / (ink.width * size)).coerceIn(1f, DAY_MAX_STRETCH)
 
-        val baseline = height * DAY_CENTER_FRACTION - ink.centerY * size
+        // The ink bottom sits on DAY_BOTTOM_FRACTION, so the letters stay at the
+        // same height whatever the day, the mark band reaches up over the digits,
+        // and the box can never cross the date line.
+        val baseline = height * DAY_BOTTOM_FRACTION - ink.bottom * size
         val x = width / 2f - ink.centerX * size
+        println(
+            "NidaaClock day=\"$text\" ink=" +
+                "${(ink.width * size * stretch).roundToInt()}x${(ink.height * size).roundToInt()}px " +
+                "(${((ink.width * size * stretch) * 100f / width).roundToInt()}%W " +
+                "${((ink.height * size) * 100f / height).roundToInt()}%H) stretch=$stretch"
+        )
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
             this.typeface = typeface
