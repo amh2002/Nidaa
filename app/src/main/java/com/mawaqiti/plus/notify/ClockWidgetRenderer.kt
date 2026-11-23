@@ -75,10 +75,11 @@ internal object ClockWidgetRenderer {
 
     /**
      * Top square's ink top, as a fraction of the cap below the digits' ink top.
-     * The two squares plus their gap are 36 % of the cap, so 0.32 centres the
-     * pair on the cap: it reads as "12:05", not as two ticks near the top.
+     * Derived, not chosen: whatever the square size and gap, the pair stays
+     * centred on the cap, so it reads as "12:05" and not as two ticks near the top.
      */
-    private const val SEP_TOP_FRACTION = 0.32f
+    private const val SEP_TOP_FRACTION =
+        (1f - SEP_SIDE_FRACTION * 2f - SEP_GAP_FRACTION) / 2f
 
     /** Day-name ink width cap, as a fraction of the bitmap width (safety only). */
     private const val DAY_WIDTH_FRACTION = 0.98f
@@ -125,8 +126,7 @@ internal object ClockWidgetRenderer {
 
     private var digitTypeface: Typeface? = null
     private var dayTypeface: Typeface? = null
-    private var hijriTypefaceRef: Typeface? = null
-    private val inkCache = HashMap<String, Ink>()
+    private var hijriTypeface: Typeface? = null
 
     /** Ink box of a string, normalised by the text size (1.0 == one em). */
     private class Ink(val left: Float, val top: Float, val right: Float, val bottom: Float) {
@@ -147,13 +147,11 @@ internal object ClockWidgetRenderer {
 
     /** Draws the whole widget into a new bitmap of exactly [widthPx] x [heightPx]. */
     fun render(context: Context, widthPx: Int, heightPx: Int): Bitmap {
-        val width = widthPx.coerceAtLeast(1).toFloat()
-        val height = heightPx.coerceAtLeast(1).toFloat()
-        val bitmap = Bitmap.createBitmap(
-            widthPx.coerceAtLeast(1),
-            heightPx.coerceAtLeast(1),
-            Bitmap.Config.ARGB_8888
-        )
+        val pxWidth = widthPx.coerceAtLeast(1)
+        val pxHeight = heightPx.coerceAtLeast(1)
+        val width = pxWidth.toFloat()
+        val height = pxHeight.toFloat()
+        val bitmap = Bitmap.createBitmap(pxWidth, pxHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         // Fully transparent: no card, no scrim, the wallpaper shows through.
 
@@ -324,7 +322,7 @@ internal object ClockWidgetRenderer {
     }
 
     /** Hour and minute, "HH"/"hh" and "mm" following the system 12/24h setting. */
-    fun timeParts(context: Context): Pair<String, String> {
+    private fun timeParts(context: Context): Pair<String, String> {
         val is24 = DateFormat.is24HourFormat(context)
         val now = Calendar.getInstance().time
         val hour = SimpleDateFormat(if (is24) "HH" else "hh", Locale.US).format(now)
@@ -333,7 +331,7 @@ internal object ClockWidgetRenderer {
     }
 
     /** The Arabic weekday, taken from [R.array.day_names_ar] (never the device locale). */
-    fun dayName(context: Context): String {
+    private fun dayName(context: Context): String {
         val names = context.resources.getStringArray(R.array.day_names_ar)
         val index = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
         return if (index in names.indices) names[index].trim() else names.firstOrNull()?.trim().orEmpty()
@@ -347,7 +345,7 @@ internal object ClockWidgetRenderer {
      * and the app cannot disagree about the date. Only the month names and the
      * format live in resources; the digits are converted to Arabic-Indic here.
      */
-    fun hijriText(context: Context): String {
+    private fun hijriText(context: Context): String {
         val hijri = runCatching { HijriDateFormatter.toHijri(LocalDate.now()) }.getOrNull() ?: return ""
         val months = context.resources.getStringArray(R.array.hijri_months_ar)
         val month = months.getOrNull(hijri.month - 1)?.trim().orEmpty()
@@ -380,16 +378,16 @@ internal object ClockWidgetRenderer {
      * The string is drawn into a scratch bitmap at [PROBE_SIZE] and its alpha
      * channel scanned, so the result includes exactly the shaping the final draw
      * will use (Paint.getTextBounds does not report the shaped Arabic width).
-     * Cached per string: the box is scale-invariant.
+     * Deliberately uncached: one render needs five boxes, which is a few
+     * milliseconds once a minute, and a cache would be shared mutable state
+     * holding every date the process lives through.
      */
     private fun measureInk(text: String, typeface: Typeface): Ink {
-        val key = text + "|" + typeface.hashCode()
-        inkCache[key]?.let { return it }
         val size = PROBE_SIZE
         val pad = size
-        val scratchWidth = (text.length * size + 2 * pad).coerceAtLeast(2 * pad).toInt()
+        val scratchWidth = (text.length * size + 2 * pad).toInt()
         val scratchHeight = (size * 4).toInt()
-        val ink = runCatching {
+        return runCatching {
             val scratch = Bitmap.createBitmap(scratchWidth, scratchHeight, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(scratch)
             val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
@@ -433,8 +431,6 @@ internal object ClockWidgetRenderer {
                 )
             }
         }.getOrElse { Ink(0f, -0.7f, size, 0f) }
-        inkCache[key] = ink
-        return ink
     }
 
     private fun withAlpha(color: Int, alpha: Int): Int =
@@ -463,8 +459,8 @@ internal object ClockWidgetRenderer {
 
     /** The Hijri subtitle uses the app's UI face (Tajawal Medium), not the display face. */
     private fun hijriTypeface(context: Context): Typeface =
-        hijriTypefaceRef ?: loadTypeface(context, R.font.tajawal_medium, Typeface.DEFAULT_BOLD)
-            .also { hijriTypefaceRef = it }
+        hijriTypeface ?: loadTypeface(context, R.font.tajawal_medium, Typeface.DEFAULT_BOLD)
+            .also { hijriTypeface = it }
 
     private fun loadTypeface(context: Context, resId: Int, fallback: Typeface): Typeface =
         runCatching { ResourcesCompat.getFont(context, resId) ?: fallback }.getOrDefault(fallback)
