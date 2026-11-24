@@ -1,0 +1,13 @@
+== STABLE LINK ==
+URL: https://github.com/amh2002/Nidaa/releases/latest/download/nidaa.apk
+HTTP=200 SIZE=11994695 FINAL=https://release-assets.githubusercontent.com/github-production-release-asset/1449254744/f1703eb0-d0ea-46dd-9d8a-41ab7b08860d?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-11-24T12%3A26%3A08Z&rscd=attachment%3B+filename%3Dnidaa.apk&rsct=application%2Fvnd.android.package-archive&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-11-24T11%3A25%3A31Z&ske=2026-11-24T12%3A26%3A08Z&sks=b&skv=2018-11-09&sig=eE1PGyctq%2Fa9QIcmCPRsu4wjVNH7cQ3%2FQWeNzO10KmE%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5NTUyMTc5OCwibmJmIjoxNzk1NTE5OTk4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.RaqqQ9ljaL48c4E3wnVRVruAiZ2GDJnAfvcYhLEc_r4&response-content-disposition=attachment%3B%20filename%3Dnidaa.apk&response-content-type=application%2Fvnd.android.package-archive
+curl_exit=0
+
+== SHA-256 of stable-link bytes ==
+01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f
+== SHA-256 of v2.2.0 asset ==
+01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f
+== v2.1.0 baseline hash (must differ) ==
+CertUtil: The system cannot find the file specified.
+== cmp stable vs asset ==
+IDENTICAL

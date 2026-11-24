@@ -1,0 +1,15 @@
+== MERGE ==
+*   ef42d7b Merge remote-tracking branch 'origin/main' into golden-night
+|\  
+| * c14af67 docs: update README with screenshots
+| * a5a3eb0 docs: add screenshots
+| * 575fc2b docs: add screenshots
+| * 880c0f6 docs: add screenshots
+
+merge commit: ef42d7b997d09d5183dd43a4759a113215aa428d
+parents: 00e42348407928c108a27d8b9d8e11cf87cdf65f c14af6784c26f10c1f0d10b3d7f12fc6b388077c
+tag v2.2.0 object: 64af1de3057292be8052f8937f3cf1cb566f8a9e -> commit 21474216c95cc9b46185df91ab5ee9cf2c3a7235
+
+== PUSH ==
+ef42d7b997d09d5183dd43a4759a113215aa428d	refs/heads/main
+64af1de3057292be8052f8937f3cf1cb566f8a9e	refs/tags/v2.2.0

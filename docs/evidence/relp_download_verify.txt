@@ -1,0 +1,21 @@
+== gh release download v2.2.0 -p nidaa.apk ==
+exit=0
+
+== SHA-256 downloaded ==
+01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f
+== SHA-256 local asset ==
+01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f
+== SHA-256 in notes ==
+SHA-256: 01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f
+== size ==
+11994695
+
+== apksigner verify --print-certs ==
+Signer #1 certificate DN: CN=Nidaa, OU=Mobile, O=Nidaa, L=Tulkarm, ST=West Bank, C=PS
+Signer #1 certificate SHA-256 digest: ef6fe8a7925e25795b3593dd735ed5a705e4574816906109aba8f34ddfaee1e9
+Signer #1 certificate SHA-1 digest: eb22c93673ef3ce90194079b154345e64a83f5bf
+Signer #1 certificate MD5 digest: 3538080e71e4bdda5ee72ddd17c0e894
+
+== aapt badging ==
+package: name='com.nidaa.prayer' versionCode='17' versionName='2.2.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+sdkVersion:'24'

@@ -1,0 +1,35 @@
+== PREFLIGHT ==
+HEAD before merge chain:
+ef42d7b Merge remote-tracking branch 'origin/main' into golden-night
+00e4234 docs: finalize v2.2.0 release notes
+2147421 release: v2.2.0
+6c1b252 beta32: adhkar hub as a second dock tab, 13 Hisn al-Muslim sections
+
+APK SHA-256: 01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f
+notes SHA-256 line: SHA-256: 01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f
+evidence rel_apk_sha256.txt: 01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f *dist/nidaa-v2.2.0-release.apk
+report hash: 201:| SHA-256 | `01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f` |
+378:Expected: certificate `ef6fe8a7925e25795b3593dd735ed5a705e4574816906109aba8f34ddfaee1e9`, `versionName='2.2.0' versionCode='17'`, size 11,994,695 bytes, SHA-256 `01858a56…501d758f`. Save that output as `evidence/rel_release_verified.txt` and this round's item 4 is closed.
+size: 11994695
+
+notes checks: SHA-256 line OK; known-issue 1080x1920 OK; permanent link: 1
+
+== COMMITS THIS ROUND ==
+ef42d7b Merge remote-tracking branch 'origin/main' into golden-night
+00e4234 docs: finalize v2.2.0 release notes
+c14af67 docs: update README with screenshots
+a5a3eb0 docs: add screenshots
+575fc2b docs: add screenshots
+880c0f6 docs: add screenshots
+e425aed docs: add screenshots
+a0761bd docs: add screenshots
+aa358ff docs: add screenshots
+6b646eb docs: add screenshots
+6ceb7dd docs: add screenshots
+7214dff docs: add screenshots
+933ad2f docs: add screenshots
+ae4fab2 docs: add screenshots
+1c5b503 docs: add screenshots
+c053f01 docs: add screenshots
+e8b639e docs: add screenshots
+da6025c docs: add screenshots

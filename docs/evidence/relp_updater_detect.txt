@@ -1,0 +1,26 @@
+== REAL UPDATER TEST — nidaa_p3a (emulator-5554) ==
+device: sdk_gphone64_x86_64 / API 34
+
+1) downgrade install of dist/nidaa-beta32-release.apk (adb install -r -d): Success
+   after downgrade: versionName=2.2.0-beta2 versionCode=16
+
+2) launched com.nidaa.prayer/com.mawaqiti.plus.MainActivity (cold start)
+   home screen showed the preserved city: القدس – فلسطين
+
+3) Settings -> عن التطبيق -> التحديثات -> «تحقق الآن»
+   UI text observed: «تحديث جديد متاح: 2.2.0»   (screenshot relp_updater_detect.png)
+   -> updater resolved /releases/latest to tag v2.2.0 of amh2002/Nidaa and parsed the semver tag
+
+4) «تنزيل التحديث» -> downloaded the first .apk asset and verified it against the SHA-256 line
+   UI text observed: «تم التحقق من بصمة الملف. جاهز للتثبيت.»   (screenshot relp_updater_sha_verified.png)
+   -> in-app SHA-256 verification accepted the published asset (no MissingChecksumException, no mismatch)
+
+5) «السماح والتثبيت» -> com.android.packageinstaller: «نداء - Nidaa / Do you want to update this app?» -> Update
+   (emulator needed REQUEST_INSTALL_PACKAGES granted for com.nidaa.prayer; device-side setup only, no app change)
+
+6) after install + relaunch:
+       versionCode=17 minSdk=24 targetSdk=36
+       versionName=2.2.0
+       lastUpdateTime=2026-11-24 09:09:57
+   home screen still shows القدس – فلسطين and the same prayer times (screenshot relp_updater_installed.png)
+   -> user data survived the in-app update

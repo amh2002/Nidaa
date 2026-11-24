@@ -327,13 +327,13 @@ Nothing was published and nothing is half-published: origin `main` is still `c14
 | 1 | APK exists, fingerprint = b33 baseline, `2.2.0`/`17` in badging | **PASS** |
 | 2 | Regression evidence on both emulators, both themes, all gates | **PASS** |
 | 3 | CHANGELOG / PRIVACY / release notes, Arabic-first, truthful | **PASS** |
-| 4 | Commit + tag on origin, public Release, verified download | **NOT MET** — STOP at divergence |
+| 4 | Commit + tag on origin, public Release, verified download | **PASS** — published in the follow-up round, see §12 |
 | 5 | Report complete, deviations explicit, manual remainder separated | **PASS** |
 | 6 | STOP path: local artifacts complete, nothing published | **PASS** |
 
 ---
 
-## 10. Manual remainder for the user
+## 10. Manual remainder for the user (superseded — completed in §12)
 
 The release is built, signed, regression-tested, committed and tagged **locally**. Only the remote reconciliation and the publication are left, and they need a decision that is yours, because it involves combining the 16 remote docs commits with the beta history.
 
@@ -400,3 +400,97 @@ Expected: certificate `ef6fe8a7925e25795b3593dd735ed5a705e4574816906109aba8f34dd
 | `rel_dayname_diff.txt` | 7/7 weekday strings byte-identical |
 | `rel_alarm_dumpsys.txt` / `rel_alarm_dumpsys_full.txt` | 24 exact FIRE_PRAYER alarms + MIDNIGHT |
 | `rel_updater_ui.png` / `rel_updater_check.png` | updater UI on the release build, no crash |
+---
+
+## 12. Publication (completed in the follow-up round)
+
+This section supersedes row 4 of §9 and all of §10. The previous round stopped before publishing because `origin/main` had diverged; the user authorized a merge-based reconciliation, and everything below is now live.
+
+### 12.1 Reconciliation of `main`
+
+| Item | Value |
+|---|---|
+| merge base | `31a3b03` |
+| remote tip merged in | `c14af67` — *docs: update README with screenshots* (16 README/screenshot commits) |
+| local release line | `2147421` *release: v2.2.0* → `00e4234` *docs: finalize v2.2.0 release notes* |
+| merge commit | `ef42d7b` — parents `00e4234` and `c14af67`, merged with `ort`, **no conflicts** |
+| `origin/main` after push | `ef42d7b997d09d5183dd43a4759a113215aa428d` |
+| annotated tag `v2.2.0` | object `64af1de3057292be8052f8937f3cf1cb566f8a9e` → commit `21474216c95cc9b46185df91ab5ee9cf2c3a7235` |
+
+The merge delta was `README.md` plus 15 files under `docs/screenshots/` — documentation and images only, no code, so the merge needed no conflict resolution and the frozen release tree is byte-for-byte the one that was built and tested. The tag was never re-created or moved: it still points at `2147421`, the commit it was created on.
+
+### 12.2 The release
+
+| Item | Value |
+|---|---|
+| release page | https://github.com/amh2002/Nidaa/releases/tag/v2.2.0 |
+| asset URL | https://github.com/amh2002/Nidaa/releases/download/v2.2.0/nidaa.apk |
+| permanent download link | https://github.com/amh2002/Nidaa/releases/latest/download/nidaa.apk |
+| title | «نداء» |
+| tag | `v2.2.0` |
+| pre-release | `false` |
+| assets | exactly one: `nidaa.apk`, 11,994,695 bytes |
+| SHA-256 | `01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f` |
+| `/releases/latest` resolves to | `v2.2.0`, `name: نداء`, `prerelease: false` |
+
+The asset published is a byte-identical copy of `dist/nidaa-v2.2.0-release.apk` (checked with `cmp` before upload), the same file whose hash was gated at the start of this round and whose hash the release notes carry.
+
+### 12.3 Verification of the published bytes
+
+| Check | Result |
+|---|---|
+| `gh release download v2.2.0` SHA-256 | `01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f` — equals the asset, the local file and the `SHA-256:` line in the body |
+| `apksigner verify --print-certs` on the download | cert SHA-256 `ef6fe8a7925e25795b3593dd735ed5a705e4574816906109aba8f34ddfaee1e9` — the b33 baseline |
+| `aapt dump badging` on the download | `com.nidaa.prayer`, `versionName='2.2.0'`, `versionCode='17'`, `minSdk 24`, `targetSdk 36` |
+| permanent link over plain HTTPS | HTTP **200**, 11,994,695 bytes, SHA-256 `01858a56…501d758f`, byte-identical to the release asset |
+
+Both acceptances are satisfied: the download URL and the permanent link serve this release's exact bytes. The `v2.2.0` asset is 11,994,695 bytes and its hash is the release hash, so the permanent link now serves 2.2.0 and not the older v2.1.0 build.
+
+### 12.4 The real update path, on a device
+
+Run on `nidaa_p3a` (emulator-5554, API 34) with the published release as the only update source:
+
+1. `adb install -r -d dist/nidaa-beta32-release.apk` — downgraded to `2.2.0-beta2` / `16`, signed-in data left in place.
+2. Cold start; the home screen still showed the configured city القدس – فلسطين.
+3. الإعدادات ← عن التطبيق ← التحديثات ← «تحقق الآن» → the app answered **«تحديث جديد متاح: 2.2.0»**. It found the new release through `/releases/latest` and parsed the semver tag.
+4. «تنزيل التحديث» → downloaded the single `.apk` asset and answered **«تم التحقق من بصمة الملف. جاهز للتثبيت.»** — the in-app SHA-256 check accepted the published bytes.
+5. «السماح والتثبيت» → the system installer showed *«نداء - Nidaa / Do you want to update this app?»*, confirming the same signature; the update installed over the old version.
+6. After relaunch: `versionName=2.2.0`, `versionCode=17`. The city, the settings and the prayer times were unchanged.
+
+So the update path a user will actually walk — detect, download, signature and SHA verification, in-place install, data preserved — works against the published release, not against a local file.
+
+### 12.5 Standing naming policy for every future release
+
+Recorded here as a rule, because it is now load-bearing: the in-app updater and the permanent link both depend on it.
+
+1. The single APK asset is always named exactly **`nidaa.apk`** — never versioned, never renamed.
+2. The version number lives **only** in the semver tag (`v2.2.0`).
+3. The release title is **«نداء»**, with no version number.
+
+Consequences: `https://github.com/amh2002/Nidaa/releases/latest/download/nidaa.apk` stays a stable link across versions, and the updater's "first `.apk` asset" rule always resolves to the right file. The body may state the version as information, and must always carry a `SHA-256:` line — the updater refuses to install without it.
+
+### 12.6 Deviations in this round
+
+1. **A notes commit was required.** `release_notes_ar.md` was missing the permanent-link line, so `00e4234` *docs: finalize v2.2.0 release notes* added it. The same commit corrected the update instructions, which still named the old versioned file (`nidaa-v2.2.0-release.apk`), to name the actual asset `nidaa.apk`; leaving the wrong filename in public instructions would have broken the documented manual path.
+2. **A second local copy of the APK was made** (`dist/nidaa.apk`) so the asset could be uploaded under the policy name. It was checked byte-identical with `cmp` and by SHA-256 before the release was created; the original `dist/nidaa-v2.2.0-release.apk` is untouched.
+3. **The emulator needed `REQUEST_INSTALL_PACKAGES` granted** for `com.nidaa.prayer` before the in-app install could hand off to the system installer. This is device-side test setup (`adb shell appops set`), not an application change; a real user grants it once through the prompt the app shows.
+4. **`gh release download` must run from inside the repository** — it infers the repo from the git remote and fails in a bare temp directory. The download was therefore run from the repo root with `-D` pointing at a temp folder.
+5. **The "must differ from v2.1.0" hash comparison was made indirectly.** The v2.1.0 APK is not present on this machine, so instead of hashing an old local file, the proof rests on the permanent link returning the v2.2.0 hash and being byte-identical to the v2.2.0 asset.
+
+### 12.7 Publication evidence
+
+All files are in `C:\rea_ws\evidence\` and committed under `docs/evidence/` with this report.
+
+| File | What it proves |
+|---|---|
+| `relp_preflight.txt` | SHA gate (APK = report = notes = evidence), notes completeness, commits in this round |
+| `relp_push.txt` | two-parent merge graph, merge/parent SHAs, tag object, `git ls-remote` after push |
+| `relp_release_view.txt` | title «نداء», one asset `nidaa.apk`, `isPrerelease: false`, `/releases/latest` = v2.2.0, full body |
+| `relp_download_verify.txt` | downloaded asset: hash = asset = notes, fingerprint `ef6fe8a7…`, badging `2.2.0`/`17` |
+| `relp_stable_link.txt` | permanent link HTTP 200, size, hash equal to the v2.2.0 asset, `cmp` identical |
+| `relp_updater_detect.txt` | device: downgrade → detect 2.2.0 → SHA verified → installed 2.2.0/17, data preserved |
+| `relp_updater_detect.png` | the app showing «تحديث جديد متاح: 2.2.0» |
+| `relp_updater_sha_verified.png` | the app showing «تم التحقق من بصمة الملف. جاهز للتثبيت.» |
+| `relp_updater_installed.png` | after the in-app install: 2.2.0 running with the preserved city |
+
+No take-down was performed: the published asset passed fingerprint, badging and hash on the first check, so the release and the tag stand as published.
