@@ -401,4 +401,184 @@
     <string name="adhkar_tasbih_caption">ثلاث وثلاثون مرة</string>
     <string name="adhkar_tasbih_completion">لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ</string>
     <string name="adhkar_tasbih_completion_caption">عند إتمام التسبيح</string>
+
+    <!-- beta32: the adhkar hub. UI labels (section and item titles) plus the
+         repetition words are ours; every dhikr BODY is transcribed verbatim
+         from Hisn al-Muslim (حصن المسلم) as published on hisnmuslim.com,
+         full tashkeel included. Nothing here is paraphrased or reordered,
+         and no resource contains a digit: repetition is a word. -->
+    <string name="adhkar_repeat_2">مرتان</string>
+    <string name="adhkar_repeat_3">ثلاث مرات</string>
+    <string name="adhkar_repeat_4">أربع مرات</string>
+    <string name="adhkar_repeat_7">سبع مرات</string>
+    <string name="adhkar_repeat_10">عشر مرات</string>
+    <string name="adhkar_repeat_33">ثلاث وثلاثون مرة</string>
+    <string name="adhkar_repeat_34">أربع وثلاثون مرة</string>
+    <string name="adhkar_repeat_100">مائة مرة</string>
+
+    <string name="adhkar_section_morning">أذكار الصباح</string>
+    <string name="adhkar_morning_item01_title">آية الكرسي</string>
+    <string name="adhkar_morning_item01_text">أَعُوذُ بِاللَّهِ مِنَ الشَّيطَانِ الرَّجِيمِ ﴿اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ لَّهُ مَا فِي السَّمَوَاتِ وَمَا فِي الأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلاَّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلاَ يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاَّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَوَاتِ وَالْأَرْضَ وَلاَ يَؤُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ﴾.</string>
+    <string name="adhkar_morning_item02_title">سورة الإخلاص والمعوذتين</string>
+    <string name="adhkar_morning_item02_text">بسم الله الرحمن الرحيم ﴿قُلْ هُوَ اللَّهُ أَحَدٌ* اللَّهُ الصَّمَدُ* لَمْ يَلِدْ وَلَمْ يُولَدْ* وَلَمْ يَكُن لَّهُ كُفُواً أَحَدٌ﴾. بسم الله الرحمن الرحيم ﴿قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ* مِن شَرِّ مَا خَلَقَ* وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ* وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ* وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ﴾. بسم الله الرحمن الرحيم ﴿قُلْ أَعُوذُ بِرَبِّ النَّاسِ* مَلِكِ النَّاسِ* إِلَهِ النَّاسِ* مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ* الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ* مِنَ الْجِنَّةِ وَ النَّاسِ﴾ (ثلاثَ مرَّاتٍ).</string>
+    <string name="adhkar_morning_item02_repeat">@string/adhkar_repeat_3</string>
+    <string name="adhkar_morning_item03_title">أصبحنا وأصبح الملك لله</string>
+    <string name="adhkar_morning_item03_text">((أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ ، وَالْحَمْدُ لِلَّهِ، لاَ إِلَهَ إلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَذَا الْيَوْمِ وَخَيرَ مَا بَعْدَهُ ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي هَذَا الْيَوْمِ وَشَرِّ مَا بَعْدَهُ، رَبِّ أَعُوذُ بِكَ مِنَ الْكَسَلِ وَسُوءِ الْكِبَرِ، رَبِّ أَعُوذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ)). [ وإذا أمسى قال: أمسينا وأمسى الملك للَّه]</string>
+    <string name="adhkar_morning_item04_title">اللهم بك أصبحنا</string>
+    <string name="adhkar_morning_item04_text">((اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا ، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ)).</string>
+    <string name="adhkar_morning_item05_title">سيد الاستغفار</string>
+    <string name="adhkar_morning_item05_text">((اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلاَّ أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لاَ يَغْفِرُ الذُّنوبَ إِلاَّ أَنْتَ)).</string>
+    <string name="adhkar_morning_item06_title">اللهم إني أصبحت أشهدك</string>
+    <string name="adhkar_morning_item06_text">((اللَّهُمَّ إِنِّي أَصْبَحْتُ أُشْهِدُكَ، وَأُشْهِدُ حَمَلَةَ عَرْشِكَ، وَمَلاَئِكَتِكَ، وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللَّهُ لَا إِلَهَ إِلاَّ أَنْتَ وَحْدَكَ لاَ شَرِيكَ لَكَ، وَأَنَّ مُحَمَّداً عَبْدُكَ وَرَسُولُكَ)) (أربعَ مَرَّاتٍ).[ وإذا أمسى قال: اللَّهم إني أمسيت...]</string>
+    <string name="adhkar_morning_item06_repeat">@string/adhkar_repeat_4</string>
+    <string name="adhkar_morning_item07_title">اللهم عافني في بدني</string>
+    <string name="adhkar_morning_item07_text">((اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لاَ إِلَهَ إِلاَّ أَنْتَ. اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ، وَالفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ القَبْرِ، لاَ إِلَهَ إِلاَّ أَنْتَ)) (ثلاثَ مرَّاتٍ).</string>
+    <string name="adhkar_morning_item07_repeat">@string/adhkar_repeat_3</string>
+    <string name="adhkar_morning_item08_title">حسبي الله لا إله إلا هو</string>
+    <string name="adhkar_morning_item08_text">((حَسْبِيَ اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ عَلَيهِ تَوَكَّلتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ)) (سَبْعَ مَرّاتٍ).</string>
+    <string name="adhkar_morning_item08_repeat">@string/adhkar_repeat_7</string>
+    <string name="adhkar_morning_item09_title">اللهم إني أسألك علماً نافعاً</string>
+    <string name="adhkar_morning_item09_text">((اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْماً نَافِعاً، وَرِزْقاً طَيِّباً، وَعَمَلاً مُتَقَبَّلاً)) (إذا أصبحَ).</string>
+    <string name="adhkar_morning_item10_title">يا حي يا قيوم بحمدك أستغيث</string>
+    <string name="adhkar_morning_item10_text">((يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغيثُ أَصْلِحْ لِي شَأْنِيَ كُلَّهُ وَلاَ تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ)).</string>
+
+    <string name="adhkar_section_evening">أذكار المساء</string>
+    <string name="adhkar_evening_item01_title">اللهم بك أمسينا</string>
+    <string name="adhkar_evening_item01_text">اللهم بك أمسينا، وبك أصبحنا، وبك نحيا، وبك نموت، وإليك المصير.</string>
+    <string name="adhkar_evening_item02_title">آية الكرسي</string>
+    <string name="adhkar_evening_item02_text">أَعُوذُ بِاللَّهِ مِنَ الشَّيطَانِ الرَّجِيمِ ﴿اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ لَّهُ مَا فِي السَّمَوَاتِ وَمَا فِي الأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلاَّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلاَ يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاَّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَوَاتِ وَالْأَرْضَ وَلاَ يَؤُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ﴾.</string>
+    <string name="adhkar_evening_item03_title">سورة الإخلاص والمعوذتين</string>
+    <string name="adhkar_evening_item03_text">بسم الله الرحمن الرحيم ﴿قُلْ هُوَ اللَّهُ أَحَدٌ* اللَّهُ الصَّمَدُ* لَمْ يَلِدْ وَلَمْ يُولَدْ* وَلَمْ يَكُن لَّهُ كُفُواً أَحَدٌ﴾. بسم الله الرحمن الرحيم ﴿قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ* مِن شَرِّ مَا خَلَقَ* وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ* وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ* وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ﴾. بسم الله الرحمن الرحيم ﴿قُلْ أَعُوذُ بِرَبِّ النَّاسِ* مَلِكِ النَّاسِ* إِلَهِ النَّاسِ* مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ* الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ* مِنَ الْجِنَّةِ وَ النَّاسِ﴾ (ثلاثَ مرَّاتٍ).</string>
+    <string name="adhkar_evening_item03_repeat">@string/adhkar_repeat_3</string>
+    <string name="adhkar_evening_item04_title">سيد الاستغفار</string>
+    <string name="adhkar_evening_item04_text">((اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلاَّ أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لاَ يَغْفِرُ الذُّنوبَ إِلاَّ أَنْتَ)).</string>
+    <string name="adhkar_evening_item05_title">اللهم عافني في بدني</string>
+    <string name="adhkar_evening_item05_text">((اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لاَ إِلَهَ إِلاَّ أَنْتَ. اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ، وَالفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ القَبْرِ، لاَ إِلَهَ إِلاَّ أَنْتَ)) (ثلاثَ مرَّاتٍ).</string>
+    <string name="adhkar_evening_item05_repeat">@string/adhkar_repeat_3</string>
+    <string name="adhkar_evening_item06_title">حسبي الله لا إله إلا هو</string>
+    <string name="adhkar_evening_item06_text">((حَسْبِيَ اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ عَلَيهِ تَوَكَّلتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ)) (سَبْعَ مَرّاتٍ).</string>
+    <string name="adhkar_evening_item06_repeat">@string/adhkar_repeat_7</string>
+    <string name="adhkar_evening_item07_title">بسم الله الذي لا يضر مع اسمه شيء</string>
+    <string name="adhkar_evening_item07_text">((بِسْمِ اللَّهِ الَّذِي لاَ يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلاَ فِي السّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ)) (ثلاثَ مرَّاتٍ).</string>
+    <string name="adhkar_evening_item07_repeat">@string/adhkar_repeat_3</string>
+    <string name="adhkar_evening_item08_title">رضيت بالله رباً</string>
+    <string name="adhkar_evening_item08_text">((رَضِيتُ بِاللَّهِ رَبَّاً، وَبِالْإِسْلاَمِ دِيناً، وَبِمُحَمَّدٍ صلى الله عليه وسلم نَبِيّاً)) (ثلاثَ مرَّاتٍ).</string>
+    <string name="adhkar_evening_item08_repeat">@string/adhkar_repeat_3</string>
+    <string name="adhkar_evening_item09_title">سبحان الله وبحمده</string>
+    <string name="adhkar_evening_item09_text">((سُبْحَانَ اللَّهِ وَبِحَمْدِهِ)) (مائة مرَّةٍ).</string>
+    <string name="adhkar_evening_item09_repeat">@string/adhkar_repeat_100</string>
+    <string name="adhkar_evening_item10_title">لا إله إلا الله وحده لا شريك له</string>
+    <string name="adhkar_evening_item10_text">((لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ)) (عشرَ مرَّات) ، أَوْ (مرَّةً واحدةً عندَ الكَسَلِ).</string>
+    <string name="adhkar_evening_item10_repeat">@string/adhkar_repeat_10</string>
+    <string name="adhkar_evening_item11_title">أعوذ بكلمات الله التامات</string>
+    <string name="adhkar_evening_item11_text">((أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ)) (ثلاثَ مرَّاتٍ إذا أمسى).</string>
+    <string name="adhkar_evening_item11_repeat">@string/adhkar_repeat_3</string>
+
+    <string name="adhkar_section_sleep">أذكار النوم</string>
+    <string name="adhkar_sleep_item01_title">باسمك اللهم أموت وأحيا</string>
+    <string name="adhkar_sleep_item01_text">((بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا)).</string>
+    <string name="adhkar_sleep_item02_title">آية الكرسي</string>
+    <string name="adhkar_sleep_item02_text">﴿اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ لَّهُ مَا فِي السَّمَوَاتِ وَمَا فِي الأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِنْـــــــــــدَهُ إِلاَّ بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلاَ يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلاَّ بِمَا شَاء وَسِعَ كُرْسِيُّهُ السَّمَوَاتِ وَالأَرْضَ وَلاَ يَؤُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ﴾.</string>
+    <string name="adhkar_sleep_item03_title">سورة الإخلاص والمعوذتين (النفث في الكفين)</string>
+    <string name="adhkar_sleep_item03_text">((يَجْمَعُ كَفَّيْهِ ثُمَّ يَنْفُثُ فِيهِمَا فَيَقْرَأُ فِيهِمَا:بسم الله الرحمن الرحيم ﴿قُلْ هُوَ اللَّهُ أَحَدٌ * اللَّهُ الصَّمَدُ* لَمْ يَلِدْ وَلَمْ يُولَدْ* وَلَمْ يَكُن لَّهُ كُفُواً أَحَدٌ﴾. بسم الله الرحمن الرحيم ﴿قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ* مِن شَرِّ مَا خَلَقَ* وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ* وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ* وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ﴾. بسم الله الرحمن الرحيم ﴿قُلْ أَعُوذُ بِرَبِّ النَّاسِ* مَلِكِ النَّاسِ* إِلَهِ النَّاسِ* مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ* الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ* مِنَ الْجِنَّةِ وَ النَّاسِ﴾ ثُمَّ يَمْسَحُ بِهِمَا مَا اسْتَطَاعَ مِنْ جَسَدِهِ يَبْدَأُ بِهِمَا عَلَى رَأْسِهِ وَوَجْهِهِ وَمَا أَقبَلَ مِنْ جَسَدِهِ)) (يفعلُ ذلك ثلاثَ مرَّاتٍ).</string>
+    <string name="adhkar_sleep_item03_repeat">@string/adhkar_repeat_3</string>
+    <string name="adhkar_sleep_item04_title">اللهم أسلمت نفسي إليك</string>
+    <string name="adhkar_sleep_item04_text">((اللَّهُمَّ أَسْلَمْتُ نَفْسِي إِلَيْكَ، وَفَوَّضْتُ أَمْرِي إِلَيْكَ، وَوَجَّهْتُ وَجْهِي إِلَيْكَ، وَأَلْجَأْتُ ظَهْرِي إِلَيْكَ، رَغْبَةً وَرَهْبَةً إِلَيْكَ، لاَ مَلْجَأَ وَلاَ مَنْجَا مِنْكَ إِلاَّ إِلَيْكَ، آمَنْتُ بِكِتَابِكَ الَّذِي أَنْزَلْتَ، وَبِنَبِيِّكَ الَّذِي أَرْسَلْتَ)).</string>
+    <string name="adhkar_sleep_item05_title">التسبيح قبل النوم</string>
+    <string name="adhkar_sleep_item05_text">((سُبْحَانَ اللَّهِ (ثلاثاً وثلاثين) وَالْحَمْدُ لِلَّهِ (ثلاثاً وثلاثين) وَاللَّهُ أَكْبَرُ (أربعاً وثلاثينَ))).</string>
+
+    <string name="adhkar_section_waking">أذكار الاستيقاظ</string>
+    <string name="adhkar_waking_item01_title">الحمد لله الذي أحيانا</string>
+    <string name="adhkar_waking_item01_text">( الْحَمْدُ للَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا، وَإِلَيْهِ النُّشُورُ )</string>
+    <string name="adhkar_waking_item02_title">لا إله إلا الله وحده لا شريك له</string>
+    <string name="adhkar_waking_item02_text">( لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَريكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، سُبْحَانَ اللَّهِ، وَالْحَمْدُ للَّهِ، وَلاَ إِلَهَ إِلاَّ اللَّهُ، وَاللَّهُ أَكبَرُ، وَلاَ حَوْلَ وَلاَ قُوَّةَ إِلاَّ بِاللَّهِ الْعَلِيِّ الْعَظِيمِ، رَبِّ اغْفرْ لِي ).</string>
+
+    <string name="adhkar_section_mosque">أذكار المسجد</string>
+    <string name="adhkar_mosque_item01_title">دعاء دخول المسجد</string>
+    <string name="adhkar_mosque_item01_text">(يَبْدَأُ بِرِجْلِهِ الْيُمْنَى) ، وَيَقُولُ: ((أَعُوذُ بِاللَّهِ العَظِيمِ، وَبِوَجْهِهِ الْكَرِيمِ، وَسُلْطَانِهِ الْقَدِيمِ، مِنَ الشَّيْطَانِ الرَّجِيمِ)) [بِسْمِ اللَّهِ، وَالصَّلَاةُ] [وَالسَّلَامُ عَلَى رَسُولِ اللَّهِ] ((اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ)).</string>
+    <string name="adhkar_mosque_item02_title">دعاء الخروج من المسجد</string>
+    <string name="adhkar_mosque_item02_text">((يَبْدَأُ بِرِجْلِهِ الْيُسْرَى)) وَيَقُولُ: ((بِسْمِ اللَّهِ وَالصّلَاةُ وَالسَّلَامُ عَلَى رَسُولِ اللَّهِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ مِنْ فَضْلِك، اللَّهُمَّ اعْصِمْنِي مِنَ الشَّيْطَانِ الرَّجِيمِ)).</string>
+
+    <string name="adhkar_section_wudu">أذكار الوضوء</string>
+    <string name="adhkar_wudu_item01_title">البسملة عند البدء</string>
+    <string name="adhkar_wudu_item01_text">(بِسْمِ اللَّهِ).</string>
+    <string name="adhkar_wudu_item02_title">شهادة التوحيد بعد الوضوء</string>
+    <string name="adhkar_wudu_item02_text">(أَشْهَدُ أَنْ لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ وَأَشْهَدُ أَنَّ مُحَمَّداً عَبْدُهُ وَرَسُولُهُ..).</string>
+    <string name="adhkar_wudu_item03_title">اللهم اجعلني من التوابين</string>
+    <string name="adhkar_wudu_item03_text">(اللَّهُمَّ اجْعَلْنِي مِنَ التَّوَّابِينَ وَاجْعَلْنِي مِنَ الْمُتَطَهِّرِينَ)</string>
+
+    <string name="adhkar_section_khala">أذكار الخلاء</string>
+    <string name="adhkar_khala_item01_title">دعاء دخول الخلاء</string>
+    <string name="adhkar_khala_item01_text">([بِسْمِ اللَّهِ] اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْخُبْثِ وَالْخَبائِث).</string>
+    <string name="adhkar_khala_item02_title">دعاء الخروج من الخلاء</string>
+    <string name="adhkar_khala_item02_text">(غُفْرَانَكَ).</string>
+
+    <string name="adhkar_section_food">أذكار الطعام والشراب</string>
+    <string name="adhkar_food_item01_title">البسملة قبل الطعام</string>
+    <string name="adhkar_food_item01_text">((إِذَا أَكَلَ أَحَدُكُمْ طَعَاماً فَلْيَقُلْ بِسْمِ اللَّهِ، فَإِنْ نَسِيَ فِي أَوَّلِهِ فَلْيَقُلْ بسمِ اللَّهِ فِي أَوَّلِهِ وَآخِرِهِ)).</string>
+    <string name="adhkar_food_item02_title">الدعاء عند الطعام والشراب</string>
+    <string name="adhkar_food_item02_text">((مَنْ أَطْعَمَهُ اللَّهُ الطَّعَامَ فَلْيَقُلْ: اللَّهُمَّ بَارِكْ لَنَا فِيهِ وَأَطْعِمْنَا خَيْراً مِنْهُ، وَمَنْ سَقَاهُ اللَّهُ لَبَناً فَلْيَقُلْ اللَّهُمَّ بَارِكْ لَنَا فِيهِ وَزِدْنَا مِنْهُ)).</string>
+    <string name="adhkar_food_item03_title">الحمد بعد الطعام</string>
+    <string name="adhkar_food_item03_text">((الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَذَا، وَرَزَقَنِيهِ، مِنْ غَيْرِ حَوْلٍ مِنِّي وَلاَ قُوَّةٍ)).</string>
+    <string name="adhkar_food_item04_title">الحمد الكثير بعد الطعام</string>
+    <string name="adhkar_food_item04_text">((الْحَمْدُ لِلَّهِ حَمْداً كَثِيراً طَيِّباً مُبَارَكاً فِيهِ، غَيْرَ [مَكْفِيٍّ وَلاَ ] مُوَدَّعٍ، وَلاَ مُسْتَغْنَىً عَنْهُ رَبَّنَا)).</string>
+    <string name="adhkar_food_item05_title">الدعاء لصاحب الطعام</string>
+    <string name="adhkar_food_item05_text">((اللَّهُمَّ بَارِكْ لَهُمْ فِيمَا رَزَقْتَهُم، وَاغْفِرْ لَهُمْ وَارْحَمْهُمْ)).</string>
+
+    <string name="adhkar_section_travel">أذكار السفر</string>
+    <string name="adhkar_travel_item01_title">دعاء الركوب</string>
+    <string name="adhkar_travel_item01_text">((بِسْمِ اللَّهِ، وَالْحَمْدُ للَّهِ ﴿سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ، وَإِنَّا إِلَى رَبِّنَا لَمُنقَلِبُونَ﴾، ((الْحَمْدُ لِلَّهِ، الْحَمْدُ لِلَّهِ، الْحَمْدُ لِلَّهِ، اللَّهُ أَكْبَرُ، اللَّهُ أَكْبَرُ، اللَّهُ أَكْبَرُ، سُبْحَانَكَ اللَّهُمَّ إِنِّي ظَلَمْتُ نَفْسِي فَاغْفِرْ لِي؛ فَإِنَّهُ لاَ يَغْفِرُ الذُّنُوبَ إِلاَّ أَنْتَ)).</string>
+    <string name="adhkar_travel_item02_title">اللهم إنا نسألك في سفرنا هذا</string>
+    <string name="adhkar_travel_item02_text">اللَّهُ أَكْبَرُ، اللَّهُ أَكْبَرُ، اللَّهُ أَكْبَرُ، ﴿سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ * وَإِنَّا إِلَى رَبِّنَا لَمُنقَلِبُونَ﴾ ((اللَّهُمَّ إِنّا نَسْأَلُكَ فِي سَفَرِنَا هَذَا البِرَّ وَالتَّقْوَى، وَمِنَ الْعَمَلِ مَا تَرْضَى، اللَّهُمَّ هَوِّنْ عَلَيْنَا سَفَرَنَا هَذَا وَاطْوِ عَنَّا بُعْدَهُ، اللَّهُمَّ أَنْتَ الصَّاحِبُ فِي السَّفَرِ، وَالْخَليفَةُ فِي الْأَهْلِ، اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ وَعْثَاءِ السَّفَرِ، وَكَآبَةِ الْمَنْظَرِ، وَسُوءِ الْمُنْقَلَبِ فِي الْمَالِ وَالْأَهْلِ))، وإذا رَجَعَ قَالَهُنَّ وَزَادَ فِيهِنَّ: ((آيِبُونَ، تائِبُونَ، عَابِدُونَ، لِرَبِّنَا حَامِدُونَ)).</string>
+    <string name="adhkar_travel_item03_title">دعاء النزول في منزل</string>
+    <string name="adhkar_travel_item03_text">((أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ)).</string>
+    <string name="adhkar_travel_item04_title">دعاء الرجوع من السفر</string>
+    <string name="adhkar_travel_item04_text">((يُكَبِّرُ عَلَى كُلِّ شَرَفٍ ثَلاَثَ تَكْبِيرَاتٍ ثُمَّ يَقُولُ: لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ، لَهُ الْمُلْكُ، وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، آيِبُونَ، تَائِبُونَ، عَابِدُونَ، لِرَبِّنا حَامِدُونَ، صَدَقَ اللَّهُ وَعْدَهُ، وَنَصَرَ عَبْدَهُ، وَهَزَمَ الْأَحْزابَ وَحْدَهُ)).</string>
+
+    <string name="adhkar_section_distress">أذكار الهم والحزن والكرب</string>
+    <string name="adhkar_distress_item01_title">اللهم إني عبدك</string>
+    <string name="adhkar_distress_item01_text">((اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ، نَاصِيَتِي بِيَدِكَ، مَاضٍ فِيَّ حُكْمُكَ، عَدْلٌ فِيَّ قَضَاؤُكَ، أَسْأَلُكَ بِكُــــلِّ اسْمٍ هُوَ لَكَ، سَمَّيْتَ بِهِ نَفْسَكَ، أَوْ أَنْزَلْتَهُ فِي كِتَابِكَ، أَوْ عَلَّمْتَهُ أَحَداً مِنْ خَلْقِكَ، أَوِ اسْتَأْثَرْتَ بِهِ فِي عِلْمِ الغَيْبِ عِنْدَكَ، أَنْ تَجْعَلَ القُرْآنَ رَبِيعَ قَلْبِي، وَنُورَ صَدْرِي، وَجَلاَءَ حُزْنِي، وَذَهَابَ هَمِّي)).</string>
+    <string name="adhkar_distress_item02_title">اللهم إني أعوذ بك من الهم والحزن</string>
+    <string name="adhkar_distress_item02_text">((اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ، وَالْبُخْلِ وَالْجُبْنِ، وَضَلَعِ الدَّيْنِ وَغَلَبَةِ الرِّجَالِ)).</string>
+    <string name="adhkar_distress_item03_title">لا إله إلا الله العظيم الحليم</string>
+    <string name="adhkar_distress_item03_text">((لاَ إِلَهَ إِلاَّ اللَّهُ الْعَظِيمُ الْحَلِيمُ، لاَ إِلَهَ إِلاَّ اللَّهُ رَبُّ الْعَرْشِ الْعَظِيمِ، لاَ إِلَهَ إِلاَّ اللَّهُ رَبُّ السَّمَوَاتِ وَرَبُّ الْأَرْضِ وَرَبُّ الْعَرْشِ الْكَرِيمِ)).</string>
+    <string name="adhkar_distress_item04_title">اللهم رحمتك أرجو</string>
+    <string name="adhkar_distress_item04_text">((اللَّهُمَّ رَحْمَتَكَ أَرْجُو، فَلاَ تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ، وَأَصْلِحْ لِي شَأْنِي كُلَّهُ، لاَ إِلَهَ إِلاَّ أَنْتَ)).</string>
+    <string name="adhkar_distress_item05_title">لا إله إلا أنت سبحانك إني كنت من الظالمين</string>
+    <string name="adhkar_distress_item05_text">((لاَ إِلَهَ إِلاَّ أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظّالِمِينَ)).</string>
+
+    <string name="adhkar_section_weather">أذكار المطر والريح والرعد</string>
+    <string name="adhkar_weather_item01_title">عند نزول المطر</string>
+    <string name="adhkar_weather_item01_text">((اللَّهُمَّ صَيِّباً نَافِعاً)).</string>
+    <string name="adhkar_weather_item02_title">بعد نزول المطر</string>
+    <string name="adhkar_weather_item02_text">((مُطِرْنَا بِفَضْلِ اللَّهِ وَرَحْمَتِهِ)).</string>
+    <string name="adhkar_weather_item03_title">عند هبوب الريح</string>
+    <string name="adhkar_weather_item03_text">((اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَهَا، وَخَيْرَ مَا فِيهَا، وَخَيْرَ مَا أُرْسِلَتْ بِهِ، وَأَعُوذُ بِكَ مِنْ شَرِّهَا، وَشَرِّ مَا فِيهَا، وَشَرِّ مَا أُرْسِلَتْ بِهِ)).</string>
+    <string name="adhkar_weather_item04_title">عند سماع الرعد</string>
+    <string name="adhkar_weather_item04_text">((سُبْحَانَ الَّذِي يُسَبِّحُ الرَّعْدُ بِحَمْدِهِ وَالْمَلاَئِكةُ مِنْ خِيفَتِهِ)).</string>
+
+    <string name="adhkar_after_adhan_item01_title">دعاء بعد الأذان</string>
+    <string name="adhkar_after_adhan_item01_text">@string/adhkar_after_adhan_dua</string>
+
+    <string name="adhkar_after_prayer_item01_title">الاستغفار</string>
+    <string name="adhkar_after_prayer_item01_text">@string/adhkar_istighfar</string>
+    <string name="adhkar_after_prayer_item01_repeat">@string/adhkar_repeat_3</string>
+    <string name="adhkar_after_prayer_item02_title">اللهم أنت السلام</string>
+    <string name="adhkar_after_prayer_item02_text">@string/adhkar_after_prayer_salam</string>
+    <string name="adhkar_after_prayer_item03_title">لا إله إلا الله وحده لا شريك له</string>
+    <string name="adhkar_after_prayer_item03_text">@string/adhkar_after_prayer_tahlil</string>
+    <string name="adhkar_after_prayer_item04_title">اللهم أعني على ذكرك</string>
+    <string name="adhkar_after_prayer_item04_text">@string/adhkar_after_prayer_tasbih_dua</string>
+    <string name="adhkar_after_prayer_item05_title">سبحان الله</string>
+    <string name="adhkar_after_prayer_item05_text">@string/adhkar_tasbih_subhan</string>
+    <string name="adhkar_after_prayer_item05_repeat">@string/adhkar_repeat_33</string>
+    <string name="adhkar_after_prayer_item06_title">الحمد لله</string>
+    <string name="adhkar_after_prayer_item06_text">@string/adhkar_tasbih_hamd</string>
+    <string name="adhkar_after_prayer_item06_repeat">@string/adhkar_repeat_33</string>
+    <string name="adhkar_after_prayer_item07_title">الله أكبر</string>
+    <string name="adhkar_after_prayer_item07_text">@string/adhkar_tasbih_akbar</string>
+    <string name="adhkar_after_prayer_item07_repeat">@string/adhkar_repeat_34</string>
+    <string name="adhkar_after_prayer_item08_title">ختم التسبيح</string>
+    <string name="adhkar_after_prayer_item08_text">@string/adhkar_tasbih_completion</string>
+
 </resources>

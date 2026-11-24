@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,9 +61,14 @@ import com.mawaqiti.plus.ui.theme.starTextExclusion
  * beta13: the ONE registry of dock destinations.
  *
  * Declaration order is the visual order from the RTL start: in Arabic the dock
- * reads Settings (right) → Home (middle) → Qibla (left); in an LTR locale the
+ * reads Home (right) → Adhkar → Qibla → Settings (left); in an LTR locale the
  * same row is mirrored automatically by the layout direction, so no per-locale
  * list is needed.
+ *
+ * beta32 (Task 1): «الأذكار» is the SECOND destination, right after the home,
+ * and «الإعدادات» stays the last one. Tab indices are untouched (Home 0,
+ * Qibla 1, Settings 2); only the new hub takes a new index (3), so a saved tab
+ * from an older build still resolves to the same screen.
  *
  * Each entry carries everything the dock needs - the tab it selects, its label
  * resource and its icon - so adding a future feature is exactly one entry here
@@ -74,9 +80,10 @@ enum class DockDestination(
     @StringRes val labelRes: Int,
     val icon: ImageVector
 ) {
-    SETTINGS(tab = 2, labelRes = R.string.footer_settings, icon = Icons.Filled.Settings),
     HOME(tab = 0, labelRes = R.string.dock_home, icon = Icons.Filled.Home),
-    QIBLA(tab = 1, labelRes = R.string.footer_qibla, icon = Icons.Filled.Explore);
+    ADHKAR(tab = 3, labelRes = R.string.adhkar_title, icon = Icons.Filled.MenuBook),
+    QIBLA(tab = 1, labelRes = R.string.footer_qibla, icon = Icons.Filled.Explore),
+    SETTINGS(tab = 2, labelRes = R.string.footer_settings, icon = Icons.Filled.Settings);
 
     companion object {
         /** Declaration order; the dock renders exactly this list. */

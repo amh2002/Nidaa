@@ -16,9 +16,10 @@ import org.junit.Test
  * These tests lock what makes "add a future feature = append one entry" safe and
  * what the owner asked for in beta13:
  *
- *  - visual order (declaration order) is Settings -> Home -> Qibla, which in
- *    Arabic RTL renders rightmost -> leftmost;
- *  - every entry owns a unique tab index (Home = 0, Qibla = 1, Settings = 2);
+ *  - visual order (declaration order) is Home -> Adhkar -> Qibla -> Settings,
+ *    which in Arabic RTL renders rightmost -> leftmost;
+ *  - every entry owns a unique tab index (Home = 0, Qibla = 1, Settings = 2,
+ *    Adhkar = 3);
  *  - all slots are the same fixed size and all gaps are the same fixed length;
  *  - the indicator is always one slot big and its offset is a pure function of
  *    the selected index, so rapid switching can never strand it;
@@ -27,15 +28,26 @@ import org.junit.Test
 class NidaaDockTest {
 
     @Test
-    fun `visual order is settings then home then qibla`() {
+    fun `visual order is home then adhkar then qibla then settings`() {
         assertEquals(
             listOf(
-                DockDestination.SETTINGS,
                 DockDestination.HOME,
-                DockDestination.QIBLA
+                DockDestination.ADHKAR,
+                DockDestination.QIBLA,
+                DockDestination.SETTINGS
             ),
             DockDestination.ordered
         )
+    }
+
+    @Test
+    fun `adhkar is the second destination and settings the last`() {
+        // beta32: the owner's order - home first, the adhkar hub second, the
+        // settings last. Declaration order is the RTL reading order, so this is
+        // also what the dock draws right-to-left.
+        assertEquals(DockDestination.HOME, DockDestination.ordered.first())
+        assertEquals(DockDestination.ADHKAR, DockDestination.ordered[1])
+        assertEquals(DockDestination.SETTINGS, DockDestination.ordered.last())
     }
 
     @Test
@@ -48,6 +60,8 @@ class NidaaDockTest {
         assertEquals(0, DockDestination.HOME.tab)
         assertEquals(1, DockDestination.QIBLA.tab)
         assertEquals(2, DockDestination.SETTINGS.tab)
+        // beta32: the new hub takes a fresh index; the shipped three keep theirs.
+        assertEquals(3, DockDestination.ADHKAR.tab)
     }
 
     @Test
@@ -104,6 +118,7 @@ class NidaaDockTest {
         assertEquals(0.dp, DockMetrics.indicatorOffset(0))
         assertEquals(70.dp, DockMetrics.indicatorOffset(1))
         assertEquals(140.dp, DockMetrics.indicatorOffset(2))
+        assertEquals(210.dp, DockMetrics.indicatorOffset(3))
 
         DockDestination.ordered.forEachIndexed { index, destination ->
             assertEquals(

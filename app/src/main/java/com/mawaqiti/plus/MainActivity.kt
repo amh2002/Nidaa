@@ -42,8 +42,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -57,7 +55,9 @@ import com.mawaqiti.plus.ui.components.NidaaSplash
 import com.mawaqiti.plus.ui.components.isArabicLocale
 import com.mawaqiti.plus.notify.NotificationScheduler
 import com.mawaqiti.plus.ui.screens.AboutDialog
-import com.mawaqiti.plus.ui.screens.AdhkarScreen
+import com.mawaqiti.plus.ui.screens.AdhkarCatalog
+import com.mawaqiti.plus.ui.screens.AdhkarHubScreen
+import com.mawaqiti.plus.ui.screens.AdhkarSectionScreen
 import com.mawaqiti.plus.ui.screens.CityPickerSheet
 import com.mawaqiti.plus.ui.screens.ExactAlarmDialog
 import com.mawaqiti.plus.ui.screens.PrayerScreen
@@ -224,9 +224,9 @@ fun MawaqitiApp(
     var showCityPicker by rememberSaveable { mutableStateOf(false) }
     // beta24: the About dialog replaces the beta10 About screen.
     var showAbout by rememberSaveable { mutableStateOf(false) }
-    // beta30 (Task 3): the adhkar screen is a full-window overlay, not a dock
-    // tab, so the navigation and every existing screen stay as they are.
-    var showAdhkar by rememberSaveable { mutableStateOf(false) }
+    // beta32 (Task 1): the adhkar hub is a dock destination now. Only the open
+    // section is extra state, and it resets the moment the dock leaves the tab.
+    var adhkarSection by rememberSaveable { mutableStateOf<String?>(null) }
 
     // beta30 (Task 1): the exact-alarm gate.
     //
@@ -273,7 +273,9 @@ fun MawaqitiApp(
         selectedTab = DockDestination.HOME.tab
     }
 
-    BackHandler(enabled = showAdhkar) { showAdhkar = false }
+    // beta32: back from an open section returns to the hub. Registered after
+    // the tab handler above, so it wins while a section is open.
+    BackHandler(enabled = adhkarSection != null) { adhkarSection = null }
 
     // First launch: pin the app to Arabic explicitly, then persist through
     // AppCompat's autoStoreLocales + our DataStore flag. Using the exact
@@ -313,7 +315,14 @@ fun MawaqitiApp(
                 // dock is present on every tab and no screen loses its height.
                 NidaaDock(
                     selectedTab = selectedTab,
-                    onSelect = { destination -> selectedTab = destination.tab }
+                    onSelect = { destination ->
+                        // Leaving the hub closes any open section, so the tab
+                        // always re-enters on the section list.
+                        if (destination.tab != DockDestination.ADHKAR.tab) {
+                            adhkarSection = null
+                        }
+                        selectedTab = destination.tab
+                    }
                 )
             }
         ) { padding ->
@@ -327,6 +336,23 @@ fun MawaqitiApp(
                 // leave a blank screen or steal a future dock slot. beta24 took
                 // About out of this switch - it is a dialog now.
                 when (DockDestination.forTab(selectedTab)) {
+                    // beta32 (Task 1): the hub. One section at a time on top of
+                    // the hub list; both live inside the tab, so the dock never
+                    // moves and Home keeps the whole height.
+                    DockDestination.ADHKAR -> {
+                        val section = AdhkarCatalog.section(adhkarSection)
+                        if (section == null) {
+                            AdhkarHubScreen(
+                                onOpenSection = { adhkarSection = it.stem }
+                            )
+                        } else {
+                            AdhkarSectionScreen(
+                                section = section,
+                                onBack = { adhkarSection = null }
+                            )
+                        }
+                    }
+
                     DockDestination.QIBLA -> QiblaScreen(
                         city = city,
                         isArabic = isArabic,
@@ -374,7 +400,6 @@ fun MawaqitiApp(
                         onSelectHomeCountdown = viewModel::setHomeCountdown,
                         onSelectHomeMoonPhase = viewModel::setHomeMoonPhase,
                         onSelectArabicIndic = viewModel::setArabicIndicNumerals,
-                        onOpenAdhkar = { showAdhkar = true }
                     )
 
                     DockDestination.HOME, null -> {
@@ -446,17 +471,6 @@ fun MawaqitiApp(
 
     if (showAbout) {
         AboutDialog(onDismiss = { showAbout = false })
-    }
-
-    if (showAdhkar) {
-        Dialog(
-            onDismissRequest = { showAdhkar = false },
-            // Full-window sheet: the dialog is only the host, the screen owns
-            // its own palette backdrop, top bar and scrolling.
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            AdhkarScreen(onBack = { showAdhkar = false })
-        }
     }
 
     if (showExactAlarmDialog && !exactAlarmAllowed) {

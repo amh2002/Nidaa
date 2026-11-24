@@ -189,7 +189,6 @@ fun SettingsScreen(
     /** beta30: home-only Arabic-Indic digits (`use_arabic_indic_numerals`). */
     onSelectArabicIndic: (Boolean) -> Unit = {},
     /** beta30: opens the lightweight «الأذكار» screen. */
-    onOpenAdhkar: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var statusTick by remember { mutableIntStateOf(0) }
@@ -303,7 +302,6 @@ fun SettingsScreen(
             onSelectHomeCountdown = onSelectHomeCountdown,
             onSelectHomeMoonPhase = onSelectHomeMoonPhase,
             onSelectArabicIndic = onSelectArabicIndic,
-            onOpenAdhkar = onOpenAdhkar,
             onSectionsCollapsedChange = { sectionsCollapsed = it },
             onLastHeaderBottomChange = { headerStackBottom = it }
         )
@@ -386,7 +384,6 @@ fun SettingsList(
     /** beta30: home-only Arabic-Indic digits (see [SettingsScreen]). */
     onSelectArabicIndic: (Boolean) -> Unit = {},
     /** beta30: opens the «الأذكار» screen (see [SettingsScreen]). */
-    onOpenAdhkar: () -> Unit = {},
     /** beta26: true while every accordion section is closed. */
     onSectionsCollapsedChange: (Boolean) -> Unit = {},
     /** beta27: bottom edge of the collapsed header stack, in root pixels. */
@@ -969,51 +966,6 @@ fun SettingsList(
                     }
 
                     SettingsSection.ABOUT -> {
-                        // beta30 (Task 3): the only entry point of the adhkar
-                        // screen. It is a plain row of this section - no dock
-                        // slot, no route - so nothing else in the app moves.
-                        SettingsCard(
-                            contentPadding = PaddingValues(0.dp),
-                            onClick = onOpenAdhkar,
-                            modifier = Modifier.testTag("settings_adhkar_card")
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Info,
-                                    contentDescription = null,
-                                    tint = palette.accent,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                                Spacer(Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = stringResource(R.string.settings_adhkar_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = palette.text
-                                    )
-                                    Spacer(Modifier.height(2.dp))
-                                    Text(
-                                        text = stringResource(R.string.settings_adhkar_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = palette.textMuted
-                                    )
-                                }
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = null,
-                                    tint = palette.accent
-                                )
-                            }
-                        }
-
-                        ItemGap()
-
                         // 4b. Updates (beta 7.95): the only network feature.
                         UpdatesSettingsCard(
                             enabled = updatesEnabled,
