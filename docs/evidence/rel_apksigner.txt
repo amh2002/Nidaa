@@ -1,0 +1,17 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Nidaa, OU=Mobile, O=Nidaa, L=Tulkarm, ST=West Bank, C=PS
+Signer #1 certificate SHA-256 digest: ef6fe8a7925e25795b3593dd735ed5a705e4574816906109aba8f34ddfaee1e9
+Signer #1 certificate SHA-1 digest: eb22c93673ef3ce90194079b154345e64a83f5bf
+Signer #1 certificate MD5 digest: 3538080e71e4bdda5ee72ddd17c0e894
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 4096
+Signer #1 public key SHA-256 digest: 5dea918fb87592ce8608e1d6fd923c62e25d1e22ebed84688e50d587cbb6cc13
+Signer #1 public key SHA-1 digest: 9f22d13e6ab2c596e3b80949a4910f18b4965cef
+Signer #1 public key MD5 digest: 972652115e06314dd64b9580bc166744

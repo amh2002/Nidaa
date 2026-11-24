@@ -1,0 +1,50 @@
+Nidaa release config audit — 2026-11-24T10:33:31Z
+source: app/build.gradle.kts, build.gradle.kts, gradle/wrapper/gradle-wrapper.properties
+
+== identity ==
+11:    namespace = "com.mawaqiti.plus"
+15:        // beta5 identity: the product is «نداء / Nidaa». The Kotlin namespace
+18:        applicationId = "com.nidaa.prayer"
+
+== sdk levels ==
+12:    compileSdk = 36
+19:        minSdk = 24
+20:        targetSdk = 36
+
+== release build type ==
+3:            // logging in the shipped bytecode (see proguard-rules.pro).
+4:            isMinifyEnabled = true
+5:            isShrinkResources = true
+6:            isDebuggable = false
+8:                signingConfig = signingConfigs.getByName("release")
+10:            proguardFiles(
+11:                getDefaultProguardFile("proguard-android-optimize.txt"),
+12:                "proguard-rules.pro"
+
+== signing config source ==
+37:    val keystorePropertiesFile: File =
+40:        if (keystorePropertiesFile.isFile) {
+41:            keystorePropertiesFile.inputStream().use { load(it) }
+44:    val hasReleaseKeys = keystorePropertiesFile.isFile
+48:            if (hasReleaseKeys) {
+49:                storeFile = keystorePropertiesFile.parentFile.resolve(
+50:                    keystoreProperties.getProperty("storeFile", "nidaa-release.jks")
+53:                keyAlias = keystoreProperties.getProperty("keyAlias", "nidaa")
+55:                enableV1Signing = true
+56:                enableV2Signing = true
+71:            if (hasReleaseKeys) {
+
+== toolchain ==
+AGP: com.android.application") version "8.11.1
+Kotlin: org.jetbrains.kotlin.android") version "2.2.20
+Gradle: distributionUrl=https\://services.gradle.org/distributions/gradle-8.14.3-bin.zip
+JDK: openjdk version "17.0.21.0.2" 2026-10-22 LTS
+
+== feature flags ==
+82:        isCoreLibraryDesugaringEnabled = true
+92:        compose = true
+93:        buildConfig = true
+
+== version after bump ==
+21:        versionCode = 17
+22:        versionName = "2.2.0"

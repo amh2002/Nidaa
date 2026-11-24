@@ -1,0 +1,67 @@
+In-app updater discovery — 2026-11-24T10:33:41Z
+
+== updater package ==
+app/src/main/java/com/nidaa/prayer/update/ApkInstaller.kt
+app/src/main/java/com/nidaa/prayer/update/HostAllowlist.kt
+app/src/main/java/com/nidaa/prayer/update/InstallDiagnostics.kt
+app/src/main/java/com/nidaa/prayer/update/InstallResultReceiver.kt
+app/src/main/java/com/nidaa/prayer/update/MiuiDevices.kt
+app/src/main/java/com/nidaa/prayer/update/ReleaseInfo.kt
+app/src/main/java/com/nidaa/prayer/update/SemanticVersion.kt
+app/src/main/java/com/nidaa/prayer/update/UpdateClient.kt
+app/src/main/java/com/nidaa/prayer/update/UpdateManager.kt
+app/src/main/java/com/nidaa/prayer/update/UpdateNotifier.kt
+app/src/main/java/com/nidaa/prayer/update/UpdatePolicy.kt
+app/src/main/java/com/nidaa/prayer/update/UpdateScheduler.kt
+app/src/main/java/com/nidaa/prayer/update/UpdateState.kt
+app/src/main/java/com/nidaa/prayer/update/UpdateWorker.kt
+app/src/main/java/com/nidaa/prayer/update/UpdatesStore.kt
+
+== release source URL ==
+39:        val connection = open(URL(LATEST_RELEASE_URL))
+40-        try {
+41-            val body = connection.inputStream.bufferedReader().use { reader ->
+--
+166:        const val LATEST_RELEASE_URL =
+167-            "https://api.github.com/repos/amh2002/Nidaa/releases/latest"
+
+== host allowlist ==
+    val HOSTS: Set<String> = linkedSetOf(
+        "api.github.com",
+        "github.com",
+        "objects.githubusercontent.com",
+        "release-assets.githubusercontent.com"
+    )
+
+== tag parser (expected tag pattern) ==
+74-            var value = raw?.trim().orEmpty()
+75-            if (value.isEmpty()) return null
+76:            if (value.first() == 'v' || value.first() == 'V') value = value.substring(1)
+77-            value = value.substringBefore('+')
+78-            if (value.isEmpty()) return null
+79-
+80:            val coreText = value.substringBefore('-')
+81-            val preRelease = if (value.contains('-')) {
+82-                value.substringAfter('-').split('.').filter { it.isNotEmpty() }
+
+== asset selection rule ==
+55:                if (!name.endsWith(".apk", ignoreCase = true)) continue
+56:                val url = asset.optString("browser_download_url").trim()
+60:                break
+
+== checksum rule (release BODY must contain it) ==
+33:        private val SHA_LINE = Regex(
+34-            "SHA[- ]?256\\s*[:=]\\s*([A-Fa-f0-9]{64})",
+35:            RegexOption.IGNORE_CASE
+36-        )
+37:        private val SAFE_NAME = Regex("[^A-Za-z0-9._-]")
+38-
+39-        /**
+40-         * Parses the GitHub `releases/latest` JSON. Returns null when the tag
+--
+68:            val sha256 = SHA_LINE.find(body)?.groupValues?.get(1)?.lowercase()
+69-
+70-            return ReleaseInfo(
+
+== update entry points in UI ==
+app/src/main/java/com/mawaqiti/plus/ui/screens/UpdateUi.kt:122:        title = stringResource(R.string.settings_updates_title),

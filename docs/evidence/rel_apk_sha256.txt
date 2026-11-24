@@ -1,0 +1,1 @@
+01858a56253a3bc61b753cef90781d7aefc4adea05d15d9d2c38fdfd501d758f *dist/nidaa-v2.2.0-release.apk

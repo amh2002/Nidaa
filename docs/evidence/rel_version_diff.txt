@@ -1,0 +1,15 @@
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+index 5be38d6..adbaf96 100644
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -18,8 +18,8 @@ android {
+         applicationId = "com.nidaa.prayer"
+         minSdk = 24
+         targetSdk = 36
+-        versionCode = 16
+-        versionName = "2.2.0-beta2"
++        versionCode = 17
++        versionName = "2.2.0"
+ 
+         // Visual verification only: -Pmawaqiti.skyPhase=dawn|day|golden|night.
+         // Empty in every shipped build, so the theme always follows the clock.

@@ -1,0 +1,15 @@
+Nidaa v2.2.0 — protected widget weekday strings (string-array day_names_ar)
+baseline = beta32 commit 6c1b252 (accepted beta29d kashida values); current = release tree
+
+item0 identical=True len=10 kashida(U+0640)x3
+item1 identical=True len=17 kashida(U+0640)x7
+item2 identical=True len=17 kashida(U+0640)x5
+item3 identical=True len=17 kashida(U+0640)x6
+item4 identical=True len=12 kashida(U+0640)x4
+item5 identical=True len=13 kashida(U+0640)x4
+item6 identical=True len=12 kashida(U+0640)x5
+
+ALL 7 BYTE-IDENTICAL: True (count=7/7)
+
+git diff 6c1b252..HEAD -- strings.xml:
+(empty)
