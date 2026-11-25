@@ -29,8 +29,7 @@ import kotlin.math.sqrt
  * the Hijri line changes at local midnight without any separate midnight alarm -
  * and [Intent.ACTION_DATE_CHANGED] makes a manual date change immediate.
  *
- * Refreshing is explicit: a single chained minute alarm (setAndAllowWhileIdle,
- * no setExact and therefore no exact-alarm permission) re-arms itself after each
+ * Refreshing is explicit: a single chained minute alarm re-arms itself after each
  * fire, which also covers the Hijri date's midnight roll-over. It exists only while at least one instance of this widget is placed -
  * onUpdate/onDeleted/onDisabled re-check the instance list and cancel it when it
  * is empty. System broadcasts (time/date/timezone/locale/boot) refresh the
@@ -195,15 +194,25 @@ class ClockWidgetProvider : AppWidgetProvider() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val now = System.currentTimeMillis()
         val nextMinute = now - now % MINUTE_MS + MINUTE_MS
-        // setAndAllowWhileIdle, never setExact: no SCHEDULE_EXACT_ALARM needed and
-        // the tick may drift by a few seconds under Doze, which a clock widget
-        // tolerates; manual clock changes arrive as TIME_SET and refresh at once.
+        // beta35 (BUG-2): the tick is exact, so the digits turn over on the minute
+        // boundary instead of whenever the inexact alarm happens to be batched
+        // (measured 8.5-48.7 s behind the status bar in 2.2.0). The exact-alarm
+        // grant is revocable on API 31/32, so a revoked grant falls back to an
+        // inexact tick rather than crashing or leaving the clock frozen.
         runCatching {
-            alarmManager.setAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                nextMinute,
-                tickPendingIntent(context)
-            )
+            if (NotificationScheduler.canScheduleExact(context)) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    nextMinute,
+                    tickPendingIntent(context)
+                )
+            } else {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    nextMinute,
+                    tickPendingIntent(context)
+                )
+            }
         }
     }
 
