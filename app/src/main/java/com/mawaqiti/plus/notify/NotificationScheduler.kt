@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import com.mawaqiti.plus.data.CityRepository
 import com.mawaqiti.plus.data.SettingsRepository
 import java.time.LocalTime
@@ -40,8 +41,10 @@ object NotificationScheduler {
     const val EXTRA_MINUTES = "minutes"
     const val EXTRA_PRE_MINUTES = "pre_minutes"
 
-    private const val EXTRA_EPOCH = "epoch"
+    /** beta35: the occurrence epoch, echoed back so the ledger key can be rebuilt. */
+    const val EXTRA_EPOCH = "epoch"
 
+    private const val TAG = "NidaaScheduler"
     private const val PREFS = "mawaqiti_scheduler"
     private const val KEY_PLAN = "plan"
     /** beta22: pre-alerts are tracked separately so 0 can cancel every one. */
@@ -81,6 +84,14 @@ object NotificationScheduler {
         val scheduled = HashSet<String>()
         for (alarm in alarms) {
             val epoch = alarm.fireAt.toInstant().toEpochMilli()
+            // beta35 (BUG-1): an occurrence the ledger already delivered is never
+            // re-armed. Without this, a backward clock correction makes the fired
+            // alarm "future" again and it fires a second time.
+            val ledgerKey = NotificationLedger.key(alarm.event, epoch, NotificationLedger.Kind.FIRE)
+            if (NotificationLedger.isDelivered(context, ledgerKey)) {
+                Log.i(TAG, "skip delivered ${alarm.event.storageKey} epoch=$epoch")
+                continue
+            }
             val minutes = alarm.fireAt.hour * 60 + alarm.fireAt.minute
             val pending = firePendingIntent(
                 context = context,
@@ -187,12 +198,24 @@ object NotificationScheduler {
         minutesBefore: Int
     ) {
         val scheduled = HashSet<String>()
-        for (alert in PreAlertPlanner.plan(alarms, now, minutesBefore)) {
+        val planned = PreAlertPlanner.plan(alarms, now, minutesBefore) { alert ->
+            NotificationLedger.isDelivered(
+                context,
+                NotificationLedger.key(alert.event, alert.occurrenceEpoch, NotificationLedger.Kind.PRE_ALERT)
+            )
+        }
+        for (alert in planned) {
             val epoch = alert.fireAt.toInstant().toEpochMilli()
             setExactOrWindow(
                 manager,
                 epoch,
-                preAlertPendingIntent(context, alert.event, epoch, minutesBefore)
+                preAlertPendingIntent(
+                    context = context,
+                    event = alert.event,
+                    epoch = epoch,
+                    occurrenceEpoch = alert.occurrenceEpoch,
+                    minutesBefore = minutesBefore
+                )
             )
             scheduled += planKey(alert.event, epoch)
         }
@@ -206,6 +229,7 @@ object NotificationScheduler {
         context: Context,
         event: NotifyEvent,
         epoch: Long,
+        occurrenceEpoch: Long,
         minutesBefore: Int
     ): PendingIntent {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
@@ -213,6 +237,7 @@ object NotificationScheduler {
             data = Uri.parse("mawaqiti://prealert/${event.storageKey}/$epoch")
             putExtra(EXTRA_EVENT, event.storageKey)
             putExtra(EXTRA_PRE_MINUTES, minutesBefore)
+            putExtra(EXTRA_EPOCH, occurrenceEpoch)
         }
         return PendingIntent.getBroadcast(
             context,
@@ -230,7 +255,7 @@ object NotificationScheduler {
             if (parts.size != 2) continue
             val event = NotifyEvent.fromKey(parts[0]) ?: continue
             val epoch = parts[1].toLongOrNull() ?: continue
-            manager.cancel(preAlertPendingIntent(context, event, epoch, 0))
+            manager.cancel(preAlertPendingIntent(context, event, epoch, epoch, 0))
         }
         prefs.edit().remove(KEY_PRE_PLAN).apply()
     }

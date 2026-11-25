@@ -43,6 +43,10 @@ class AlarmReceiver : BroadcastReceiver() {
         val event = NotifyEvent.fromKey(intent.getStringExtra(NotificationScheduler.EXTRA_EVENT))
             ?: return
         if (!NotificationRouting.shouldDeliver(settings.notifications, event)) return
+        // beta35 (BUG-1): one delivery per occurrence, checked and set atomically.
+        // A clock rollback that re-arms this alarm makes the second fire land here
+        // and drop silently instead of posting and playing the adhan again.
+        if (!claimOccurrence(context, intent, event, NotificationLedger.Kind.FIRE)) return
 
         val city = CityRepository(context).byOrder(settings.cityOrder)
         val minutes = intent.getIntExtra(NotificationScheduler.EXTRA_MINUTES, 0)
@@ -74,12 +78,35 @@ class AlarmReceiver : BroadcastReceiver() {
             ?: return
         if (event !in NotifyEvent.PRE_ALERT_EVENTS) return
         if (!NotificationRouting.shouldDeliver(settings.notifications, event)) return
+        // beta35 (BUG-1): same atomic check-and-set for the reminder.
+        if (!claimOccurrence(context, intent, event, NotificationLedger.Kind.PRE_ALERT)) return
 
         NotificationDispatcher.deliverPreAlert(
             context = context,
             event = event,
             minutesBefore = minutesBefore,
             language = settings.language
+        )
+    }
+
+    /**
+     * beta35: atomically claims this occurrence in [NotificationLedger].
+     *
+     * Returns true the first time only. An older build (or an alarm armed before
+     * this version) carries no epoch extra; such an alarm is left unledgered so
+     * its delivery behaves exactly as it did in 2.2.0 rather than being dropped.
+     */
+    private fun claimOccurrence(
+        context: Context,
+        intent: Intent,
+        event: NotifyEvent,
+        kind: NotificationLedger.Kind
+    ): Boolean {
+        val epoch = intent.getLongExtra(NotificationScheduler.EXTRA_EPOCH, 0L)
+        if (epoch <= 0L) return true
+        return NotificationLedger.claim(
+            context,
+            NotificationLedger.key(event, epoch, kind)
         )
     }
 }

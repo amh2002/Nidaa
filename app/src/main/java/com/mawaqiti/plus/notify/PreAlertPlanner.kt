@@ -3,10 +3,15 @@ package com.mawaqiti.plus.notify
 import com.mawaqiti.plus.data.PreAlertMinutes
 import java.time.ZonedDateTime
 
-/** One pre-alert occurrence: the prayer and the instant the reminder must fire. */
+/**
+ * One pre-alert occurrence: the prayer, the instant the reminder must fire, and
+ * the epoch of the prayer occurrence it belongs to (the ledger identity, so the
+ * reminder cannot be delivered twice even if the lead time changes).
+ */
 data class PlannedPreAlert(
     val event: NotifyEvent,
-    val fireAt: ZonedDateTime
+    val fireAt: ZonedDateTime,
+    val occurrenceEpoch: Long
 )
 
 /**
@@ -23,13 +28,19 @@ data class PlannedPreAlert(
  *
  * Occurrences whose reminder instant is already in the past are skipped, and
  * [PreAlertMinutes.DISABLED] plans nothing at all.
+ *
+ * beta35: an occurrence the ledger already delivered is skipped too, so a clock
+ * rollback cannot re-arm a reminder that was already shown. The next undelivered
+ * occurrence for that prayer is planned instead of leaving the prayer unarmed.
  */
 object PreAlertPlanner {
 
     fun plan(
         alarms: List<PlannedAlarm>,
         now: ZonedDateTime,
-        minutesBefore: Int
+        minutesBefore: Int,
+        /** beta35: true for an occurrence the ledger already delivered. */
+        isDelivered: (PlannedPreAlert) -> Boolean = { false }
     ): List<PlannedPreAlert> {
         if (minutesBefore <= 0) return emptyList()
         val lead = minutesBefore.toLong()
@@ -37,8 +48,14 @@ object PreAlertPlanner {
         return NotifyEvent.PRE_ALERT_EVENTS.mapNotNull { event ->
             alarms.asSequence()
                 .filter { it.event == event }
-                .map { PlannedPreAlert(event, it.fireAt.minusMinutes(lead)) }
-                .firstOrNull { it.fireAt.isAfter(now) }
+                .map {
+                    PlannedPreAlert(
+                        event = event,
+                        fireAt = it.fireAt.minusMinutes(lead),
+                        occurrenceEpoch = it.fireAt.toInstant().toEpochMilli()
+                    )
+                }
+                .firstOrNull { it.fireAt.isAfter(now) && !isDelivered(it) }
         }.sortedBy { it.fireAt.toInstant() }
     }
 }
